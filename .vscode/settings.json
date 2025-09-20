@@ -1,0 +1,20 @@
+{
+    "java.home": "C:\\Program Files\\Eclipse Adoptium\\jdk-8.0.462.8-hotspot",
+    "java.configuration.runtimes": [
+        {
+            "name": "JavaSE-1.8",
+            "path": "C:\\Program Files\\Eclipse Adoptium\\jdk-8.0.462.8-hotspot",
+            "default": true
+        }
+    ],
+    "java.project.sourcePaths": [
+        "src/main/java"
+    ],
+    "java.project.referencedLibraries": [
+        "lib/**/*.jar",
+        "build/libs/**/*.jar"
+    ],
+    "[java]": {
+        "editor.defaultFormatter": "redhat.java"
+    }
+}

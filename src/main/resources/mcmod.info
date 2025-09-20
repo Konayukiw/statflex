@@ -1,0 +1,16 @@
+[
+  {
+    "modid": "statflex",
+    "name": "StatFlex",
+    "description": "/s for Hypixel stats utilities!",
+    "version": "1.84",
+    "mcversion": "1.8.9",
+    "url": "",
+    "updateUrl": "",
+    "authorList": ["Konayukiw", "Sirapixel"],
+    "credits": "Konayuki (@Konayukiw) on YouTube, X, Discord, Super thanks to Sirapixel (@zzzxpov) on X.",
+    "logoFile": "",
+    "screenshots": [],
+    "requiredMods": []
+  }
+]
