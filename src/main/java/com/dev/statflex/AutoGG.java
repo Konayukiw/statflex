@@ -39,7 +39,7 @@ public class AutoGG {
             if (saved != null) {
                 Collections.addAll(autoMessages, saved);
             } else {
-                mc.thePlayer.addChatMessage(new ChatComponentText("§7[§cS§7] Failed to load AutoGG messages."));
+                sendChat("§7[§cS§7] Failed to load AutoGG messages.");
             }
             System.out.println("[S] Reloaded autoMessages: " + autoMessages);
         }
@@ -145,26 +145,26 @@ public class AutoGG {
                         autoMessages.remove(idx);
                         SettingsManager.getInstance().autoGGMessages = autoMessages.toArray(new String[0]);
                         SettingsManager.save();
-                        mc.thePlayer.addChatMessage(new ChatComponentText("§7[§cS§7] Removed message."));
+                        sendChat("§7[§cS§7] Removed message.");
                     } else {
-                        mc.thePlayer.addChatMessage(new ChatComponentText("§7[§cS§7] Invalid index."));
+                        sendChat("§7[§cS§7] Invalid index.");
                     }
                 } catch (NumberFormatException e) {
-                    mc.thePlayer.addChatMessage(new ChatComponentText("§7[§cS§7] Index must be a number."));
+                    sendChat("§7[§cS§7] Index must be a number.");
                 }
             } else {
                 String msg = String.join(" ", args);
                 autoMessages.add(msg);
                 SettingsManager.getInstance().autoGGMessages = autoMessages.toArray(new String[0]);
                 SettingsManager.save();
-                mc.thePlayer.addChatMessage(new ChatComponentText("§7[§cS§7] Added message: §e" + msg));
+                sendChat("§7[§cS§7] Added message: §e" + msg);
             }
             System.out.println("[S] autoMessages after command: " + autoMessages);
         }
     }
 
     public void showMessages() {
-        mc.thePlayer.addChatMessage(new ChatComponentText("§7[§cS§7] Current AutoGG messages:"));
+        sendChat("§7[§cS§7] Current AutoGG messages:");
         synchronized (autoMessages) {
             if (autoMessages.isEmpty()) {
                 ChatComponentText empty = new ChatComponentText(
@@ -192,6 +192,14 @@ public class AutoGG {
                 .setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                         new ChatComponentText("Click to add messages."))));
         mc.thePlayer.addChatMessage(add);
+    }
+
+    private static void sendChat(String msg) {
+        Minecraft.getMinecraft().addScheduledTask(() -> {
+            if (Minecraft.getMinecraft().thePlayer != null) {
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(msg));
+            }
+        });
     }
 
     private String stripColors(String input) {

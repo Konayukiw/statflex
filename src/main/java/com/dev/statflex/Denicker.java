@@ -31,7 +31,6 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.io.InputStreamReader;
 import java.text.Normalizer;
-import java.util.Base64;
 
 public class Denicker {
 
@@ -196,8 +195,7 @@ public class Denicker {
                         : cleanName(npi.getGameProfile().getName());
 
                 if (nicks.contains(hash)) {
-                    mc.thePlayer.addChatMessage(
-                            new ChatComponentText("§8[§cS§8]§7 Found a nicked player:§c " + displayName));
+                    sendChat("§8[§cS§8]§7 Found a nicked player:§c " + displayName);
                     return;
                 }
 
@@ -206,8 +204,7 @@ public class Denicker {
                     return;
 
                 if (!profileName.contains(displayName)) {
-                    mc.thePlayer.addChatMessage(new ChatComponentText(
-                            "§8[§cS§8]§c " + profileName + " §7is nicked as §c" + displayName + "§7!"));
+                    sendChat("§8[§cS§8]§c " + profileName + " §7is nicked as §c" + displayName + "§7!");
 
                     if (!awaitingLocraw) {
                         pendingProfile = profileName;
@@ -228,8 +225,7 @@ public class Denicker {
         String mode = currentMode != null ? currentMode.toLowerCase() : null;
 
         if (gameType == null) {
-            mc.thePlayer.addChatMessage(new ChatComponentText(
-                    "§8[§cS§8]§7 Game mode could not be detected. Auto-Stats cancelled."));
+            sendChat("§8[§cS§8]§7 Game mode could not be detected. Auto-Stats cancelled.");
             return;
         }
 
@@ -245,14 +241,13 @@ public class Denicker {
                 SwFetcher.fetchStats(profileName, null);
                 break;
             default:
-                mc.thePlayer.addChatMessage(new ChatComponentText(
-                        "§8[§cS§8]§7 Unsupported gamemode. Auto-Stats cancelled."));
+                sendChat("§8[§cS§8]§7 Unsupported gamemode. Auto-Stats cancelled.");
         }
     }
 
     public static String getSkinData(UUID uuid) {
         if (uuid == null) {
-            mc.thePlayer.addChatMessage(new ChatComponentText("§8[§cS§8]§7 Failed to get UUID"));
+            sendChat("§8[§cS§8]§7 Failed to get UUID");
             return "{}";
         }
 
@@ -265,23 +260,20 @@ public class Denicker {
 
             int response = conn.getResponseCode();
             if (response != 200) {
-                mc.thePlayer
-                        .addChatMessage(new ChatComponentText("§8[§cS§8]§7 Failed to fetch skin data: " + response));
+                sendChat("§8[§cS§8]§7 Failed to fetch skin data: " + response);
                 return "{}";
             }
 
             JsonObject root = gson.fromJson(new InputStreamReader(conn.getInputStream()), JsonObject.class);
 
             if (!root.has("properties") || root.getAsJsonArray("properties").size() == 0) {
-                mc.thePlayer
-                        .addChatMessage(new ChatComponentText(("§8[§cS§8]§7 No properties found")));
+                sendChat("§8[§cS§8]§7 No properties found");
                 return "{}";
             }
 
             JsonObject property = root.getAsJsonArray("properties").get(0).getAsJsonObject();
             if (!property.has("value")) {
-                mc.thePlayer
-                        .addChatMessage(new ChatComponentText(("§8[§cS§8]§7 Data in properties was null")));
+                sendChat("§8[§cS§8]§7 Data in properties was null");
                 return "{}";
             }
 
@@ -354,6 +346,14 @@ public class Denicker {
 
     private static String cleanName(String name) {
         return name.replaceAll("§[0-9a-frk-o]", "").trim();
+    }
+
+    private static void sendChat(String msg) {
+        Minecraft.getMinecraft().addScheduledTask(() -> {
+            if (Minecraft.getMinecraft().thePlayer != null) {
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(msg));
+            }
+        });
     }
 
     public static String stripColor(String input) {
