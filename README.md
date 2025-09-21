@@ -35,6 +35,6 @@ Hypixel stats viewer mod for Forge 1.8.9.
 
 > /s settings - Opens clickable settings.
 
-> /s help - Shows help message similar to this release note.
+> /s help - Shows help message similar to this readme.
 
 **_This mod is NOT officially agreed by Hypixel, stop using if you are scared about ban._**
