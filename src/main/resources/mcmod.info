@@ -3,7 +3,7 @@
     "modid": "statflex",
     "name": "StatFlex",
     "description": "/s for Hypixel stats utilities!",
-    "version": "1.0",
+    "version": "1.01",
     "mcversion": "1.8.9",
     "url": "",
     "updateUrl": "",
