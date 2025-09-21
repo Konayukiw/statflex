@@ -99,7 +99,7 @@ public class DuelsFetcher {
                 String modeAndTitle = colorCode + (modeDisplay.isEmpty() ? "" : modeDisplay + " ") + titleBody;
 
                 if (auto) {
-                    sendChat(String.format("§8[§cS§7-§6Auto§8] %s %s §7| Wins: %s §7| WLR: %s",
+                    sendChat(String.format("§8[§cS§8] %s %s §7| Wins: %s §7| WLR: %s",
                             modeAndTitle, coloredPlayerName, formattedWins, coloredWLR));
                 } else {
                     if (mode == null) {
