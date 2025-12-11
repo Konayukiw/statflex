@@ -1,4 +1,4 @@
-### **StatFlex**
+### **statflex**
 
 Hypixel stats viewer mod for Forge 1.8.9. 
 
