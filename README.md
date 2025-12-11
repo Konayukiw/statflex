@@ -21,6 +21,10 @@ Hypixel stats viewer mod for Forge 1.8.9.
 
 > /s nh [Player] - Shows their Name History (Not working if they have hidden their name history.)
 
+> /s skin [PLayer] - Downloads their Skin.
+
+> /s dir [PATH] - Sets a folder which skins will be saved into.
+
 > /s secure - Toggles secure connections.  
 > | This should be disabled if you have errors while getting stats. Usually, disabling this is not recommended as it may endanger your connection security by trusting all certifications.
 
@@ -37,4 +41,4 @@ Hypixel stats viewer mod for Forge 1.8.9.
 
 > /s help - Shows help message similar to this readme.
 
-**_This mod is NOT officially agreed by Hypixel, stop using if you are scared about ban._**
+**_This mod is NOT officially allowed by Hypixel! Never use if you care about ban._**
