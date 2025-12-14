@@ -80,7 +80,14 @@ public class DuelsFetcherForUpdate {
                 HttpURLConnection connection = (HttpURLConnection) new URL(urlStr).openConnection();
                 connection.setRequestMethod("GET");
 
-                InputStreamReader reader = new InputStreamReader(connection.getInputStream());
+                int status = connection.getResponseCode();
+                InputStreamReader reader;
+                if (status >= 200 && status < 300) {
+                    reader = new InputStreamReader(connection.getInputStream());
+                } else {
+                    reader = new InputStreamReader(connection.getErrorStream());
+                }
+
                 JsonParser parser = new JsonParser();
                 JsonObject response = parser.parse(reader).getAsJsonObject();
 
@@ -88,7 +95,14 @@ public class DuelsFetcherForUpdate {
                     String cause = response.has("cause") && !response.get("cause").isJsonNull()
                             ? response.get("cause").getAsString()
                             : "Unknown error";
-                    sendChat("§8[§cS§8]§7 Failed to fetch player data: " + cause);
+                    String lower = cause.toLowerCase();
+                    if (lower.contains("invalid") || lower.contains("api key")) {
+                        sendChat("§8[§cS§8]§7 Invalid API Key while fetching §c" + properName
+                                + "§7. Set a new key using §e/s api <key>");
+                    } else {
+                        sendChat("§8[§cS§8]§7 Failed to fetch data for §c" + properName
+                                + "§7: " + cause);
+                    }
                     return;
                 }
 
