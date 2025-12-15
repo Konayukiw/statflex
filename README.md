@@ -1,6 +1,6 @@
 ### **statflex**
 
-Hypixel stats viewer mod for Forge 1.8.9.
+Hypixel stats viewer, and overall utility mod for Forge 1.8.9.
 
 **Features**
 
