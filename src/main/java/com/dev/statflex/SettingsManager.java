@@ -20,6 +20,7 @@ public class SettingsManager {
     public boolean ignoreCertificates = false;
     public boolean keepWhoEnabled = false;
     public String apiKey = "";
+    public String skinSaveDir = "";
 
     private static SettingsManager instance;
 
@@ -62,5 +63,17 @@ public class SettingsManager {
     }
 
     public String[] autoGGMessages = new String[0];
+
+    public File getSkinSaveDir() {
+        if (skinSaveDir == null || skinSaveDir.isEmpty()) {
+            return new File(net.minecraft.client.Minecraft.getMinecraft().mcDataDir, "downloads");
+        }
+        return new File(skinSaveDir);
+    }
+
+    public void setSkinSaveDir(File dir) {
+        this.skinSaveDir = dir.getAbsolutePath();
+        save();
+    }
 
 }

@@ -13,6 +13,8 @@ import net.minecraft.event.HoverEvent;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.io.File;
+import java.io.IOException;
 
 public class Fetcher implements ICommand {
 
@@ -228,6 +230,16 @@ public class Fetcher implements ICommand {
                 }
                 break;
 
+            case "skin":
+                if (args.length >= 2) {
+                    String targetName = args[1];
+                    SkinSaver.savePlayerSkinAsync(targetName);
+                    return;
+                } else {
+                    sendChat("§8[§cS§8]§7 Invalid usage. /s skin [Player] for download.");
+                }
+                break;
+
             case "autogg":
                 if (args.length == 1) {
                     AutoGGInstance.showMessages();
@@ -248,6 +260,45 @@ public class Fetcher implements ICommand {
             case "keepwho":
                 toggleKeepWho(false);
                 break;
+
+            case "dir":
+                if (args.length >= 2) {
+
+                    String rawPath = args[1];
+                    File dir = new File(rawPath);
+
+                    if (!dir.isAbsolute()) {
+                        sendChat("§8[§cS§8]§7 No relative paths are allowed.");
+                        break;
+                    }
+
+                    try {
+                        dir = dir.getCanonicalFile();
+                    } catch (IOException e) {
+                        sendChat("§8[§cS§8]§7 Invalid path.");
+                        break;
+                    }
+
+                    if (!dir.exists() && !dir.mkdirs()) {
+                        sendChat("§8[§cS§8]§7 Failed to create directory.");
+                        sendChat("§8[§cS§8]§7 statflex may fail configure paths under C:/Windows or C:/Program Files.");
+                        break;
+                    }
+
+                    if (!dir.isDirectory()) {
+                        sendChat("§8[§cS§8]§7 Select a directory.");
+                        break;
+                    }
+
+                    SettingsManager.getInstance().setSkinSaveDir(dir);
+
+                    sendChat("§8[§cS§8]§7 Skin save directory set to:" + "§e" + dir.getAbsolutePath());
+                    break;
+
+                } else {
+                    sendChat("§8[§cS§8]§7 Usage: /s dir §e[Path]§7 to determine the path.");
+                    break;
+                }
 
             case "toggle":
                 if (args.length >= 2) {
@@ -307,6 +358,8 @@ public class Fetcher implements ICommand {
                 sendChat("§c || §7/s settings §8: §7Opens togglable settings");
                 sendChat("§c || §7/s secure §8: §7Toggles secure connections.");
                 sendChat("§c || §7- §7This should be disabled if you have errors while getting stats.");
+                sendChat("§c || §7/s skin §e[Player] §8: §7Download their skin locally.");
+                sendChat("§c || §7/s dir §e[Path] §8: §7Determines the directory to save skin files.");
                 sendChat("§c || §7- §7 Usually, disabling this is not recommended as it can be insecure.");
                 sendChat(" ");
                 sendChat("§c || §7/s help §8: §7Opens this help");
