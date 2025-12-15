@@ -21,7 +21,7 @@ Hypixel stats viewer mod for Forge 1.8.9.
 
 > /s nh [Player] - Shows their Name History (Not working if they have hidden their name history.)
 
-> /s skin [PLayer] - Downloads their Skin.
+> /s skin [Player] - §7Download their skin locally.
 
 > /s dir [PATH] - Sets a folder which skins will be saved into.
 
