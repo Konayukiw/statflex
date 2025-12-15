@@ -1,8 +1,8 @@
 ### **statflex**
 
-Hypixel stats viewer mod for Forge 1.8.9. 
+Hypixel stats viewer mod for Forge 1.8.9.
 
-**Features** 
+**Features**
 
 > /s api [API Key] - Sets Hypixel API Key to enable stats viewer.
 
@@ -21,9 +21,9 @@ Hypixel stats viewer mod for Forge 1.8.9.
 
 > /s nh [Player] - Shows their Name History (Not working if they have hidden their name history.)
 
-> /s skin [PLayer] - Downloads their Skin.
+> /s skin [Player] - §7Download their skin locally.
 
-> /s dir [PATH] - Sets a folder which skins will be saved into.
+> /s dir [PATH] - Sets a folder which skins will be saved into. .minecraft/downloads is the default directory.
 
 > /s secure - Toggles secure connections.  
 > | This should be disabled if you have errors while getting stats. Usually, disabling this is not recommended as it may endanger your connection security by trusting all certifications.
