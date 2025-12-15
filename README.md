@@ -23,7 +23,7 @@ Hypixel stats viewer mod for Forge 1.8.9.
 
 > /s skin [Player] - §7Download their skin locally.
 
-> /s dir [PATH] - Sets a folder which skins will be saved into.
+> /s dir [PATH] - Sets a folder which skins will be saved into. .minecraft/downloads is the default directory.
 
 > /s secure - Toggles secure connections.  
 > | This should be disabled if you have errors while getting stats. Usually, disabling this is not recommended as it may endanger your connection security by trusting all certifications.
