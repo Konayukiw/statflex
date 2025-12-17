@@ -4,6 +4,9 @@ import com.google.gson.*;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ChatComponentText;
+import net.minecraft.client.network.NetworkPlayerInfo;
+import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.properties.Property;
 
 import javax.imageio.ImageIO;
 import javax.net.ssl.HttpsURLConnection;
@@ -11,7 +14,9 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.UUID;
 
 public class SkinSaver {
@@ -22,6 +27,45 @@ public class SkinSaver {
 
     private static void savePlayerSkin(String playerName) {
         try {
+            Minecraft mc = Minecraft.getMinecraft();
+
+            NetworkPlayerInfo localInfo = null;
+
+            for (NetworkPlayerInfo npi : mc.getNetHandler().getPlayerInfoMap()) {
+                if (npi.getGameProfile().getName().equalsIgnoreCase(playerName)) {
+                    localInfo = npi;
+                    break;
+                }
+            }
+
+            if (localInfo != null) {
+                GameProfile profile = localInfo.getGameProfile();
+                Collection<Property> props = profile.getProperties().get("textures");
+
+                if (props != null && !props.isEmpty()) {
+                    Property texturesProp = props.iterator().next();
+
+                    String decoded = new String(
+                            Base64.getDecoder().decode(texturesProp.getValue()),
+                            StandardCharsets.UTF_8
+                    );
+
+                    JsonObject root =
+                            new JsonParser().parse(decoded).getAsJsonObject();
+                    JsonObject textures = root.getAsJsonObject("textures");
+
+                    if (textures != null && textures.has("SKIN")) {
+                        String skinUrl =
+                                textures.getAsJsonObject("SKIN")
+                                        .get("url").getAsString();
+
+                        UUID uuid = profile.getId();
+                        downloadAndSaveSkin(skinUrl, playerName, uuid);
+                        return;
+                    }
+                }
+            }
+
             GetUUID.PlayerInfo info = GetUUID.getPlayerInfo(playerName);
             if (info == null) {
                 sendChat("§8[§cS§8]§7 Player not found: " + playerName);
@@ -36,10 +80,12 @@ public class SkinSaver {
                 return;
             }
 
-            JsonObject root = new JsonParser().parse(textureJson).getAsJsonObject();
+            JsonObject root =
+                    new JsonParser().parse(textureJson).getAsJsonObject();
             JsonObject textures = root.getAsJsonObject("textures");
+
             if (textures == null || !textures.has("SKIN")) {
-                sendChat("§8[§cS§8]§7 No skin texture found");
+                sendChat("§8[§cS§8]§7 No skin found.");
                 return;
             }
 
@@ -51,7 +97,7 @@ public class SkinSaver {
 
         } catch (Exception e) {
             e.printStackTrace();
-            sendChat("§8[§cS§8]§7 Unexpected error occurred");
+            sendChat("§8[§cS§8]§7 Unexpected error occurred.");
         }
     }
 
@@ -121,12 +167,54 @@ public class SkinSaver {
                     new File(downloadDir, name + "_" + uuid + ".png");
             ImageIO.write(image, "png", out);
 
-            sendChat("§8[§cS§8]§7 Saved skin: §f" + out.getName());
+            sendClickablePath(out);
 
         } catch (Exception e) {
             e.printStackTrace();
             sendChat("§8[§cS§8]§7 Failed to download skin");
         }
+    }
+
+    private static Property findLocalSkinProperty(String playerName) {
+        Minecraft mc = Minecraft.getMinecraft();
+
+        if (mc.getNetHandler() == null) return null;
+
+        for (NetworkPlayerInfo npi : mc.getNetHandler().getPlayerInfoMap()) {
+            GameProfile profile = npi.getGameProfile();
+            if (profile == null || profile.getName() == null) continue;
+
+            if (profile.getName().equalsIgnoreCase(playerName)) {
+                return profile.getProperties().get("textures").iterator().hasNext()
+                        ? profile.getProperties().get("textures").iterator().next()
+                        : null;
+            }
+        }
+        return null;
+    }
+
+    private static void sendClickablePath(File file) {
+        Minecraft mc = Minecraft.getMinecraft();
+
+        mc.addScheduledTask(() -> {
+            if (mc.thePlayer == null) return;
+
+            ChatComponentText prefix =
+                    new ChatComponentText("§8[§cS§8]§7 Saved skin: ");
+            ChatComponentText path =
+                    new ChatComponentText("§e" + file.getName());
+            path.getChatStyle()
+                    .setChatClickEvent(
+                            new net.minecraft.event.ClickEvent(
+                                    net.minecraft.event.ClickEvent.Action.OPEN_FILE,
+                                    file.getParentFile().getAbsolutePath()
+                            )
+                    )
+                    .setUnderlined(true);
+
+            prefix.appendSibling(path);
+            mc.thePlayer.addChatMessage(prefix);
+        });
     }
 
     private static UUID parseUuid(String raw) {
