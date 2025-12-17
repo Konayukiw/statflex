@@ -37,6 +37,8 @@ Hypixel stats viewer, and overall utility mod for Forge 1.8.9.
 > /s denick - Toggles Denicker like Lilith. This can denick nicks using their original skins.  
 > | It's possibly bannable, use at your own risk.
 
+> /s update - Checks update.
+
 > /s settings - Opens clickable settings.
 
 > /s help - Shows help message similar to this readme.

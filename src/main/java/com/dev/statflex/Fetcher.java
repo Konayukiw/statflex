@@ -261,6 +261,11 @@ public class Fetcher implements ICommand {
                 toggleKeepWho(false);
                 break;
 
+            case "update":
+                Updater.checkForUpdatesAsync();
+                sendChat("§aChecking for updates...");
+                break;
+
             case "dir":
                 if (args.length >= 2) {
 
@@ -315,7 +320,6 @@ public class Fetcher implements ICommand {
                             break;
                         case "denick":
                             toggleDenick(true);
-                            // currently developing
                         case "autogg":
                             ;
                             break;
@@ -362,6 +366,7 @@ public class Fetcher implements ICommand {
                 sendChat("§c || §7/s dir §e[Path] §8: §7Determines the directory to save skin files.");
                 sendChat("§c || §7- §7 Usually, disabling this is not recommended as it can be insecure.");
                 sendChat(" ");
+                sendChat("§c || §7/s update §8: §7Check for latest version of the mod.");
                 sendChat("§c || §7/s help §8: §7Opens this help");
                 sendChat("§c || §7If you don't understand well, watch introduction video!");
                 sendChat("§c || §7 §ehttps://www.youtube.com/watch?v=(UPLOAD_SOON)");
