@@ -194,6 +194,10 @@ public class Updater {
 
 
     private static void download(String url, File out) throws IOException {
+        File parent = out.getParentFile();
+        if (parent != null && !parent.exists()) {
+            parent.mkdirs();
+        }
         URLConnection raw = new URL(url).openConnection();
         if (raw instanceof HttpsURLConnection && Fetcher.ignoreCertificates) {
             try {
