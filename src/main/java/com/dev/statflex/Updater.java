@@ -88,9 +88,9 @@ public class Updater {
         JsonObject obj = new JsonObject();
         obj.addProperty("newFile", newJar.getName());
         obj.addProperty("finalName", finalName);
-        obj.addProperty("mcDir", mcDir.getAbsolutePath());
+        obj.addProperty("mcDir", mcDir.getAbsolutePath().replace("\\", "/"));
 
-        try (Writer w = new FileWriter(info)) {
+        try (Writer w = new OutputStreamWriter(new FileOutputStream(info), "UTF-8")) {
             w.write(obj.toString());
         }
 
@@ -98,22 +98,42 @@ public class Updater {
         writeBat(bat);
 
         Runtime.getRuntime().exec(new String[]{
-                "cmd.exe", "/C",
-                "set __COMPAT_LAYER=RUNASINVOKER && start \"\" \"" + bat.getAbsolutePath() + "\""
+                "cmd.exe", "/C", "start", "\"\"", "\"" + bat.getAbsolutePath() + "\""
         });
 
         Minecraft.getMinecraft().shutdown();
     }
 
     private static void writeBat(File bat) throws IOException {
-        try (PrintWriter pw = new PrintWriter(new FileWriter(bat))) {
+        try (PrintWriter pw = new PrintWriter(new OutputStreamWriter(
+                new FileOutputStream(bat), "UTF-8"))) {
+
             pw.println("@echo off");
+            pw.println("chcp 65001 > nul");
             pw.println("setlocal");
             pw.println("");
-            pw.println("set \"BASE_DIR=%~dp0\"");
-            pw.println("set \"INFO=%BASE_DIR%statflex-update.json\"");
-            pw.println("if not exist \"%INFO%\" exit /b");
+            pw.println("rem Bring console window to front");
+            pw.println("powershell -NoProfile -ExecutionPolicy Bypass -Command ^");
+            pw.println("  \"Add-Type @'");
+            pw.println("    using System;");
+            pw.println("    using System.Runtime.InteropServices;");
+            pw.println("    public class WinAPI {");
+            pw.println("      [DllImport(\\\"user32.dll\\\")] public static extern bool SetForegroundWindow(IntPtr hWnd);");
+            pw.println("      [DllImport(\\\"kernel32.dll\\\")] public static extern IntPtr GetConsoleWindow();");
+            pw.println("    }");
+            pw.println("'@; [WinAPI]::SetForegroundWindow([WinAPI]::GetConsoleWindow())\"");
             pw.println("");
+            pw.println("rem Base");
+            pw.println("cd /d \"%~dp0\"");
+            pw.println("set \"BASE_DIR=%CD%\"");
+            pw.println("set \"INFO=%BASE_DIR%\\statflex-update.json\"");
+            pw.println("");
+            pw.println("if not exist \"%INFO%\" (");
+            pw.println("  echo update info not found");
+            pw.println("  exit /b");
+            pw.println(")");
+            pw.println("");
+            pw.println("rem Observing javaw.exe");
             pw.println(":wait");
             pw.println("tasklist | findstr /i \"javaw.exe\" >nul");
             pw.println("if not errorlevel 1 (");
@@ -121,22 +141,26 @@ public class Updater {
             pw.println("  goto wait");
             pw.println(")");
             pw.println("");
-            pw.println(
-                    "powershell -NoProfile -Command "
-                            + "'$i = Get-Content '''%INFO%''' | ConvertFrom-Json; "
-                            + "$mods = Join-Path $i.mcDir ''mods''; "
-                            + "Move-Item (Join-Path '''%BASE_DIR%''' $i.newFile) "
-                            + "(Join-Path $mods $i.finalName) -Force; "
-                            + "Get-ChildItem $mods | Where-Object { $_.Name -like ''statflex*.jar'' -and $_.Name -ne $i.finalName } | Remove-Item -Force'"
-            );
+            pw.println("rem PowerShell");
+            pw.println("powershell -NoProfile -ExecutionPolicy Bypass -Command ^");
+            pw.println("  \"$info = Get-Content -Raw -Encoding UTF8 '%INFO%' | ConvertFrom-Json; \" ^");
+            pw.println("  \"$mods = Join-Path $info.mcDir 'mods'; \" ^");
+            pw.println("  \"$src  = Join-Path '%BASE_DIR%' $info.newFile; \" ^");
+            pw.println("  \"$dst  = Join-Path $mods $info.finalName; \" ^");
+            pw.println("  \"New-Item -ItemType Directory -Force -Path $mods | Out-Null; \" ^");
+            pw.println("  \"Move-Item -Force $src $dst; \" ^");
+            pw.println("  \"Get-ChildItem $mods -Filter 'statflex*.jar' | Where-Object { $_.Name -ne $info.finalName } | Remove-Item -Force\"");
             pw.println("");
+            pw.println("rem Cleanup");
             pw.println("del \"%INFO%\"");
-            pw.println("echo statflex has been updated. You can now launch Minecraft again.");
+            pw.println("");
+            pw.println("echo.");
+            pw.println("echo statflex has been updated successfully.");
+            pw.println("echo You can now launch Minecraft again.");
+            pw.println("echo.");
             pw.println("pause");
         }
     }
-
-
 
     private static boolean isNewer(String latest, String current) {
         String nl = normalize(latest);
