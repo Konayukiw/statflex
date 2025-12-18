@@ -9,7 +9,7 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 public class SFlex {
     public static final String MODID = "statflex";
     public static final String NAME = "statflex";
-    public static final String VERSION = "1.05";
+    public static final String VERSION = "1.06";
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
@@ -19,6 +19,7 @@ public class SFlex {
         MinecraftForge.EVENT_BUS.register(new DuelsListStats());
         MinecraftForge.EVENT_BUS.register(new Denicker());
         MinecraftForge.EVENT_BUS.register(new AutoGG());
+        MinecraftForge.EVENT_BUS.register(new UpdaterGuiHandler());
 
         SettingsManager.load();
         Fetcher.syncFromSettings(SettingsManager.getInstance());

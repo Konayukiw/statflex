@@ -261,11 +261,28 @@ public class Fetcher implements ICommand {
                 toggleKeepWho(false);
                 break;
 
-            case "update":
-                Updater.checkForUpdatesAsync();
-                sendChat("§aChecking for updates...");
-                break;
+            case "update": {
+                Updater.UpdateState state = Updater.checkNow();
+                switch (state) {
+                    case UP_TO_DATE:
+                        sendChat("§8[§cS§8]§7 statflex is up-to-date!");
+                        break;
 
+                    case UPDATE_AVAILABLE:
+                        sendChat("§8[§cS§8]§7 Update is available. Restart for the latest version.");
+                        Minecraft.getMinecraft().addScheduledTask(() -> {
+                            Minecraft.getMinecraft().displayGuiScreen(
+                                    new UpdaterGui()
+                            );
+                        });
+                        break;
+
+                    case ERROR:
+                        sendChat("§8[§cS§8]§7 Failed to check updates.");
+                        break;
+                }
+                break;
+            }
             case "dir":
                 if (args.length >= 2) {
 
