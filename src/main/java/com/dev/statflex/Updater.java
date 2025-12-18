@@ -122,11 +122,12 @@ public class Updater {
             pw.println(")");
             pw.println("");
             pw.println(
-                    "powershell -NoProfile -Command \""
-                            + "$i = Get-Content '%INFO%' | ConvertFrom-Json; "
-                            + "$mods = Join-Path $i.mcDir 'mods'; "
-                            + "Move-Item (Join-Path '%BASE_DIR%' $i.newFile) (Join-Path $mods $i.finalName) -Force; "
-                            + "Get-ChildItem $mods | Where-Object { $_.Name -like 'statflex*.jar' -and $_.Name -ne $i.finalName } | Remove-Item -Force\""
+                    "powershell -NoProfile -Command "
+                            + "'$i = Get-Content '''%INFO%''' | ConvertFrom-Json; "
+                            + "$mods = Join-Path $i.mcDir ''mods''; "
+                            + "Move-Item (Join-Path '''%BASE_DIR%''' $i.newFile) "
+                            + "(Join-Path $mods $i.finalName) -Force; "
+                            + "Get-ChildItem $mods | Where-Object { $_.Name -like ''statflex*.jar'' -and $_.Name -ne $i.finalName } | Remove-Item -Force'"
             );
             pw.println("");
             pw.println("del \"%INFO%\"");
@@ -134,6 +135,7 @@ public class Updater {
             pw.println("pause");
         }
     }
+
 
 
     private static boolean isNewer(String latest, String current) {

@@ -41,7 +41,7 @@ public class UpdaterGui extends GuiScreen {
 
         this.drawCenteredString(
                 this.fontRendererObj,
-                "statflex " + com.dev.statflex.Updater.latestVersion + " is available.",
+                "New version: " + com.dev.statflex.Updater.latestVersion + " is available.",
                 centerX,
                 centerY - 20,
                 0xFFFFFF
