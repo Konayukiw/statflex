@@ -4,12 +4,12 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 
-@Mod(modid = SFlex.MODID, name = SFlex.NAME, version = SFlex.VERSION, clientSideOnly = true)
+@Mod(modid = Main.MODID, name = Main.NAME, version = Main.VERSION, clientSideOnly = true)
 
-public class SFlex {
+public class Main {
     public static final String MODID = "statflex";
     public static final String NAME = "statflex";
-    public static final String VERSION = "1.06";
+    public static final String VERSION = "1.07";
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {

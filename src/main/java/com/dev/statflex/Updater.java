@@ -55,7 +55,7 @@ public class Updater {
         JsonObject root = new JsonParser().parse(json).getAsJsonObject();
 
         latestVersion = root.get("tag_name").getAsString();
-        String currentVersion = SFlex.VERSION;
+        String currentVersion = Main.VERSION;
 
         if (!isNewer(latestVersion, currentVersion)) return;
 

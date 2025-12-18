@@ -262,27 +262,34 @@ public class Fetcher implements ICommand {
                 break;
 
             case "update": {
-                Updater.UpdateState state = Updater.checkNow();
-                switch (state) {
-                    case UP_TO_DATE:
-                        sendChat("§8[§cS§8]§7 statflex is up-to-date!");
-                        break;
+                sendChat("§8[§cS§8]§7 Checking for updates...");
 
-                    case UPDATE_AVAILABLE:
-                        sendChat("§8[§cS§8]§7 Update is available. Restart for the latest version.");
-                        Minecraft.getMinecraft().addScheduledTask(() -> {
-                            Minecraft.getMinecraft().displayGuiScreen(
-                                    new UpdaterGui()
-                            );
-                        });
-                        break;
+                new Thread(() -> {
+                    Updater.UpdateState state = Updater.checkNow();
 
-                    case ERROR:
-                        sendChat("§8[§cS§8]§7 Failed to check updates.");
-                        break;
-                }
+                    Minecraft.getMinecraft().addScheduledTask(() -> {
+                        switch (state) {
+                            case UP_TO_DATE:
+                                sendChat("§8[§cS§8]§7 statflex is up-to-date!");
+                                break;
+
+                            case UPDATE_AVAILABLE:
+                                sendChat("§8[§cS§8]§7 Update is available.");
+                                Minecraft.getMinecraft().displayGuiScreen(
+                                        new UpdaterGui()
+                                );
+                                break;
+
+                            case ERROR:
+                                sendChat("§8[§cS§8]§7 Failed to check updates.");
+                                break;
+                        }
+                    });
+                }, "statflex-updater").start();
+
                 break;
             }
+
             case "dir":
                 if (args.length >= 2) {
 
