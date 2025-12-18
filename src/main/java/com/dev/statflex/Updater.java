@@ -108,7 +108,7 @@ public class Updater {
     private static void writeBat(File bat) throws IOException {
         try (PrintWriter pw = new PrintWriter(new FileWriter(bat))) {
             pw.println("@echo off");
-            pw.println("setlocal enabledelayedexpansion");
+            pw.println("setlocal");
             pw.println("");
             pw.println("set \"BASE_DIR=%~dp0\"");
             pw.println("set \"INFO=%BASE_DIR%statflex-update.json\"");
@@ -121,15 +121,17 @@ public class Updater {
             pw.println("  goto wait");
             pw.println(")");
             pw.println("");
-            pw.println("powershell -NoProfile -Command ^");
-            pw.println("\"$i = Get-Content '%INFO%' | ConvertFrom-Json; ^");
-            pw.println(" $mods = Join-Path $i.mcDir 'mods'; ^");
-            pw.println(" Move-Item (Join-Path '%BASE_DIR%' $i.newFile) (Join-Path $mods $i.finalName) -Force; ^");
-            pw.println(" Get-ChildItem $mods | Where-Object { $_.Name -like 'statflex*.jar' -and $_.Name -ne $i.finalName } | Remove-Item -Force\"");
+            pw.println(
+                    "powershell -NoProfile -Command \""
+                            + "$i = Get-Content '%INFO%' | ConvertFrom-Json; "
+                            + "$mods = Join-Path $i.mcDir 'mods'; "
+                            + "Move-Item (Join-Path '%BASE_DIR%' $i.newFile) (Join-Path $mods $i.finalName) -Force; "
+                            + "Get-ChildItem $mods | Where-Object { $_.Name -like 'statflex*.jar' -and $_.Name -ne $i.finalName } | Remove-Item -Force\""
+            );
             pw.println("");
             pw.println("del \"%INFO%\"");
-            pw.println("");
-            pw.println("echo statflex has been updated and you can launch Minecraft again.");
+            pw.println("echo statflex has been updated. You can now launch Minecraft again.");
+            pw.println("pause");
         }
     }
 
@@ -198,6 +200,7 @@ public class Updater {
         if (parent != null && !parent.exists()) {
             parent.mkdirs();
         }
+
         URLConnection raw = new URL(url).openConnection();
         if (raw instanceof HttpsURLConnection && Fetcher.ignoreCertificates) {
             try {
