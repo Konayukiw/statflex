@@ -13,7 +13,7 @@ public class DiscordReportSender {
     public static void sendReport(String cheater, String reason, String reporter) {
         new Thread(() -> {
             try {
-                URL url = new URL("http://localhost:3000/report");
+                URL url = new URL("http://192.168.11.11:3000/report");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
                 conn.setRequestMethod("POST");
