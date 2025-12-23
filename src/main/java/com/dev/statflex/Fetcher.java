@@ -21,6 +21,7 @@ public class Fetcher implements ICommand {
     private final List<String> aliases = Arrays.asList("s");
 
     private static final AutoGG AutoGGInstance = new AutoGG();
+    public static final Minecraft mc = Minecraft.getMinecraft();
 
     public static boolean listStatsEnabled;
     public static boolean autoStatsEnabled;
@@ -329,6 +330,27 @@ public class Fetcher implements ICommand {
                     break;
                 }
 
+            case "add":
+                if (args.length >= 3) {
+                    String cheaterName = args[1];
+
+                    String reason = String.join(" ",
+                            Arrays.copyOfRange(args, 2, args.length));
+
+                    String reporterName = mc.thePlayer.getName();
+
+                    DiscordReportSender.sendReport(
+                            cheaterName,
+                            reason,
+                            reporterName
+                    );
+
+                    sendChat("§8[§cS§8]§7 Report sent for §e" + cheaterName);
+                } else {
+                    sendChat("§8[§cS§8]§7 Usage: /s add <Player> <Reason>");
+                }
+                return;
+
             case "toggle":
                 if (args.length >= 2) {
                     String setting = args[1].toLowerCase();
@@ -383,11 +405,12 @@ public class Fetcher implements ICommand {
                 sendChat("§c || §7/s denick §8: §7Toggles Denicker which can denick original skin users.");
                 sendChat("§c || §7- §7It's possibly bannable, use at your own risk.");
                 sendChat("§c || §7/s keepwho §8: §7Toggles whether the original /who message remains visible.");
+                sendChat("§c || §7/s skin §e[Player] §8: §7Download their skin locally.");
+                sendChat("§c || §7/s dir §e[Path] §8: §7Determines the directory to save skin files.");
+                sendChat("§c || §7/s add [Player] [Reason] §8: §7Reports cheaters to share and notify when you queued them.");
                 sendChat("§c || §7/s settings §8: §7Opens togglable settings");
                 sendChat("§c || §7/s secure §8: §7Toggles secure connections.");
                 sendChat("§c || §7- §7This should be disabled if you have errors while getting stats.");
-                sendChat("§c || §7/s skin §e[Player] §8: §7Download their skin locally.");
-                sendChat("§c || §7/s dir §e[Path] §8: §7Determines the directory to save skin files.");
                 sendChat("§c || §7- §7 Usually, disabling this is not recommended as it can be insecure.");
                 sendChat(" ");
                 sendChat("§c || §7/s update §8: §7Check for latest version of the mod.");

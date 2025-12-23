@@ -34,6 +34,8 @@ Hypixel stats viewer, and overall utility mod for Forge 1.8.9.
 
 > /s keepwho - Toggles whether the original /who message remains visible when the stats list is enabled in Bedwars.
 
+> /s add [Player] [Reason] - Reports cheaters to share and notify when you queued them.
+
 > /s denick - Toggles Denicker like Lilith. This can denick nicks using their original skins.  
 > | It's possibly bannable, use at your own risk.
 
