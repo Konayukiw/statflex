@@ -21,6 +21,7 @@ public class Fetcher implements ICommand {
     private final List<String> aliases = Arrays.asList("s");
 
     private static final AutoGG AutoGGInstance = new AutoGG();
+    public static final Minecraft mc = Minecraft.getMinecraft();
 
     public static boolean listStatsEnabled;
     public static boolean autoStatsEnabled;
@@ -328,6 +329,27 @@ public class Fetcher implements ICommand {
                     sendChat("§8[§cS§8]§7 Usage: /s dir §e[Path]§7 to determine the path.");
                     break;
                 }
+
+            case "add":
+                if (args.length >= 3) {
+                    String cheaterName = args[1];
+
+                    String reason = String.join(" ",
+                            Arrays.copyOfRange(args, 2, args.length));
+
+                    String reporterName = mc.thePlayer.getName();
+
+                    DiscordReportSender.sendReport(
+                            cheaterName,
+                            reason,
+                            reporterName
+                    );
+
+                    sendChat("§8[§cS§8]§7 Report sent for §e" + cheaterName);
+                } else {
+                    sendChat("§8[§cS§8]§7 Usage: /s add <Player> <Reason>");
+                }
+                return;
 
             case "toggle":
                 if (args.length >= 2) {
