@@ -20,4 +20,4 @@ build
 # other
 eclipse
 run
-src/main/java/com/dev/statflex/DiscordReportSender.java
+/src/main/java/com/dev/statflex/DiscordReportSender.java
