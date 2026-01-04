@@ -1,4 +1,4 @@
-package com.dev.statflex;
+package com.konayuki.statflex;
 
 import com.google.gson.*;
 
@@ -21,51 +21,23 @@ import java.util.UUID;
 
 public class SkinSaver {
 
-    public static void savePlayerSkinAsync(String playerName) {
-        new Thread(() -> savePlayerSkin(playerName), "SkinSaver-Thread").start();
+    public static void savePlayerSkinAsync(String playerName, boolean useNpcSkin) {
+        new Thread(() -> savePlayerSkin(playerName, useNpcSkin), "SkinSaver-Thread").start();
     }
 
-    private static void savePlayerSkin(String playerName) {
+    private static void savePlayerSkin(String playerName, boolean useNpcSkin) {
         try {
             Minecraft mc = Minecraft.getMinecraft();
 
-            NetworkPlayerInfo localInfo = null;
-
-            for (NetworkPlayerInfo npi : mc.getNetHandler().getPlayerInfoMap()) {
-                if (npi.getGameProfile().getName().equalsIgnoreCase(playerName)) {
-                    localInfo = npi;
-                    break;
+            // -npcskin オプションが指定されている場合、NetworkPlayerInfoを優先
+            if (useNpcSkin) {
+                if (tryLocalSkinSave(playerName, mc)) {
+                    return;
                 }
+                // ローカル取得失敗時はAPIフォールバック
             }
 
-            if (localInfo != null) {
-                GameProfile profile = localInfo.getGameProfile();
-                Collection<Property> props = profile.getProperties().get("textures");
-
-                if (props != null && !props.isEmpty()) {
-                    Property texturesProp = props.iterator().next();
-
-                    String decoded = new String(
-                            Base64.getDecoder().decode(texturesProp.getValue()),
-                            StandardCharsets.UTF_8
-                    );
-
-                    JsonObject root =
-                            new JsonParser().parse(decoded).getAsJsonObject();
-                    JsonObject textures = root.getAsJsonObject("textures");
-
-                    if (textures != null && textures.has("SKIN")) {
-                        String skinUrl =
-                                textures.getAsJsonObject("SKIN")
-                                        .get("url").getAsString();
-
-                        UUID uuid = profile.getId();
-                        downloadAndSaveSkin(skinUrl, playerName, uuid);
-                        return;
-                    }
-                }
-            }
-
+            // -npcskin未指定、またはローカル取得失敗時のAPI取得処理
             GetUUID.PlayerInfo info = GetUUID.getPlayerInfo(playerName);
             if (info == null) {
                 sendChat("§8[§cS§8]§7 Player not found: " + playerName);
@@ -98,6 +70,57 @@ public class SkinSaver {
         } catch (Exception e) {
             e.printStackTrace();
             sendChat("§8[§cS§8]§7 Unexpected error occurred.");
+        }
+    }
+
+    /**
+     * NetworkPlayerInfoからローカルでスキンを取得して保存
+     * @return 成功した場合true、失敗した場合false
+     */
+    private static boolean tryLocalSkinSave(String playerName, Minecraft mc) {
+        try {
+            NetworkPlayerInfo localInfo = null;
+
+            for (NetworkPlayerInfo npi : mc.getNetHandler().getPlayerInfoMap()) {
+                if (npi.getGameProfile().getName().equalsIgnoreCase(playerName)) {
+                    localInfo = npi;
+                    break;
+                }
+            }
+
+            if (localInfo != null) {
+                GameProfile profile = localInfo.getGameProfile();
+                Collection<Property> props = profile.getProperties().get("textures");
+
+                if (props != null && !props.isEmpty()) {
+                    Property texturesProp = props.iterator().next();
+
+                    String decoded = new String(
+                            Base64.getDecoder().decode(texturesProp.getValue()),
+                            StandardCharsets.UTF_8
+                    );
+
+                    JsonObject root =
+                            new JsonParser().parse(decoded).getAsJsonObject();
+                    JsonObject textures = root.getAsJsonObject("textures");
+
+                    if (textures != null && textures.has("SKIN")) {
+                        String skinUrl =
+                                textures.getAsJsonObject("SKIN")
+                                        .get("url").getAsString();
+
+                        UUID uuid = profile.getId();
+                        downloadAndSaveSkin(skinUrl, playerName, uuid);
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
     }
 

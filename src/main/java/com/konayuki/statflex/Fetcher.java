@@ -1,4 +1,4 @@
-package com.dev.statflex;
+package com.konayuki.statflex;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.ICommand;
@@ -232,13 +232,18 @@ public class Fetcher implements ICommand {
                 break;
 
             case "skin":
-                if (args.length >= 2) {
-                    String targetName = args[1];
-                    SkinSaver.savePlayerSkinAsync(targetName);
+                if (args.length < 2) {
+                    sendChat(Messages.USAGE);
                     return;
-                } else {
-                    sendChat("§8[§cS§8]§7 Invalid usage. /s skin [Player] for download.");
                 }
+                String skinPlayerName = args[1];
+                boolean useNpcSkin = false;
+
+                if (args.length >= 3 && args[2].equalsIgnoreCase("-npcskin")) {
+                    useNpcSkin = true;
+                }
+
+                SkinSaver.savePlayerSkinAsync(skinPlayerName, useNpcSkin);
                 break;
 
             case "autogg":
@@ -347,7 +352,7 @@ public class Fetcher implements ICommand {
 
                     sendChat("§8[§cS§8]§7 Report sent for §e" + cheaterName);
                 } else {
-                    sendChat("§8[§cS§8]§7 Usage: /s add <Player> <Reason>");
+                    sendChat(Messages.USAGE);
                 }
                 return;
 
@@ -356,7 +361,7 @@ public class Fetcher implements ICommand {
                     String setting = args[1].toLowerCase();
                     switch (setting) {
                         case "liststats":
-                            Fetcher.toggleListStats(true);
+                            toggleListStats(true);
                             break;
                         case "autoduels":
                             Fetcher.toggleAutoStats(true);
@@ -376,7 +381,7 @@ public class Fetcher implements ICommand {
                             toggleKeepWho(true);
                             break;
                         default:
-                            sendChat(Messages.INVALID_COMMAND);
+                            sendChat(Messages.USAGE);
                             return;
                     }
                     sendSettings();
@@ -392,26 +397,27 @@ public class Fetcher implements ICommand {
             case "help":
                 sendChat("§8[§cS§8] §7Available commands:");
                 sendChat("§c || §7/s api §b[API Key] §8: §7Sets Hypixel API Key to enable stats viewer.");
-                sendChat("§c || §7- §7You must get API Key from §ehttps://developer.hypixel.net");
+                sendChat("§c || §7- You must get API Key from §ehttps://developer.hypixel.net");
                 sendChat("§c || §7/s bw §e[Player] -[Mode] §8: §7Shows their Bedwars stats in-game.");
                 sendChat("§c || §7/s sw §e[Player] -[Mode] §8: §7Shows their Skywars stats in-game.");
                 sendChat("§c || §7/s duels §e[Player] -[Mode] §8: §7Shows their Duels stats in-game.");
                 sendChat("§c || §7/s nh §e[Player] §8: §7Shows their Name History.");
                 sendChat("§c || §7/s autogg §8: §7Shows current AutoGG messages.");
                 sendChat("§c || §7/s autogg §e[Message] §8: §7Add new AutoGG message.");
-                sendChat("§c || §7- §7Keep it under 9 messages or get blocked for spamming.");
+                sendChat("§c || §7- Keep it under 9 messages or get blocked for spamming.");
                 sendChat("§c || §7/s list §8: §7Toggles whether the stats list is displayed with /who.");
                 sendChat("§c || §7/s auto §8: §7Toggles auto stats viewer for Duels.");
                 sendChat("§c || §7/s denick §8: §7Toggles Denicker which can denick original skin users.");
-                sendChat("§c || §7- §7It's possibly bannable, use at your own risk.");
+                sendChat("§c || §7- It's possibly bannable, use at your own risk.");
                 sendChat("§c || §7/s keepwho §8: §7Toggles whether the original /who message remains visible.");
                 sendChat("§c || §7/s skin §e[Player] §8: §7Download their skin locally.");
+                sendChat("§c || §7- Add -npcSkin to force saving NPC or Nick Skin if they have existing username.");
                 sendChat("§c || §7/s dir §e[Path] §8: §7Determines the directory to save skin files.");
                 sendChat("§c || §7/s add [Player] [Reason] §8: §7Reports cheaters to share and notify when you queued them.");
                 sendChat("§c || §7/s settings §8: §7Opens togglable settings");
                 sendChat("§c || §7/s secure §8: §7Toggles secure connections.");
-                sendChat("§c || §7- §7This should be disabled if you have errors while getting stats.");
-                sendChat("§c || §7- §7 Usually, disabling this is not recommended as it can be insecure.");
+                sendChat("§c || §7- This should be disabled if you have errors while getting stats.");
+                sendChat("§c || §7- Usually, disabling this is not recommended as it can be insecure.");
                 sendChat(" ");
                 sendChat("§c || §7/s update §8: §7Check for latest version of the mod.");
                 sendChat("§c || §7/s help §8: §7Opens this help");

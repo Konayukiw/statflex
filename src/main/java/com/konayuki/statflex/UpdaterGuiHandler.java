@@ -1,7 +1,5 @@
-package com.dev.statflex;
+package com.konayuki.statflex;
 
-import com.dev.statflex.Updater;
-import com.dev.statflex.UpdaterGui;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;

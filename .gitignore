@@ -21,3 +21,5 @@ build
 eclipse
 run
 /src/main/java/com/dev/statflex/DiscordReportSender.java
+/src/main/java/com/dev/statflex/anticheat
+/src/main/java/com/dev/statflex/asm

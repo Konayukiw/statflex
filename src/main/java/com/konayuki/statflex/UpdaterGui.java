@@ -1,4 +1,4 @@
-package com.dev.statflex;
+package com.konayuki.statflex;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
@@ -41,7 +41,7 @@ public class UpdaterGui extends GuiScreen {
 
         this.drawCenteredString(
                 this.fontRendererObj,
-                "New version: " + com.dev.statflex.Updater.latestVersion + " is available.",
+                "New version: " + Updater.latestVersion + " is available.",
                 centerX,
                 centerY - 20,
                 0xFFFFFF
@@ -61,7 +61,7 @@ public class UpdaterGui extends GuiScreen {
     @Override
     protected void actionPerformed(GuiButton button) throws IOException {
         if (button.id == 0) {
-            com.dev.statflex.Updater.prepareUpdateAndExit();
+            Updater.prepareUpdateAndExit();
         } else if (button.id == 1) {
             Minecraft.getMinecraft().displayGuiScreen(null);
         }

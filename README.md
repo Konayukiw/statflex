@@ -21,7 +21,7 @@ Hypixel stats viewer, and overall utility mod for Forge 1.8.9.
 
 > /s nh [Player] - Shows their Name History (Not working if they have hidden their name history.)
 
-> /s skin [Player] - §7Download their skin locally.
+> /s skin [Player] - §7Download their skin locally. Add -npcSkin to force saving NPC or Nick Skin if they have existing username.
 
 > /s dir [PATH] - Sets a folder which skins will be saved into. .minecraft/downloads is the default directory.
 
@@ -35,6 +35,7 @@ Hypixel stats viewer, and overall utility mod for Forge 1.8.9.
 > /s keepwho - Toggles whether the original /who message remains visible when the stats list is enabled in Bedwars.
 
 > /s add [Player] [Reason] - Reports cheaters to share and notify when you queued them.
+> | Only working while I'm starting server for this.
 
 > /s denick - Toggles Denicker like Lilith. This can denick nicks using their original skins.  
 > | It's possibly bannable, use at your own risk.

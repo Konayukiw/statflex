@@ -1,4 +1,4 @@
-package com.dev.statflex;
+package com.konayuki.statflex;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ChatComponentText;

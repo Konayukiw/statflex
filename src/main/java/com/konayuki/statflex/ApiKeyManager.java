@@ -1,4 +1,4 @@
-package com.dev.statflex;
+package com.konayuki.statflex;
 
 public class ApiKeyManager {
     private static String apiKey = null;

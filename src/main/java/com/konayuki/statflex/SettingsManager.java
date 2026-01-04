@@ -1,4 +1,4 @@
-package com.dev.statflex;
+package com.konayuki.statflex;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
