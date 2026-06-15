@@ -63,13 +63,13 @@ public class DuelsFetcherForUpdate {
             try {
                 String apiKey = ApiKeyManager.getApiKey();
                 if (apiKey.equals("N/A")) {
-                    sendChat("§8[§cS§8]§7 API Key is not set.");
+                    sendChat(Messages.INVALID_API);
                     return;
                 }
 
                 GetUUID.PlayerInfo info = GetUUID.getPlayerInfo(inputName);
                 if (info == null) {
-                    System.out.println("[S] Failed to fetch player stats: " + inputName);
+                    System.out.println(Messages.FETCH_ERROR + inputName);
                     return;
                 }
 
@@ -97,18 +97,16 @@ public class DuelsFetcherForUpdate {
                             : "Unknown error";
                     String lower = cause.toLowerCase();
                     if (lower.contains("invalid") || lower.contains("api key")) {
-                        sendChat("§8[§cS§8]§7 Invalid API Key while fetching §c" + properName
-                                + "§7. Set a new key using §e/s api <key>");
+                        sendChat(Messages.INVALID_API);
                     } else {
-                        sendChat("§8[§cS§8]§7 Failed to fetch data for §c" + properName
-                                + "§7: " + cause);
+                        sendChat(Messages.FETCH_ERROR + cause);
                     }
                     return;
                 }
 
                 JsonElement playerElement = response.get("player");
                 if (playerElement == null || playerElement.isJsonNull()) {
-                    System.out.println("[S] Failed to fetch player stats: " + inputName);
+                    System.out.println(Messages.FETCH_ERROR + inputName);
                     return;
                 }
 
@@ -123,7 +121,7 @@ public class DuelsFetcherForUpdate {
                 if (mode != null) {
                     String key = DuelsFetcher.getModeKey(mode);
                     if (key == null) {
-                        sendChat("§8[§cS§8]§7 Invalid mode: " + mode);
+                        sendChat(Messages.INVALID_MODE + mode);
                         return;
                     }
                     wins = stats.has(key + "_wins") ? stats.get(key + "_wins").getAsInt() : 0;
@@ -176,16 +174,16 @@ public class DuelsFetcherForUpdate {
                             modeAndTitle, coloredPlayerName, formattedWins, coloredWLR));
                 } else {
                     if (mode == null) {
-                        sendChat("§8[§cS§8] §b§lDuels §7|");
+                        sendChat(Messages.DUELS_STATS);
                     } else {
-                        sendChat(String.format("§8[§cS§8] §b§lDuels §7[§e%s§7]", modeDisplay));
+                        sendChat(String.format(Messages.DUELS_STATS + "§7[§e%s§7]", modeDisplay));
                     }
                     sendChat(String.format("§c ||§6 %s %s §7| Wins: %s §7| WLR: %s",
                             modeAndTitle, coloredPlayerName, formattedWins, coloredWLR));
                 }
 
             } catch (Exception e) {
-                sendChat("§8[§cS§8]§7 Failed to fetch player stats: " + e.getClass().getSimpleName());
+                sendChat(Messages.FETCH_ERROR + e.getClass().getSimpleName());
             }
         }).start();
     }

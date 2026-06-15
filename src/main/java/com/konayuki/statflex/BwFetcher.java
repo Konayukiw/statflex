@@ -1,5 +1,6 @@
 package com.konayuki.statflex;
 
+import akka.io.Tcp;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -18,18 +19,19 @@ public class BwFetcher {
             try {
                 String apiKey = ApiKeyManager.getApiKey();
                 if (apiKey.equals("N/A")) {
-                    sendChat("§8[§cS§8]§7 API Key is not set.");
+                    sendChat(Messages.INVALID_API);
                     return;
                 }
 
-                GetUUID.PlayerInfo info = GetUUID.getPlayerInfo(inputName);
+                GetUUID.PlayerInfo info = GetUUID.getPlayerInfo(inputName.toLowerCase());
                 if (info == null) {
-                    sendChat("§8[§cS§8]§7 Player not found for name " + inputName);
+                    sendChat(Messages.PLAYER_NOT_FOUND);
                     return;
                 }
 
                 String uuid = info.uuid;
                 String properName = info.name;
+
                 String urlStr = "https://api.hypixel.net/player?key=" + apiKey + "&uuid=" + uuid;
                 HttpURLConnection connection = (HttpURLConnection) new URL(urlStr).openConnection();
                 connection.setRequestMethod("GET");
@@ -42,6 +44,7 @@ public class BwFetcher {
                 } else {
                     reader = new InputStreamReader(connection.getErrorStream());
                 }
+
                 JsonParser parser = new JsonParser();
                 JsonObject response = parser.parse(reader).getAsJsonObject();
 
@@ -51,38 +54,37 @@ public class BwFetcher {
                             : "Unknown error";
                     String lower = cause.toLowerCase();
                     if (lower.contains("invalid") || lower.contains("api key")) {
-                        sendChat("§8[§cS§8]§7 Invalid API Key while fetching §c" + properName
-                                + "§7. Set a new key using §e/s api <key>");
+                        sendChat(Messages.INVALID_API);
                     } else {
-                        sendChat("§8[§cS§8]§7 Failed to fetch data for §c" + properName + "§7: " + cause);
+                        sendChat(Messages.FETCH_ERROR + properName + "§7| " + cause);
                     }
                     return;
                 }
+
                 JsonElement playerElement = response.get("player");
                 if (playerElement == null || playerElement.isJsonNull()) {
-                    sendChat("§8[§cS§8]§7 Player not found.");
+                    sendChat(Messages.PLAYER_NOT_FOUND);
                     return;
                 }
 
                 JsonObject player = playerElement.getAsJsonObject();
-                JsonObject stats = player.has("stats") && player.getAsJsonObject("stats").has("Bedwars")
-                        ? player.getAsJsonObject("stats").getAsJsonObject("Bedwars")
+                JsonObject stats = player.has("stats") && player.get("stats").getAsJsonObject().has("Bedwars")
+                        ? player.get("stats").getAsJsonObject().get("Bedwars").getAsJsonObject()
                         : new JsonObject();
 
-                int level = player.has("achievements") && player.getAsJsonObject("achievements").has("bedwars_level")
-                        ? player.getAsJsonObject("achievements").get("bedwars_level").getAsInt()
+                int level = player.has("achievements") && player.get("achievements").getAsJsonObject().has("bedwars_level")
+                        ? player.get("achievements").getAsJsonObject().get("bedwars_level").getAsInt()
                         : 0;
 
                 int finals, deaths;
                 double fkdr;
 
-                if (mode != null) {
+                if (mode != null && !mode.isEmpty()) {
                     String key = getModeKey(mode);
                     if (key == null) {
-                        sendChat("§8[§cS§8]§7 Invalid mode: " + mode);
+                        sendChat(Messages.INVALID_MODE + mode);
                         return;
                     }
-
                     finals = stats.has(key + "_final_kills_bedwars")
                             ? stats.get(key + "_final_kills_bedwars").getAsInt()
                             : 0;
@@ -101,24 +103,34 @@ public class BwFetcher {
                 String formattedFinals = getFormattedFinals(finals);
                 String coloredFKDR = getColoredFKDR(fkdr);
 
-                if (mode != null) {
+                if (mode != null && !mode.isEmpty()) {
                     String displayMode = getModeDisplayName(mode.toLowerCase());
-                    if (displayMode == null)
-                        displayMode = mode;
-
-                    sendChat(String.format("§8[§cS§8] §c§lBed§f§lWars §7[§e%s§7]", displayMode));
+                    if (displayMode == null) displayMode = mode;
+                    sendChat(String.format(Messages.BEDWARS_STATS + "§7[§e%s§7]", displayMode));
                     sendChat(String.format("§c || %s %s §7| Finals: %s §7| FKDR: %s",
                             coloredLevel, coloredPlayerName, formattedFinals, coloredFKDR));
                 } else {
-                    sendChat(String.format("§8[§cS§8] §c§lBed§f§lWars §7|"));
+                    sendChat(Messages.BEDWARS_STATS);
                     sendChat(String.format("§c || %s %s §7| Finals: %s §7| FKDR: %s",
                             coloredLevel, coloredPlayerName, formattedFinals, coloredFKDR));
                 }
 
             } catch (Exception e) {
-                sendChat("§8[§cS§8]§7 Failed to fetch player stats: " + e.getClass().getSimpleName());
+                sendChat(Messages.FETCH_ERROR + e.getClass().getSimpleName());
             }
         }).start();
+    }
+
+    public static String formatLevelPlain(int level) {
+        return String.valueOf(level);
+    }
+
+    public static String formatFinalsPlain(int finals) {
+        return new DecimalFormat("#,###").format(finals);
+    }
+
+    public static String formatFKDRPlain(double fkdr) {
+        return new DecimalFormat("#.##").format(fkdr);
     }
 
     private static String getModeKey(String input) {
@@ -202,42 +214,29 @@ public class BwFetcher {
             StringBuilder sb = new StringBuilder();
 
             if (level < 1100) {
-                // 1000 - 1099
                 String bracketLeft = "§c[";
                 String bracketRight = "§5]";
-                String[] digitColors = { "§6", "§e", "§a", "§b" };
+                String[] digitColors = {"§6", "§e", "§a", "§b"};
                 String symbolColor = "§d";
                 String symbol = "✫";
-
                 sb.append(bracketLeft);
-                for (int i = 0; i < 4; i++) {
-                    sb.append(digitColors[i]).append(digits[i]);
-                }
+                for (int i = 0; i < 4; i++) sb.append(digitColors[i]).append(digits[i]);
                 sb.append(symbolColor).append(symbol);
                 sb.append(bracketRight);
                 return sb.toString();
-
             } else if (level < 1200) {
-                // 1100 - 1199
                 String bracketLeft = "§7[";
                 String bracketRight = "§7]";
                 String digitColor = "§f";
                 String symbolColor = "§7";
                 String symbol = "✪";
-
                 sb.append(bracketLeft);
-                for (int i = 0; i < 4; i++) {
-                    sb.append(digitColor).append(digits[i]);
-                }
+                for (int i = 0; i < 4; i++) sb.append(digitColor).append(digits[i]);
                 sb.append(symbolColor).append(symbol);
                 sb.append(bracketRight);
                 return sb.toString();
-
             } else if (level < 2000) {
-                // 1200 - 1999
-                String numberColor;
-                String symbolColor;
-
+                String numberColor, symbolColor;
                 int decade = (level - 1200) / 100;
                 switch (decade) {
                     case 0:
@@ -277,104 +276,66 @@ public class BwFetcher {
                         numberColor = "§7";
                         break;
                 }
-
                 String bracketLeft = numberColor + "[";
                 String bracketRight = numberColor + "]";
                 String symbol = "✪";
-
                 sb.append(bracketLeft);
-                for (char digit : digits) {
-                    sb.append(numberColor).append(digit);
-                }
+                for (char digit : digits) sb.append(numberColor).append(digit);
                 sb.append(symbolColor).append(symbol);
                 sb.append(bracketRight);
                 return sb.toString();
-
             } else {
-                // 2000+
                 String bracketLeft = "§8[";
                 String bracketRight = "§8]";
                 String symbolColor = "§7";
                 String symbol = "✪";
-                String[] digitColors = { "§7", "§f", "§f", "§7" }; // 1000, 100, 10, 1
-
+                String[] digitColors = {"§7", "§f", "§f", "§7"};
                 sb.append(bracketLeft);
-                for (int i = 0; i < 4; i++) {
-                    sb.append(digitColors[i]).append(digits[i]);
-                }
+                for (int i = 0; i < 4; i++) sb.append(digitColors[i]).append(digits[i]);
                 sb.append(symbolColor).append(symbol);
                 sb.append(bracketRight);
                 return sb.toString();
             }
         }
 
-        // 0 - 999
         String levelColor;
-        if (level >= 900)
-            levelColor = "§5";
-        else if (level >= 800)
-            levelColor = "§9";
-        else if (level >= 700)
-            levelColor = "§d";
-        else if (level >= 600)
-            levelColor = "§4";
-        else if (level >= 500)
-            levelColor = "§3";
-        else if (level >= 400)
-            levelColor = "§2";
-        else if (level >= 300)
-            levelColor = "§b";
-        else if (level >= 200)
-            levelColor = "§6";
-        else if (level >= 100)
-            levelColor = "§f";
-        else
-            levelColor = "§7";
+        if (level >= 900) levelColor = "§5";
+        else if (level >= 800) levelColor = "§9";
+        else if (level >= 700) levelColor = "§d";
+        else if (level >= 600) levelColor = "§4";
+        else if (level >= 500) levelColor = "§3";
+        else if (level >= 400) levelColor = "§2";
+        else if (level >= 300) levelColor = "§b";
+        else if (level >= 200) levelColor = "§6";
+        else if (level >= 100) levelColor = "§f";
+        else levelColor = "§7";
 
         return levelColor + "[" + level + "✫" + levelColor + "]";
     }
 
     public static String getFormattedFinals(int finals) {
         DecimalFormat formatter = new DecimalFormat("#,###");
-
         String color;
-        if (finals >= 50000)
-            color = "§5";
-        else if (finals >= 20000)
-            color = "§4";
-        else if (finals >= 10000)
-            color = "§c";
-        else if (finals >= 5000)
-            color = "§6";
-        else if (finals >= 3000)
-            color = "§e";
-        else if (finals >= 1000)
-            color = "§f";
-        else
-            color = "§7";
-
+        if (finals >= 50000) color = "§5";
+        else if (finals >= 20000) color = "§4";
+        else if (finals >= 10000) color = "§c";
+        else if (finals >= 5000) color = "§6";
+        else if (finals >= 3000) color = "§e";
+        else if (finals >= 1000) color = "§f";
+        else color = "§7";
         return color + formatter.format(finals);
     }
 
     public static String getColoredFKDR(double fkdr) {
         DecimalFormat df = new DecimalFormat("#.##");
-
         String color;
-        if (fkdr >= 30)
-            color = "§5";
-        else if (fkdr >= 15)
-            color = "§4";
-        else if (fkdr >= 8)
-            color = "§c";
-        else if (fkdr >= 4)
-            color = "§6";
-        else if (fkdr >= 3)
-            color = "§e";
-        else if (fkdr >= 1)
-            color = "§f";
-        else
-            color = "§7";
-
+        if (fkdr >= 30) color = "§5";
+        else if (fkdr >= 15) color = "§4";
+        else if (fkdr >= 8) color = "§c";
+        else if (fkdr >= 4) color = "§6";
+        else if (fkdr >= 3) color = "§e";
+        else if (fkdr >= 1) color = "§f";
+        else color = "§7";
         return color + df.format(fkdr);
     }
 

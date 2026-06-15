@@ -131,8 +131,6 @@ public class Denicker {
         String clean = cleanName(displayNameText).trim();
         String normalized = clean.replaceAll("\\s+", "");
 
-        System.out.println(
-                "Checking player <Display Name: " + displayNameText + " Clean=" + clean + "Profile=" + name + ">");
         // [NPC] Check
         if (normalized.contains("[NPC]") || name.contains("[NPC]")) {
             return;
@@ -141,12 +139,10 @@ public class Denicker {
         if (displayNameText.startsWith("§8")) {
             return;
         }
-
         // No Color Check / White Name Check
         if ((!displayNameText.contains("§") || displayNameText.startsWith("§f"))) {
             return;
         }
-
         String pingText = String.valueOf(npi.getResponseTime());
         pingText = pingText.replaceAll("§.", "").trim();
 
@@ -154,7 +150,6 @@ public class Denicker {
         if (pingText.contains("?") || pingText.contains("0")) {
             return;
         }
-
         // 0 Ping Check
         int ping = npi.getResponseTime();
         if (ping <= 0) {
@@ -214,7 +209,7 @@ public class Denicker {
         String mode = currentMode != null ? currentMode.toLowerCase() : null;
 
         if (gameType == null) {
-            sendChat("§8[§cS§8]§7 Game mode could not be detected. Auto-Stats cancelled.");
+            sendChat(Messages.UNKNOWN_GAMEMODE);
             return;
         }
 
@@ -230,7 +225,7 @@ public class Denicker {
                 SwFetcher.fetchStats(profileName, null);
                 break;
             default:
-                sendChat("§8[§cS§8]§7 Unsupported gamemode. Auto-Stats cancelled.");
+                sendChat(Messages.UNKNOWN_GAMEMODE);
         }
     }
 

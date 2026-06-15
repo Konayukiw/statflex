@@ -267,6 +267,36 @@ public class Fetcher implements ICommand {
                 toggleKeepWho(false);
                 break;
 
+            case "warn":
+                if (args.length < 2) {
+                    sendChat("§8[§cS§8]§7 Usage: /s warn [Level] [FKDR] / /s warn [Level] / /s warn [FKDR]");
+                    return;
+                }
+                try {
+                    SettingsManager settings = SettingsManager.getInstance();
+
+                    if (args.length == 2) {
+                        if (args[1].contains(".")) {
+                            settings.warnLevel = 0;
+                            settings.warnFKDR = Double.parseDouble(args[1]);
+                            sendChat("§8[§cS§8]§7 Players higher than §e" + settings.warnFKDR + " FKDR §7will be warned.");
+                        } else {
+                            settings.warnLevel = Integer.parseInt(args[1]);
+                            settings.warnFKDR = 0;
+                            sendChat("§8[§cS§8]§7 Players higher than §e✫" + settings.warnLevel + "§7 will be warned.");
+                        }
+                    } else {
+                        settings.warnLevel = Integer.parseInt(args[1]);
+                        settings.warnFKDR = Double.parseDouble(args[2]);
+                        sendChat("§8[§cS§8]§7 Players higher than §e✫" + settings.warnLevel + "§7, §e" + settings.warnFKDR + " FKDR §7will be warned.");
+                    }
+
+                    SettingsManager.save();
+                } catch (NumberFormatException e) {
+                    sendChat("§8[§cS§8]§7 Invalid number format.");
+                }
+                break;
+
             case "update": {
                 sendChat("§8[§cS§8]§7 Checking for updates...");
 
@@ -316,7 +346,7 @@ public class Fetcher implements ICommand {
 
                     if (!dir.exists() && !dir.mkdirs()) {
                         sendChat("§8[§cS§8]§7 Failed to create directory.");
-                        sendChat("§8[§cS§8]§7 statflex may fail configure paths under C:/Windows or C:/Program Files.");
+                        sendChat("§8[§cS§8]§7 statflex may fail configure files under C:/Windows or C:/Program Files.");
                         break;
                     }
 
@@ -335,6 +365,7 @@ public class Fetcher implements ICommand {
                     break;
                 }
 
+                /* Report Sender (Currently under development)
             case "add":
                 if (args.length >= 3) {
                     String cheaterName = args[1];
@@ -355,6 +386,7 @@ public class Fetcher implements ICommand {
                     sendChat(Messages.USAGE);
                 }
                 return;
+                 */
 
             case "toggle":
                 if (args.length >= 2) {
@@ -471,79 +503,6 @@ public class Fetcher implements ICommand {
         }
     }
 
-    /*
-     * private static void checkApiKeyAsync(IChatComponent root) {
-     * new Thread(() -> {
-     * String apiKey = ApiKeyManager.getApiKey();
-     * String msg;
-     * 
-     * if (apiKey == null || apiKey.isEmpty()) {
-     * msg =
-     * "§c || §7No API Key set. Generate key from §chttps://developer.hypixel.net";
-     * } else {
-     * try {
-     * java.net.URL url = new java.net.URL("https://api.hypixel.net/key?key=" +
-     * apiKey);
-     * java.net.HttpURLConnection conn = (java.net.HttpURLConnection)
-     * url.openConnection();
-     * conn.setRequestMethod("GET");
-     * conn.setConnectTimeout(5000);
-     * conn.setReadTimeout(5000);
-     * 
-     * java.io.InputStreamReader reader = new
-     * java.io.InputStreamReader(conn.getInputStream());
-     * com.google.gson.JsonObject response = new
-     * com.google.gson.JsonParser().parse(reader)
-     * .getAsJsonObject();
-     * 
-     * boolean success = response.get("success").getAsBoolean();
-     * if (success) {
-     * msg = "§c || §7API Key is valid.";
-     * } else {
-     * msg =
-     * "§c || §7API Key is invalid! Get API key from §chttps://developer.hypixel.net"
-     * ;
-     * }
-     * } catch (Exception e) {
-     * msg = "§c || §7Could not verify API Key: Network Error";
-     * }
-     * }
-     * 
-     * final String finalMsg = msg;
-     * Minecraft.getMinecraft().addScheduledTask(() -> {
-     * root.appendSibling(new ChatComponentText(finalMsg));
-     * SettingsMessageManager.registerMessage(SETTINGS_CHAT_ID, root);
-     * });
-     * }).start();
-     * }
-     * 
-     */
-
-    /*
-     * private static IChatComponent makeToggle(String name, boolean enabled, String
-     * cmd, String description) {
-     * String state = enabled ? "§b§lEnabled" : "§c§lDisabled";
-     * ChatComponentText text = new ChatComponentText("§7" + name + ": " + state);
-     * 
-     * text.getChatStyle().setChatClickEvent(
-     * new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
-     * 
-     * text.getChatStyle().setChatHoverEvent(
-     * new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ChatComponentText("§e" +
-     * description)));
-     * 
-     * return text;
-     * }
-     */
-
-    private static void sendChat(String msg) {
-        Minecraft.getMinecraft().addScheduledTask(() -> {
-            if (Minecraft.getMinecraft().thePlayer != null) {
-                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(msg));
-            }
-        });
-    }
-
     @Override
     public boolean canCommandSenderUseCommand(ICommandSender sender) {
         return true;
@@ -562,5 +521,13 @@ public class Fetcher implements ICommand {
     @Override
     public int compareTo(ICommand o) {
         return this.getCommandName().compareTo(o.getCommandName());
+    }
+
+    private static void sendChat(String msg) {
+        Minecraft.getMinecraft().addScheduledTask(() -> {
+            if (Minecraft.getMinecraft().thePlayer != null) {
+                Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(msg));
+            }
+        });
     }
 }

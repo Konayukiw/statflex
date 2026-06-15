@@ -28,7 +28,7 @@ public class DuelsFetcher {
             try {
                 String apiKey = ApiKeyManager.getApiKey();
                 if (apiKey.equals("N/A")) {
-                    sendChat("§8[§cS§8]§7 API Key is not set.");
+                    sendChat(Messages.INVALID_API);
                     return;
                 }
 
@@ -63,11 +63,9 @@ public class DuelsFetcher {
                     String lower = cause.toLowerCase();
 
                     if (lower.contains("invalid") || lower.contains("api key")) {
-                        sendChat("§8[§cS§8]§7 Invalid API Key while fetching §c" + properName
-                                + "§7. Set a new key using §e/s api <key>");
+                        sendChat(Messages.INVALID_API);
                     } else {
-                        sendChat("§8[§cS§8]§7 Failed to fetch data for §c" + properName
-                                + "§7: " + cause);
+                        sendChat(Messages.FETCH_ERROR + cause);
                     }
                     return;
                 }
@@ -89,7 +87,7 @@ public class DuelsFetcher {
                 if (mode != null) {
                     String key = getModeKey(mode);
                     if (key == null) {
-                        sendChat("§8[§cS§8]§7 Invalid mode: " + mode);
+                        sendChat(Messages.INVALID_MODE + mode);
                         return;
                     }
                     wins = stats.has(key + "_wins") ? stats.get(key + "_wins").getAsInt() : 0;
@@ -118,16 +116,16 @@ public class DuelsFetcher {
                             modeAndTitle, coloredPlayerName, formattedWins, coloredWLR));
                 } else {
                     if (mode == null) {
-                        sendChat("§8[§cS§8] §b§lDuels §7|");
+                        sendChat(Messages.DUELS_STATS);
                     } else {
-                        sendChat(String.format("§8[§cS§8] §b§lDuels §7[§e%s§7]", modeDisplay));
+                        sendChat(String.format(Messages.DUELS_STATS +  "§7[§e%s§7]", modeDisplay));
                     }
                     sendChat(String.format("§c || %s %s §7| Wins: %s §7| WLR: %s",
                             modeAndTitle, coloredPlayerName, formattedWins, coloredWLR));
                 }
 
             } catch (Exception e) {
-                sendChat("§8[§cS§8]§7 Failed to fetch player stats: " + e.getClass().getSimpleName());
+                sendChat(Messages.FETCH_ERROR + e.getClass().getSimpleName());
             }
         }).start();
     }

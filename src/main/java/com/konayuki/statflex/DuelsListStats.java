@@ -36,7 +36,7 @@ public class DuelsListStats {
                 pendingChatLine = chatLine;
             }
         } catch (Exception e) {
-            sendChat("§8[§cS§8]§7 Failed to read chat: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+            sendChat("§8[§cS§8]§7 Failed to load chat: " + e.getClass().getSimpleName() + ": " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -66,7 +66,7 @@ public class DuelsListStats {
             updateModeFromScoreboardLines(scoreboardLines);
             getFormattedFromChat(chatLine);
         } catch (Exception e) {
-            System.out.println("[S] Failed to process scoreboard: " + e);
+            System.out.println("[S] Failed to load scoreboard: " + e);
             e.printStackTrace();
         }
     }
@@ -103,7 +103,7 @@ public class DuelsListStats {
             }
 
             if (!modeFound) {
-                sendChat("§8[§cS§8]§7 Failed to detect mode from scoreboard.");
+                sendChat(Messages.INVALID_MODE);
                 currentMode = null;
             }
         } catch (Exception e) {
@@ -132,7 +132,7 @@ public class DuelsListStats {
                 }
             }
         } catch (Exception e) {
-            sendChat("§8[§cS§8]§7 Failed to detect opponents: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+            sendChat(Messages.PLAYER_NOT_FOUND + e.getClass().getSimpleName() + ": " + e.getMessage());
             e.printStackTrace();
         }
         return opponents;
@@ -150,13 +150,12 @@ public class DuelsListStats {
                         DuelsFetcher.fetchStats(playerName, currentMode, true);
                     }
                 } catch (Exception e) {
-                    sendChat("§8[§cS§8]§7 Failed to fetch stats for " + playerName + ": "
-                            + e.getClass().getSimpleName() + ": " + e.getMessage());
+                    sendChat(Messages.FETCH_ERROR + e.getClass().getSimpleName() + ": " + e.getMessage());
                     e.printStackTrace();
                 }
             }
         } catch (Exception e) {
-            sendChat("§8[§cS§8]§7 Failed to format info for chat: " + e.getClass().getSimpleName() + ": "
+            sendChat(Messages.FETCH_ERROR + e.getClass().getSimpleName() + ": "
                     + e.getMessage());
             e.printStackTrace();
         }

@@ -29,7 +29,6 @@ public class AutoGG {
     public AutoGG() {
         SettingsManager.load();
         reloadMessages();
-        System.out.println("[S] Set AutoGG messages: " + autoMessages);
     }
 
     private void reloadMessages() {
@@ -41,7 +40,6 @@ public class AutoGG {
             } else {
                 sendChat("§7[§cS§7] Failed to load AutoGG messages.");
             }
-            System.out.println("[S] Reloaded autoMessages: " + autoMessages);
         }
     }
 
@@ -98,7 +96,6 @@ public class AutoGG {
                         if (!autoMessages.isEmpty()) {
                             sending = true;
                             sendIndex = 0;
-                            System.out.println("[S] Starting AutoGG sending: " + autoMessages);
                         }
                     }
                     return;
@@ -124,12 +121,10 @@ public class AutoGG {
             if (sendIndex < autoMessages.size()) {
                 String message = autoMessages.get(sendIndex);
                 mc.thePlayer.sendChatMessage("/ac " + message);
-                System.out.println("[S] Sending: /ac " + message);
                 sendIndex++;
                 tickDelay = 2;
             } else {
                 sending = false;
-                System.out.println("[S] Finished AutoGG sending cycle.");
             }
         }
     }
@@ -147,10 +142,10 @@ public class AutoGG {
                         SettingsManager.save();
                         sendChat("§7[§cS§7] Removed message.");
                     } else {
-                        sendChat("§7[§cS§7] Invalid index.");
+                        sendChat("§7[§cS§7] Selected message does not exist.");
                     }
                 } catch (NumberFormatException e) {
-                    sendChat("§7[§cS§7] Index must be a number.");
+                    sendChat(Messages.UNEXPECTED_ERROR);
                 }
             } else {
                 String msg = String.join(" ", args);
@@ -159,7 +154,6 @@ public class AutoGG {
                 SettingsManager.save();
                 sendChat("§7[§cS§7] Added message: §e" + msg);
             }
-            System.out.println("[S] autoMessages after command: " + autoMessages);
         }
     }
 

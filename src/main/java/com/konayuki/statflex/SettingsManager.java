@@ -21,6 +21,8 @@ public class SettingsManager {
     public boolean keepWhoEnabled = false;
     public String apiKey = "";
     public String skinSaveDir = "";
+    public int warnLevel = 0;
+    public double warnFKDR = 0.0;
 
     private static SettingsManager instance;
 

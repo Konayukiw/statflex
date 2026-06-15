@@ -49,7 +49,7 @@ public class UpdaterGui extends GuiScreen {
 
         this.drawCenteredString(
                 this.fontRendererObj,
-                "Click 'Update' for update. You will be have to restart Minecraft.",
+                "Click 'Update' for update. You will have to restart Minecraft.",
                 centerX,
                 centerY - 8,
                 0xAAAAAA

@@ -26,7 +26,7 @@ public class NameHistory {
             try {
                 GetUUID.PlayerInfo info = GetUUID.getPlayerInfo(inputName);
                 if (info == null) {
-                    sendChat("§8[§cS§8]§7 Player not found for name " + inputName);
+                    sendChat(Messages.PLAYER_NOT_FOUND + inputName);
                     return;
                 }
 

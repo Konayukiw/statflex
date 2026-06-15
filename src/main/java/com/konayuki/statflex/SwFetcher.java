@@ -18,7 +18,7 @@ public class SwFetcher {
             try {
                 String apiKey = ApiKeyManager.getApiKey();
                 if (apiKey.equals("N/A")) {
-                    sendChat(Messages.API_INVALID);
+                    sendChat(Messages.INVALID_API);
                     return;
                 }
 
@@ -57,7 +57,7 @@ public class SwFetcher {
                         ? player.getAsJsonObject("stats")
                         : null;
                 if (statsRoot == null || !statsRoot.has("SkyWars") || !statsRoot.get("SkyWars").isJsonObject()) {
-                    sendChat(Messages.FETCH_ERROR + " §b§lSky§e§lWars§7 stats not found");
+                    sendChat(Messages.FETCH_ERROR + " No stats found for name" + playerName);
                     return;
                 }
 
@@ -89,11 +89,11 @@ public class SwFetcher {
                     if (displayMode == null)
                         displayMode = mode;
 
-                    sendChat(String.format("§8[§cS§8] §b§lSky§e§lWars §7[§e%s§7]", displayMode));
+                    sendChat(String.format(Messages.SKYWARS_STATS + "§7[§e%s§7]", displayMode));
                     sendChat(String.format("§c || %s %s §7| Wins: %s §7| KDR: %s",
                             levelFormatted, coloredPlayerName, formattedWins, formattedKDR));
                 } else {
-                    sendChat(String.format("§8[§cS§8] §b§lSky§e§lWars §7|"));
+                    sendChat(String.format(Messages.SKYWARS_STATS));
                     sendChat(String.format("§c || %s %s §7| Wins: %s §7| KDR: %s",
                             levelFormatted, coloredPlayerName, formattedWins, formattedKDR));
                 }

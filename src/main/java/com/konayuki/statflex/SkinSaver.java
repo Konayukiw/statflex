@@ -29,15 +29,12 @@ public class SkinSaver {
         try {
             Minecraft mc = Minecraft.getMinecraft();
 
-            // -npcskin オプションが指定されている場合、NetworkPlayerInfoを優先
             if (useNpcSkin) {
                 if (tryLocalSkinSave(playerName, mc)) {
                     return;
                 }
-                // ローカル取得失敗時はAPIフォールバック
             }
 
-            // -npcskin未指定、またはローカル取得失敗時のAPI取得処理
             GetUUID.PlayerInfo info = GetUUID.getPlayerInfo(playerName);
             if (info == null) {
                 sendChat("§8[§cS§8]§7 Player not found: " + playerName);
@@ -69,14 +66,10 @@ public class SkinSaver {
 
         } catch (Exception e) {
             e.printStackTrace();
-            sendChat("§8[§cS§8]§7 Unexpected error occurred.");
+            sendChat(Messages.UNEXPECTED_ERROR);
         }
     }
 
-    /**
-     * NetworkPlayerInfoからローカルでスキンを取得して保存
-     * @return 成功した場合true、失敗した場合false
-     */
     private static boolean tryLocalSkinSave(String playerName, Minecraft mc) {
         try {
             NetworkPlayerInfo localInfo = null;
