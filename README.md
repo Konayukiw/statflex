@@ -21,7 +21,7 @@ Hypixel stats viewer, and overall utility mod for Forge 1.8.9.
 
 > /s nh [Player] - Shows their Name History (Not working if they have hidden their name history.)
 
-> /s skin [Player] - §7Download their skin locally. Add -npcSkin to force saving NPC or Nick Skin if they have existing username.
+> /s skin [Player] - Download their skin locally. Add -npcSkin to force saving NPC or Nick Skin if they have existing username.
 
 > /s dir [PATH] - Sets a folder which skins will be saved into. .minecraft/downloads is the default directory.
 
