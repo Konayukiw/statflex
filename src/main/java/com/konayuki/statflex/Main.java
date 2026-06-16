@@ -3,13 +3,14 @@ package com.konayuki.statflex;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import com.konayuki.statflex.anticheat.Anticheat;
 
 @Mod(modid = Main.MODID, name = Main.NAME, version = Main.VERSION, clientSideOnly = true)
 public class Main {
 
     public static final String MODID = "statflex";
     public static final String NAME = "statflex";
-    public static final String VERSION = "1.28";
+    public static final String VERSION = "1.29";
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
@@ -34,10 +35,9 @@ public class Main {
             Fetcher.syncFromSettings(SettingsManager.getInstance());
 
             Updater.checkForUpdatesAsync();
-
             ApiKeyManager.init();
-
             Fetcher.register();
+            Anticheat.register();
 
             net.minecraft.client.Minecraft.getMinecraft().thePlayer.addChatMessage(
                     new net.minecraft.util.ChatComponentText("§8[§cS§8]§7 statflex has been loaded!")

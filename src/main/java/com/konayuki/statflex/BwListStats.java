@@ -171,7 +171,7 @@ public class BwListStats {
                 sendChat(Messages.BEDWARS_STATS);
 
                 for (PlayerData data : playerDatas) {
-                    sendChat("/pc " + data.coloredLevel + " " + data.coloredPlayerName + " §7| Finals: " + data.formattedFinals + " §7| FKDR: " + data.coloredFKDR);
+                    sendChat(data.coloredLevel + " " + data.coloredPlayerName + " §7| Finals: " + data.formattedFinals + " §7| FKDR: " + data.coloredFKDR);
                 }
 
                 int warnLevel = SettingsManager.getInstance().warnLevel;
