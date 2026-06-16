@@ -4,6 +4,8 @@ Hypixel stats viewer, and overall utility mod for Forge 1.8.9.
 
 **Features**
 
+> Anticheat - Detects cheaters and warns on chat.
+
 > /s api [API Key] - Sets Hypixel API Key to enable stats viewer.
 
 > /s bw [Player] - Shows their Bedwars stats in-game.  
