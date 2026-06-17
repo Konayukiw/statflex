@@ -29,6 +29,7 @@ public class Fetcher implements ICommand {
     public static boolean denickenabled;
     public static boolean duelsUpdate;
     public static boolean keepWhoEnabled;
+    private static boolean registered;
 
     public static boolean isListStatsEnabled() {
         return listStatsEnabled;
@@ -133,8 +134,13 @@ public class Fetcher implements ICommand {
         return duelsUpdate;
     }
 
-    public static void register() {
+    public static synchronized void register() {
+        if (registered) {
+            return;
+        }
+
         ClientCommandHandler.instance.registerCommand(new Fetcher());
+        registered = true;
     }
 
     @Override

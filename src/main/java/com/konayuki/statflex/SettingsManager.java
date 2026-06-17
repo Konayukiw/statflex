@@ -70,7 +70,7 @@ public class SettingsManager {
     }
 
     public void setFlagInterval(double seconds) {
-        this.flagInterval = Math.max(0.0, Math.min(20.0, seconds)); // 0〜20秒に制限
+        this.flagInterval = Math.max(0.0, Math.min(20.0, seconds));
         save();
     }
 
@@ -87,5 +87,4 @@ public class SettingsManager {
         this.skinSaveDir = dir.getAbsolutePath();
         save();
     }
-
 }

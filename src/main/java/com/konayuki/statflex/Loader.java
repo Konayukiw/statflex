@@ -2,11 +2,23 @@ package com.konayuki.statflex;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.lang.reflect.Method;
+import java.security.CodeSource;
 
 public class Loader {
+    public static void start() {
+        try {
+            CodeSource codeSource = Loader.class.getProtectionDomain().getCodeSource();
+            if (codeSource == null || codeSource.getLocation() == null) {
+                throw new IllegalStateException("Unable to resolve statflex jar location.");
+            }
+
+            InjectedJarLauncher.launch(codeSource.getLocation(), Loader.class.getClassLoader());
+            System.out.println("StatFlex successfully injected!");
+        } catch (Throwable throwable) {
+            throwable.printStackTrace();
+        }
+    }
+
     public static void start(byte[] jarBytes) {
         try {
             File tempJar = File.createTempFile("statflex_temp", ".jar");
@@ -15,19 +27,10 @@ public class Loader {
                 fos.write(jarBytes);
             }
 
-            URLClassLoader loader = new URLClassLoader(
-                    new URL[]{tempJar.toURI().toURL()},
-                    Loader.class.getClassLoader()
-            );
-
-            Class<?> mainClass = loader.loadClass("com.konayuki.statflex.Main");
-            Method initMethod = mainClass.getDeclaredMethod("init");
-            initMethod.invoke(null);
-
+            InjectedJarLauncher.launch(tempJar.toURI().toURL(), Loader.class.getClassLoader());
             System.out.println("StatFlex successfully injected!");
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Throwable throwable) {
+            throwable.printStackTrace();
         }
     }
 }
