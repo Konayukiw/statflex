@@ -16,7 +16,7 @@ public class Updater {
     private static final String API_LATEST =
             "https://api.github.com/repos/" + REPO + "/releases/latest";
 
-    private static final String JAR_PREFIX = "statflex";
+    private static final String JAR_PREFIX = "statflex-";
 
     public static boolean guiShown = false;
 
@@ -59,8 +59,11 @@ public class Updater {
 
         if (!isNewer(latestVersion, currentVersion)) return;
 
-        JsonObject asset = root.getAsJsonArray("assets")
-                .get(0).getAsJsonObject();
+        JsonObject asset = findStatflexJarAsset(root);
+        if (asset == null) {
+            System.err.println("[S] statflex jar not found.");
+            return;
+        }
 
         String downloadUrl = asset.get("browser_download_url").getAsString();
         String fileName = asset.get("name").getAsString();
@@ -74,7 +77,22 @@ public class Updater {
         updateAvailable = true;
         updateDownloaded = true;
         downloadedFile = outFile;
+    }
 
+    private static JsonObject findStatflexJarAsset(JsonObject root) {
+        if (!root.has("assets") || !root.get("assets").isJsonArray()) {
+            return null;
+        }
+
+        for (com.google.gson.JsonElement element : root.getAsJsonArray("assets")) {
+            JsonObject asset = element.getAsJsonObject();
+            String name = asset.get("name").getAsString().toLowerCase();
+
+            if (name.startsWith(JAR_PREFIX) && name.endsWith(".jar")) {
+                return asset;
+            }
+        }
+        return null;
     }
 
     public static void prepareAndRunUpdater(File newJar) throws IOException {

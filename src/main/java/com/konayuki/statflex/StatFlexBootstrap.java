@@ -38,8 +38,7 @@ public final class StatFlexBootstrap {
     public static boolean start(String source) {
         synchronized (LOCK) {
             if (initialized) {
-                System.out.println("[S] statflex is already initialized by " + initializedBy
-                        + "; ignored duplicate request from " + source + ".");
+                System.out.println("[S] statflex is already initialized by " + initializedBy + "; ignored duplicate request from " + source + ".");
                 requestLoadedMessage();
                 return false;
             }
@@ -120,7 +119,7 @@ public final class StatFlexBootstrap {
         }
 
         pendingLoadedMessage = false;
-        mc.thePlayer.addChatMessage(new ChatComponentText("\u00A78[\u00A7cS\u00A78]\u00A77 statflex has been loaded!"));
+        mc.thePlayer.addChatMessage(new ChatComponentText(Messages.PREFIX + "statflex has been loaded!"));
     }
 
     private static void runOnClientThread(Runnable runnable) {
