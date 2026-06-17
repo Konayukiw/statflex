@@ -19,6 +19,11 @@ final class PlayerData {
     double serverPosX = Double.NaN;
     double serverPosY = Double.NaN;
     double serverPosZ = Double.NaN;
+    int ticksWithoutServerPosUpdate;
+    boolean packetGapScored;
+    boolean postGapBpsScored;
+    double lastHorizontalSpeed;
+    final FlagScoreTracker blinkFlagScore = new FlagScoreTracker();
 
     void update(EntityPlayer player) {
         int currentTicks = player.ticksExisted;

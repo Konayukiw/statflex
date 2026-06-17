@@ -30,6 +30,12 @@ public final class Anticheat {
     private static final String NO_SLOW = "NoSlow";
     private static final String SCAFFOLD = "Scaffold";
     private static final String LEGIT_SCAFFOLD = "Legit Scaffold";
+    private static final LagModulesDetector.AlertCallback BLINK_ALERT_CALLBACK = new LagModulesDetector.AlertCallback() {
+        @Override
+        public void alert(EntityPlayer player, String cheat) {
+            INSTANCE.alert(player, cheat);
+        }
+    };
 
     private static boolean registered;
 
@@ -137,6 +143,8 @@ public final class Anticheat {
                 return;
             }
         }
+
+        LagModulesDetector.check(player, data, BLINK_ALERT_CALLBACK);
 
         if (!player.capabilities.disableDamage
                 && AnticheatUtils.timeBetween(System.currentTimeMillis(), lastClientBoundPacket) <= 150L) {
