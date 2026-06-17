@@ -17,7 +17,7 @@ buildscript {
 apply plugin: 'net.minecraftforge.gradle.forge'
 apply plugin: 'org.spongepowered.mixin'
 
-version = "2.03"
+version = "2.05"
 group = "com.dev.statflex"
 archivesBaseName = "statflex"
 
@@ -51,8 +51,8 @@ jar {
     manifest.attributes(
             'MixinConfigs': 'statflex.mixins.json',
             'FMLCorePluginContainsFMLMod': 'true',
-            'Agent-Class': 'com.konayuki.statflex.StatFlexAgent',
-            'Premain-Class': 'com.konayuki.statflex.StatFlexAgent',
+            'Agent-Class': 'com.konayuki.statflex.JavaAgent',
+            'Premain-Class': 'com.konayuki.statflex.JavaAgent',
             'Can-Redefine-Classes': 'false',
             'Can-Retransform-Classes': 'false'
     )

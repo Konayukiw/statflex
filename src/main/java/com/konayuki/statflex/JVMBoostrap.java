@@ -47,6 +47,7 @@ public final class JVMBoostrap {
     }
 
     public static boolean start(String source) {
+        System.out.println("[S] Debug: start() success");
         synchronized (LOCK) {
             if (initialized) {
                 System.out.println("[S] statflex is already initialized by " + initializedBy + "; ignored duplicate request from " + source + ".");
@@ -61,18 +62,26 @@ public final class JVMBoostrap {
         try {
             System.setProperty("https.protocols", "TLSv1.2");
 
+            System.out.println("[S] Debug: try{} reached");
             Settings.load();
+            System.out.println("[S] Debug: Settings loaded");
             Toggles.syncFromSettings(Settings.getInstance());
+            System.out.println("[S] Debug: getInstance() success");
             ApiKeyManager.init();
-
+            System.out.println("[S] Debug: API Manager initialized");
             registerEventHandlers();
+            System.out.println("[S] Debug: Event handlers registered");
             Commands.register();
+            System.out.println("[S] Debug: Commands registered");
             Anticheat.register();
+            System.out.println("[S] Debug: Anticheat registered");
             RuntimePacketHook.register();
+            System.out.println("[S] Debug: RuntimePacketHook registered");
             startUpdateCheck();
+            System.out.println("[S] Debug: UpdateCheck ran");
 
             requestLoadedMessage();
-            System.out.println("[S] statflex initialized from " + source + ".");
+            System.out.println("[S] Debug: initialization completed: " + source + ".");
             return true;
         } catch (Throwable throwable) {
             throwable.printStackTrace();
