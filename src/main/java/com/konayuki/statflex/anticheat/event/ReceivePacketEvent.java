@@ -14,4 +14,3 @@ public final class ReceivePacketEvent extends Event {
         return packet;
     }
 }
-

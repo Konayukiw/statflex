@@ -174,7 +174,13 @@ public class Fetcher implements ICommand {
                 sendChat(Messages.API_SET);
                 break;
 
+            case "flag":
+            case "interval":
+                handleFlagCommand(sender, args);
+                break;
+
             case "bw":
+            case "bedwars":
                 if (args.length < 2) {
                     sendChat(Messages.USAGE);
                     return;
@@ -185,6 +191,7 @@ public class Fetcher implements ICommand {
                 break;
 
             case "sw":
+            case "skywars":
                 if (args.length < 2) {
                     sendChat(Messages.USAGE);
                     return;
@@ -430,6 +437,7 @@ public class Fetcher implements ICommand {
                 sendChat("§8[§cS§8] §7Available commands:");
                 sendChat("§c || §7/s api §b[API Key] §8: §7Sets Hypixel API Key to enable stats viewer.");
                 sendChat("§c || §7- You must get API Key from §ehttps://developer.hypixel.net");
+                sendChat("§c || §7/s flag §8: §7Sets Anticheat flag interval. It's up to you.");
                 sendChat("§c || §7/s bw §e[Player] -[Mode] §8: §7Shows their Bedwars stats in-game.");
                 sendChat("§c || §7/s sw §e[Player] -[Mode] §8: §7Shows their Skywars stats in-game.");
                 sendChat("§c || §7/s duels §e[Player] -[Mode] §8: §7Shows their Duels stats in-game.");
@@ -445,7 +453,7 @@ public class Fetcher implements ICommand {
                 sendChat("§c || §7/s skin §e[Player] §8: §7Download their skin locally.");
                 sendChat("§c || §7- Add -npcSkin to force saving NPC or Nick Skin if they have existing username.");
                 sendChat("§c || §7/s dir §e[Path] §8: §7Determines the directory to save skin files.");
-                sendChat("§c || §7/s add [Player] [Reason] §8: §7Reports cheaters to share and notify when you queued them.");
+                sendChat("§c || §7/s add §e[Player] [Reason] §8: §7Reports cheaters to share and notify when you queued them.");
                 sendChat("§c || §7/s settings §8: §7Opens togglable settings");
                 sendChat("§c || §7/s secure §8: §7Toggles secure connections.");
                 sendChat("§c || §7- This should be disabled if you have errors while getting stats.");
@@ -459,6 +467,26 @@ public class Fetcher implements ICommand {
 
             default:
                 sendChat(Messages.INVALID_COMMAND);
+        }
+    }
+
+    private void handleFlagCommand(ICommandSender sender, String[] args) {
+        if (args.length < 2) {
+            sendChat(Messages.USAGE);
+            sendChat("§c || §7Current value: §e" + SettingsManager.getInstance().getFlagInterval() + "§7s");
+            return;
+        }
+
+        try {
+            double value = Double.parseDouble(args[1]);
+            if (value < 0) value = 0;
+            if (value > 20) value = 20;
+
+            SettingsManager.getInstance().setFlagInterval(value);
+
+            sendChat("§c || §7Set flag interval to §e" + value + "§7s");
+        } catch (NumberFormatException e) {
+            sendChat("§c || §7Invalid value. Min: 0, Max: 20");
         }
     }
 

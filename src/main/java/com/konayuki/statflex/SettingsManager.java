@@ -23,6 +23,7 @@ public class SettingsManager {
     public String skinSaveDir = "";
     public int warnLevel = 0;
     public double warnFKDR = 0.0;
+    public double flagInterval = 5.0;
 
     private static SettingsManager instance;
 
@@ -62,6 +63,15 @@ public class SettingsManager {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public double getFlagInterval() {
+        return flagInterval;
+    }
+
+    public void setFlagInterval(double seconds) {
+        this.flagInterval = Math.max(0.0, Math.min(20.0, seconds)); // 0〜20秒に制限
+        save();
     }
 
     public String[] autoGGMessages = new String[0];

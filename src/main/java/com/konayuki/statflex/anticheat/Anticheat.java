@@ -187,7 +187,7 @@ public final class Anticheat {
         }
 
         String displayName = player.getDisplayName() == null ? player.getName() : player.getDisplayName().getFormattedText();
-        ChatComponentText message = new ChatComponentText(Messages.PREFIX + displayName + " detected for" + cheat);
+        ChatComponentText message = new ChatComponentText(Messages.PREFIX + "§e" + displayName + " §7detected for §c" + cheat);
         mc.thePlayer.addChatMessage(message);
 
         if (AnticheatUtils.timeBetween(lastAlert, now) >= 1500L) {
@@ -212,9 +212,9 @@ public final class Anticheat {
             Field field = SettingsManager.class.getDeclaredField("flagInterval");
             field.setAccessible(true);
             Object owner = Modifier.isStatic(field.getModifiers()) ? null : findSettingsManagerInstance();
-            return toDouble(field.get(owner), 20.0D);
+            return toDouble(field.get(owner), 5.0D);
         } catch (Throwable ignored) {
-            return 20.0D;
+            return 5.0D;
         }
     }
 
