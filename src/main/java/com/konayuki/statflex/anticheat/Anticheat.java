@@ -1,8 +1,8 @@
 package com.konayuki.statflex.anticheat;
 
-import com.konayuki.statflex.Messages;
-import com.konayuki.statflex.SettingsManager;
-import com.konayuki.statflex.anticheat.event.ReceivePacketEvent;
+import com.konayuki.statflex.system.Messages;
+import com.konayuki.statflex.config.Settings;
+import com.konayuki.statflex.anticheat.event.PacketDetector;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -79,7 +79,7 @@ public final class Anticheat {
     }
 
     @SubscribeEvent
-    public void onReceivePacket(ReceivePacketEvent event) {
+    public void onReceivePacket(PacketDetector event) {
         lastClientBoundPacket = System.currentTimeMillis();
     }
 
@@ -217,32 +217,32 @@ public final class Anticheat {
 
     private double readFlagInterval() {
         try {
-            Field field = SettingsManager.class.getDeclaredField("flagInterval");
+            Field field = Settings.class.getDeclaredField("flagInterval");
             field.setAccessible(true);
-            Object owner = Modifier.isStatic(field.getModifiers()) ? null : findSettingsManagerInstance();
+            Object owner = Modifier.isStatic(field.getModifiers()) ? null : findSettingsInstance();
             return toDouble(field.get(owner), 5.0D);
         } catch (Throwable ignored) {
             return 5.0D;
         }
     }
 
-    private Object findSettingsManagerInstance() {
+    private Object findSettingsInstance() {
         try {
-            Field instance = SettingsManager.class.getDeclaredField("INSTANCE");
+            Field instance = Settings.class.getDeclaredField("INSTANCE");
             instance.setAccessible(true);
             return instance.get(null);
         } catch (Throwable ignored) {
         }
 
         try {
-            Field instance = SettingsManager.class.getDeclaredField("instance");
+            Field instance = Settings.class.getDeclaredField("instance");
             instance.setAccessible(true);
             return instance.get(null);
         } catch (Throwable ignored) {
         }
 
         try {
-            Method getInstance = SettingsManager.class.getDeclaredMethod("getInstance");
+            Method getInstance = Settings.class.getDeclaredMethod("getInstance");
             getInstance.setAccessible(true);
             return getInstance.invoke(null);
         } catch (Throwable ignored) {

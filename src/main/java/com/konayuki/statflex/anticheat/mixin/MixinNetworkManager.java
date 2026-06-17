@@ -1,6 +1,6 @@
 package com.konayuki.statflex.anticheat.mixin;
 
-import com.konayuki.statflex.anticheat.event.ReceivePacketEvent;
+import com.konayuki.statflex.anticheat.event.PacketDetector;
 import io.netty.channel.ChannelHandlerContext;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.Packet;
@@ -17,6 +17,6 @@ public class MixinNetworkManager {
             at = @At("HEAD")
     )
     private void statflex$receivePacket(ChannelHandlerContext context, Packet<?> packet, CallbackInfo callbackInfo) {
-        MinecraftForge.EVENT_BUS.post(new ReceivePacketEvent(packet));
+        MinecraftForge.EVENT_BUS.post(new PacketDetector(packet));
     }
 }

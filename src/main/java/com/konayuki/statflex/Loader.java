@@ -12,8 +12,8 @@ public class Loader {
                 throw new IllegalStateException("Unable to resolve statflex jar location.");
             }
 
-            InjectedJarLauncher.launch(codeSource.getLocation(), Loader.class.getClassLoader());
-            System.out.println("StatFlex successfully injected!");
+            JarLauncher.launch(codeSource.getLocation(), Loader.class.getClassLoader());
+            System.out.println("statflex successfully injected!");
         } catch (Throwable throwable) {
             throwable.printStackTrace();
         }
@@ -27,8 +27,8 @@ public class Loader {
                 fos.write(jarBytes);
             }
 
-            InjectedJarLauncher.launch(tempJar.toURI().toURL(), Loader.class.getClassLoader());
-            System.out.println("StatFlex successfully injected!");
+            JarLauncher.launch(tempJar.toURI().toURL(), Loader.class.getClassLoader());
+            System.out.println("statflex successfully injected!");
         } catch (Throwable throwable) {
             throwable.printStackTrace();
         }

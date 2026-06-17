@@ -1,6 +1,6 @@
 package com.konayuki.statflex.anticheat;
 
-import com.konayuki.statflex.anticheat.event.ReceivePacketEvent;
+import com.konayuki.statflex.anticheat.event.PacketDetector;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -95,7 +95,7 @@ public final class RuntimePacketHook {
                     @Override
                     public void channelRead(ChannelHandlerContext context, Object message) throws Exception {
                         if (message instanceof Packet) {
-                            MinecraftForge.EVENT_BUS.post(new ReceivePacketEvent((Packet<?>) message));
+                            MinecraftForge.EVENT_BUS.post(new PacketDetector((Packet<?>) message));
                         }
                         super.channelRead(context, message);
                     }
