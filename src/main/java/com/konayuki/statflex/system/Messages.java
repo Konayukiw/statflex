@@ -6,7 +6,7 @@ public final class Messages {
     public static final String USAGE = PREFIX + "Invalid command. /s help for usage.";
     public static final String API_SET = PREFIX + "API Key has been set.";
     public static final String INVALID_COMMAND = PREFIX + "Invalid command. /s help for help.";
-    public static final String INVALID_API = PREFIX + "API Key is invalid or not set. Use /s api [API Key] to set.";
+    public static final String INVALID_API = PREFIX + "API Key is invalid or not set. Use /s api §e[API Key]§7 to set.";
     public static final String INVALID_MODE = PREFIX + "Invalid mode: ";
     public static final String PLAYER_NOT_FOUND = PREFIX + "Player not found or stats unavailable.";
     public static final String FRESH_STATS = PREFIX + "Fresh stats";

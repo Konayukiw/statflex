@@ -15,6 +15,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.ChatComponentText;
+import net.minecraft.network.play.server.S12PacketEntityVelocity;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -30,7 +31,7 @@ public final class Anticheat {
     private static final String NO_SLOW = "NoSlow";
     private static final String SCAFFOLD = "Scaffold";
     private static final String LEGIT_SCAFFOLD = "Legit Scaffold";
-    private static final LagModulesDetector.AlertCallback BLINK_ALERT_CALLBACK = new LagModulesDetector.AlertCallback() {
+    private static final LagRangeDetector.AlertCallback BLINK_ALERT_CALLBACK = new LagRangeDetector.AlertCallback() {
         @Override
         public void alert(EntityPlayer player, String cheat) {
             INSTANCE.alert(player, cheat);
@@ -81,6 +82,22 @@ public final class Anticheat {
     @SubscribeEvent
     public void onReceivePacket(PacketDetector event) {
         lastClientBoundPacket = System.currentTimeMillis();
+
+        if (event.getPacket() instanceof S12PacketEntityVelocity) {
+            S12PacketEntityVelocity packet = (S12PacketEntityVelocity) event.getPacket();
+            int entityId = packet.getEntityID();
+
+            if (mc.theWorld != null) {
+                net.minecraft.entity.Entity entity = mc.theWorld.getEntityByID(entityId);
+                if (entity instanceof EntityPlayer) {
+                    EntityPlayer player = (EntityPlayer) entity;
+                    PlayerData data = players.get(player.getUniqueID());
+                    if (data != null) {
+                        data.attackPacketReceived = true;
+                    }
+                }
+            }
+        }
     }
 
     @SubscribeEvent
@@ -144,7 +161,7 @@ public final class Anticheat {
             }
         }
 
-        LagModulesDetector.check(player, data, BLINK_ALERT_CALLBACK);
+        LagRangeDetector.check(player, data, BLINK_ALERT_CALLBACK);
 
         if (!player.capabilities.disableDamage
                 && AnticheatUtils.timeBetween(System.currentTimeMillis(), lastClientBoundPacket) <= 150L) {

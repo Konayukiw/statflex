@@ -19,7 +19,12 @@ final class PlayerData {
     double serverPosX = Double.NaN;
     double serverPosY = Double.NaN;
     double serverPosZ = Double.NaN;
+    double gapStartX;
+    double gapStartZ;
     int ticksWithoutServerPosUpdate;
+    int postAttackMonitorTicks = 0;
+    int packetsInBurst = 0;
+    boolean attackPacketReceived = false;
     boolean packetGapScored;
     boolean postGapBpsScored;
     double lastHorizontalSpeed;

@@ -7,6 +7,7 @@ import com.konayuki.statflex.system.Messages;
 import com.konayuki.statflex.stats.duels.DuelsFetcher;
 import com.konayuki.statflex.stats.skywars.SkywarsFetcher;
 
+import net.minecraft.scoreboard.ScorePlayerTeam;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -30,7 +31,6 @@ import java.text.Normalizer;
 public class Denicker {
 
     private final Set<String> parsed = new HashSet<>();
-    private final Map<String, Integer> noColorTicks = new HashMap<>();
     public static final Minecraft mc = Minecraft.getMinecraft();
 
     private static final Gson gson = new Gson();
@@ -71,16 +71,10 @@ public class Denicker {
                     ? displayNameComponent.getFormattedText()
                     : name;
 
-            boolean noColor = !displayNameText.contains("§");
-            if (noColor) {
-                int ticks = noColorTicks.merge(name, 1, Integer::sum);
-                if (ticks < 200)
-                    continue;
-            }
+            System.out.println("[S] Debug: Checking " + name);
 
             parseSkinData(npi);
             parsed.add(name);
-            noColorTicks.remove(name);
         }
     }
 
@@ -88,7 +82,6 @@ public class Denicker {
     public void onWorldJoin(EntityJoinWorldEvent event) {
         if (event.entity == mc.thePlayer) {
             parsed.clear();
-            noColorTicks.clear();
             awaitingLocraw = false;
             currentGameType = null;
             currentMode = null;
@@ -124,6 +117,7 @@ public class Denicker {
 
     public void parseSkinData(NetworkPlayerInfo npi) {
 
+
         GameProfile profile = npi.getGameProfile();
 
         if (npi == null || npi.getGameProfile() == null)
@@ -139,28 +133,39 @@ public class Denicker {
 
         // [NPC] Check
         if (normalized.contains("[NPC]") || name.contains("[NPC]")) {
+            System.out.println("[S] Debug: " + displayNameText + " is an NPC");
             return;
         }
-        // Gray Name Check
-        if (displayNameText.startsWith("§8")) {
-            return;
-        }
-        // No Color Check / White Name Check
-        if ((!displayNameText.contains("§") || displayNameText.startsWith("§f"))) {
-            return;
-        }
+
         String pingText = String.valueOf(npi.getResponseTime());
         pingText = pingText.replaceAll("§.", "").trim();
-
         // ? Ping Check
-        if (pingText.contains("?") || pingText.contains("0")) {
+        if (pingText.contains("?")) {
+            System.out.println("[S] Debug: " + displayNameText + " has ? ping");
             return;
         }
         // 0 Ping Check
         int ping = npi.getResponseTime();
         if (ping <= 0) {
+            System.out.println("[S] Debug: " + displayNameText + " has 0 ping");
             return;
         }
+
+        // Team Check
+        ScorePlayerTeam team = npi.getPlayerTeam();
+        if (team == null) {
+            System.out.println("[S] Debug: " + displayNameText + "'s team is null");
+            return;
+        }
+
+        // UUID Version Check
+        if (profile.getId().version() == 2) {
+            System.out.println("[S] Debug: " + displayNameText + "'s UUID version is 2");
+            return;
+        }
+
+        // Might not work but check whether UUID version is 2 or not
+        System.out.println("[S] Debug: " + displayNameText + ", UUID=" + profile.getId() + ", UUID version" + profile.getId().version() + " passed all NPC checks");
 
         for (Property prop : profile.getProperties().get("textures")) {
             try {

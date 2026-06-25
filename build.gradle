@@ -17,7 +17,7 @@ buildscript {
 apply plugin: 'net.minecraftforge.gradle.forge'
 apply plugin: 'org.spongepowered.mixin'
 
-version = "2.05"
+version = "2.12"
 group = "com.dev.statflex"
 archivesBaseName = "statflex"
 
@@ -68,6 +68,11 @@ task fatJar(type: Jar) {
         configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) }
     }
     with jar
+}
+
+task copyDeps(type: Copy) {
+    from configurations.compileClasspath
+    into 'libs'
 }
 
 sourceSets {
