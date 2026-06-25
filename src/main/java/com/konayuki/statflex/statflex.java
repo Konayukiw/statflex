@@ -8,7 +8,7 @@ public class statflex {
 
     public static final String MODID = "statflex";
     public static final String NAME = "statflex";
-    public static final String VERSION = "2.12";
+    public static final String VERSION = "2.13";
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
