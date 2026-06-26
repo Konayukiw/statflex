@@ -9,8 +9,11 @@ public final class Formatter {
     public static String getColoredPlayerName(JsonObject player, String correctName) {
         String color = "§7";
 
-        if (player.has("monthlyPackageRank")
-                && player.get("monthlyPackageRank").getAsString().equalsIgnoreCase("SUPERSTAR")) {
+        if (player.has("rank")
+                && "YOUTUBER".equalsIgnoreCase(player.get("rank").getAsString())) {
+            color = "§c";
+        } else if (player.has("monthlyPackageRank")
+                && "SUPERSTAR".equalsIgnoreCase(player.get("monthlyPackageRank").getAsString())) {
             color = "§6";
         } else if (player.has("newPackageRank") && !player.get("newPackageRank").isJsonNull()) {
             switch (player.get("newPackageRank").getAsString()) {
@@ -18,14 +21,11 @@ public final class Formatter {
                 case "VIP_PLUS":
                     color = "§a";
                     break;
+
                 case "MVP":
                 case "MVP_PLUS":
                     color = "§b";
                     break;
-                case "YOUTUBE":
-                    color = "§c";
-                default:
-                    color = "§7";
             }
         }
 

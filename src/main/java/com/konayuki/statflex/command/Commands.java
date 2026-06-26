@@ -201,16 +201,16 @@ public class Commands implements ICommand {
                         if (args[1].contains(".")) {
                             settings.warnLevel = 0;
                             settings.warnFKDR = Double.parseDouble(args[1]);
-                            ChatManager.send("§8[§cS§8]§7 Players higher than §e" + settings.warnFKDR + " FKDR §7will be warned.");
+                            ChatManager.send("§8[§cS§8]§7 Players higher than §e§l" + settings.warnFKDR + " FKDR §7will be warned.");
                         } else {
                             settings.warnLevel = Integer.parseInt(args[1]);
                             settings.warnFKDR = 0;
-                            ChatManager.send("§8[§cS§8]§7 Players higher than §e✫" + settings.warnLevel + "§7 will be warned.");
+                            ChatManager.send("§8[§cS§8]§7 Players higher than §e§l✫" + settings.warnLevel + "§7 will be warned.");
                         }
                     } else {
                         settings.warnLevel = Integer.parseInt(args[1]);
                         settings.warnFKDR = Double.parseDouble(args[2]);
-                        ChatManager.send("§8[§cS§8]§7 Players higher than §e✫" + settings.warnLevel + "§7, §e" + settings.warnFKDR + " FKDR §7will be warned.");
+                        ChatManager.send("§8[§cS§8]§7 Players higher than §e§l✫" + settings.warnLevel + "§7, §e§l" + settings.warnFKDR + " FKDR §7will be warned.");
                     }
 
                     Settings.save();
@@ -286,29 +286,6 @@ public class Commands implements ICommand {
                     ChatManager.send("§8[§cS§8]§7 Usage: /s dir §e[Path]§7 to determine the path.");
                     break;
                 }
-
-                /* Report Sender (Currently under development)
-            case "add":
-                if (args.length >= 3) {
-                    String cheaterName = args[1];
-
-                    String reason = String.join(" ",
-                            Arrays.copyOfRange(args, 2, args.length));
-
-                    String reporterName = mc.thePlayer.getName();
-
-                    DiscordReportSender.sendReport(
-                            cheaterName,
-                            reason,
-                            reporterName
-                    );
-
-                    ChatManager.send("§8[§cS§8]§7 Report sent for §e" + cheaterName);
-                } else {
-                    ChatManager.send(Messages.USAGE);
-                }
-                return;
-                 */
 
             case "toggle":
                 if (args.length >= 2) {
