@@ -164,7 +164,6 @@ public class Commands implements ICommand {
                 if (args.length >= 3 && args[2].equalsIgnoreCase("-npcskin")) {
                     useNpcSkin = true;
                 }
-
                 SkinSaver.savePlayerSkinAsync(skinPlayerName, useNpcSkin);
                 break;
 
@@ -365,7 +364,7 @@ public class Commands implements ICommand {
     private void handleFlagCommand(ICommandSender sender, String[] args) {
         if (args.length < 2) {
             ChatManager.send(Messages.USAGE);
-            ChatManager.send("§c || §7Current value: §e" + Settings.getInstance().getFlagInterval() + "§7s");
+            ChatManager.send("§c || §7Current value: §e§l" + Settings.getInstance().getFlagInterval() + "§7s");
             return;
         }
 
@@ -376,7 +375,7 @@ public class Commands implements ICommand {
 
             Settings.getInstance().setFlagInterval(value);
 
-            ChatManager.send("§c || §7Set flag interval to §e" + value + "§7s");
+            ChatManager.send("§c || §7Set flag interval to §e§l" + value + "§7s");
         } catch (NumberFormatException e) {
             ChatManager.send("§c || §7Invalid value. Min: 0, Max: 20");
         }
@@ -419,7 +418,7 @@ public class Commands implements ICommand {
 
         } catch (Exception e) {
             e.printStackTrace();
-            ChatManager.send("[S] Failed to open settings.");
+            ChatManager.send("§8[§cS§8] §7Failed to open settings.");
         }
     }
 

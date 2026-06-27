@@ -25,23 +25,18 @@ public final class Toggles {
     public static boolean isListStatsEnabled() {
         return listStatsEnabled;
     }
-
     public static boolean isAutoStatsEnabled() {
         return autoStatsEnabled;
     }
-
     public static boolean isIgnoreCertificatesEnabled() {
         return ignoreCertificates;
     }
-
     public static boolean isKeepWhoEnabled() {
         return keepWhoEnabled;
     }
-
     public static boolean isDuelsUpdateEnabled() {
         return duelsUpdate;
     }
-
     public static void setIgnoreCertificates(boolean ignore) {
         ignoreCertificates = ignore;
     }

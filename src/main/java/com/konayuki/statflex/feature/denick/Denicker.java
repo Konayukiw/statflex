@@ -7,8 +7,6 @@ import com.konayuki.statflex.system.Messages;
 import com.konayuki.statflex.stats.duels.DuelsFetcher;
 import com.konayuki.statflex.stats.skywars.SkywarsFetcher;
 
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.scoreboard.ScorePlayerTeam;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -153,7 +151,7 @@ public class Denicker {
             return;
         }
 
-        System.out.println("[S] Debug: " + displayNameText + ", UUID=" + profile.getId() + ", UUID version" + profile.getId().version() + " confirmed not to be NPC");
+        System.out.println("[S] " + displayNameText + ", UUID=" + profile.getId() + ", UUID version" + profile.getId().version() + " confirmed not to be an NPC");
 
         for (Property prop : profile.getProperties().get("textures")) {
             try {

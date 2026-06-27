@@ -3,10 +3,10 @@
   "minVersion": "0.7.10",
   "package": "com.konayuki.statflex.anticheat.mixin",
   "compatibilityLevel": "JAVA_8",
-  "mixins": [],
-  "client": [
-    "MixinNetworkManager"
+  "mixins": [
+    "S14PacketEntityAccessor"
   ],
+  "client": [],
   "injectors": {
     "defaultRequire": 1
   }
