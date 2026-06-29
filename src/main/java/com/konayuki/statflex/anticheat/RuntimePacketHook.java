@@ -1,7 +1,10 @@
 package com.konayuki.statflex.anticheat;
 
-import com.konayuki.statflex.anticheat.event.PacketDetector;
+import com.konayuki.statflex.anticheat.event.ReceivedPacketDetector;
+import com.konayuki.statflex.anticheat.event.SentPacketDetector;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelPromise;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import net.minecraft.client.Minecraft;
@@ -91,13 +94,26 @@ public final class RuntimePacketHook {
                     return;
                 }
 
-                ChannelInboundHandlerAdapter handler = new ChannelInboundHandlerAdapter() {
+                ChannelDuplexHandler handler = new ChannelDuplexHandler() {
+
                     @Override
-                    public void channelRead(ChannelHandlerContext context, Object message) throws Exception {
-                        if (message instanceof Packet) {
-                            MinecraftForge.EVENT_BUS.post(new PacketDetector((Packet<?>) message));
+                    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+                        if (msg instanceof Packet) {
+                            MinecraftForge.EVENT_BUS.post(new ReceivedPacketDetector((Packet<?>) msg));
                         }
-                        super.channelRead(context, message);
+                        super.channelRead(ctx, msg);
+                    }
+
+                    @Override
+                    public void write(ChannelHandlerContext ctx,
+                                      Object msg,
+                                      ChannelPromise promise) throws Exception {
+
+                        if (msg instanceof Packet) {
+                            MinecraftForge.EVENT_BUS.post(new SentPacketDetector((Packet<?>) msg));
+                        }
+
+                        super.write(ctx, msg, promise);
                     }
                 };
 

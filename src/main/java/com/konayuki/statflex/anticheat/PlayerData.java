@@ -11,12 +11,10 @@ final class PlayerData {
     int ticksExisted;
     int lastSneakTick;
     int ticksWithoutServerPosUpdate;
-    int postAttackMonitorTicks = 0;
-    int packetsInBurst = 0;
     int sneakTicks;
     int noSlowTicks;
-    int movePacketsThisTick = 0;
     int consecutiveFrozenTicks = 0;
+    int movePacketsSinceFreeze;
 
     double posZ;
     double posY;
@@ -24,18 +22,14 @@ final class PlayerData {
     double serverPosX = Double.NaN;
     double serverPosY = Double.NaN;
     double serverPosZ = Double.NaN;
-    double gapStartX;
-    double gapStartZ;
     double lastHorizontalSpeed;
     boolean sneaking;
-    boolean packetGapScored;
-    boolean postGapBpsScored;
-    boolean burstLastWasAttack = false;
-    boolean frozenScoreIncremented = false;
     boolean burstHadRealMove = false;
-    long lastAttackPacketTime = 0L;
-    final FlagScoreTracker blinkFlagScore = new FlagScoreTracker();
+    long lagRangeStateEnteredAt = 0L;
+    long lastAttackPacketTime = Long.MIN_VALUE;
 
+    enum LagRangeState { IDLE, WAITING_FREEZE, FROZEN }
+    LagRangeState lagRangeState = LagRangeState.IDLE;
 
     void update(EntityPlayer player) {
         int currentTicks = player.ticksExisted;

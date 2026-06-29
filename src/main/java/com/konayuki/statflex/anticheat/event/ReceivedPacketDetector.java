@@ -3,10 +3,10 @@ package com.konayuki.statflex.anticheat.event;
 import net.minecraft.network.Packet;
 import net.minecraftforge.fml.common.eventhandler.Event;
 
-public final class PacketDetector extends Event {
+public final class ReceivedPacketDetector extends Event {
     private final Packet<?> packet;
 
-    public PacketDetector(Packet<?> packet) {
+    public ReceivedPacketDetector(Packet<?> packet) {
         this.packet = packet;
     }
 
