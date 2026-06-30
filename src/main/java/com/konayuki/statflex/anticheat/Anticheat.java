@@ -43,8 +43,8 @@ public final class Anticheat {
 
     private static final int FREEZE_TICKS_REQUIRED   = 2;
     private static final int MAX_SHORT_FREEZE_TICKS = 3;
-    private static final int MIN_BURST_MOVE_PACKETS = 2;
-    private static final int MAX_SHORT_BURST_MOVE_PACKETS = 4;
+    private static final int MIN_BURST_MOVE_PACKETS = 1;
+    private static final int MAX_SHORT_BURST_MOVE_PACKETS = 3;
     private static final int LAG_RANGE_PATTERN_FLAGS_REQUIRED = 3;
     private static final long LAG_RANGE_PATTERN_WINDOW_MS = 1200L;
     private static final double MIN_MOVEMENT_SPEED = 0.03D;
