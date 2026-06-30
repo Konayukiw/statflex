@@ -15,6 +15,7 @@ final class PlayerData {
     int noSlowTicks;
     int consecutiveFrozenTicks = 0;
     int movePacketsSinceFreeze;
+    int lagRangePatternVl;
 
     double posZ;
     double posY;
@@ -26,6 +27,7 @@ final class PlayerData {
     boolean sneaking;
     boolean burstHadRealMove = false;
     long lagRangeStateEnteredAt = 0L;
+    long lastLagRangeBurstTime = 0L;
     long lastAttackPacketTime = Long.MIN_VALUE;
 
     enum LagRangeState { IDLE, WAITING_FREEZE, FROZEN }

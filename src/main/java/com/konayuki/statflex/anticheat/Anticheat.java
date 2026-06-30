@@ -18,8 +18,6 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.network.Packet;
-import net.minecraft.potion.Potion;
-import net.minecraft.potion.PotionEffect;
 import net.minecraft.world.World;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.ChatComponentText;
@@ -43,7 +41,12 @@ public final class Anticheat {
     private static final String LEGIT_SCAFFOLD = "Legit Scaffold";
     private static final String LAG_RANGE = "Lag Range";
 
-    private static final int FREEZE_TICKS_REQUIRED   = 4;
+    private static final int FREEZE_TICKS_REQUIRED   = 2;
+    private static final int MAX_SHORT_FREEZE_TICKS = 3;
+    private static final int MIN_BURST_MOVE_PACKETS = 2;
+    private static final int MAX_SHORT_BURST_MOVE_PACKETS = 4;
+    private static final int LAG_RANGE_PATTERN_FLAGS_REQUIRED = 3;
+    private static final long LAG_RANGE_PATTERN_WINDOW_MS = 1200L;
     private static final double MIN_MOVEMENT_SPEED = 0.03D;
     private static final double SERVER_POS_EPSILON = 0.001D;
     private static final double NEARBY_ENEMY_RANGE = 15.0D;
@@ -317,7 +320,7 @@ public final class Anticheat {
 
     private void checkLagRange(EntityPlayer player, PlayerData data) {
         if (!isLagRangeEligible(player) || !hasNearbyEnemy(player)) {
-            resetLagRangeState(data);
+            resetLagRangeTracking(data);
             return;
         }
 
@@ -337,14 +340,23 @@ public final class Anticheat {
         boolean packetFrozen    = isMoving && !serverPosChanged;
         boolean recentAttack = data.lastAttackPacketTime != Long.MIN_VALUE
                 && now - data.lastAttackPacketTime < 300;
+        boolean continuingPattern = data.lagRangePatternVl > 0
+                && now - data.lastLagRangeBurstTime <= LAG_RANGE_PATTERN_WINDOW_MS;
+
+        if (data.lagRangePatternVl > 0 && !continuingPattern) {
+            data.lagRangePatternVl = 0;
+            data.lastLagRangeBurstTime = 0L;
+        }
 
         switch (data.lagRangeState) {
 
             case IDLE:
-                if (recentAttack) {
+                if (recentAttack || continuingPattern) {
                     System.out.printf(
-                            "[S] %s attacked%n",
-                            player.getName()
+                            "[S] %s detected suspicious LagRange: Attack=%b VL=%d%n",
+                            player.getName(),
+                            recentAttack,
+                            data.lagRangePatternVl
                     );
                     data.lagRangeState = PlayerData.LagRangeState.WAITING_FREEZE;
                     data.lagRangeStateEnteredAt = now;
@@ -354,7 +366,7 @@ public final class Anticheat {
                 break;
 
             case WAITING_FREEZE:
-                if (now - data.lagRangeStateEnteredAt > 250) {
+                if (now - data.lagRangeStateEnteredAt > 350) {
                     resetLagRangeState(data);
                     break;
                 }
@@ -388,7 +400,7 @@ public final class Anticheat {
 
             case FROZEN:
                 if (now - data.lagRangeStateEnteredAt > 600) {
-                    resetLagRangeState(data);
+                    resetLagRangeTracking(data);
                     break;
                 }
 
@@ -403,33 +415,63 @@ public final class Anticheat {
                             data.consecutiveFrozenTicks
                     );
 
+                    boolean shortFreeze =
+                            data.consecutiveFrozenTicks >= FREEZE_TICKS_REQUIRED
+                                    && data.consecutiveFrozenTicks <= MAX_SHORT_FREEZE_TICKS;
                     boolean burstPackets =
-                            data.movePacketsSinceFreeze >= 2;
+                            data.movePacketsSinceFreeze >= MIN_BURST_MOVE_PACKETS
+                                    && data.movePacketsSinceFreeze <= MAX_SHORT_BURST_MOVE_PACKETS;
 
                     System.out.printf(
                             "[S] %s leaving freeze: "
                                     + "FrozenTicks=%d "
                                     + "MovePackets=%d "
                                     + "BurstMove=%b "
+                                    + "ShortFreeze=%b "
                                     + "Attack=%b%n",
 
                             player.getName(),
                             data.consecutiveFrozenTicks,
                             data.movePacketsSinceFreeze,
                             data.burstHadRealMove,
+                            shortFreeze,
                             recentAttack
                     );
 
-                    if (data.burstHadRealMove && burstPackets) {
+                    if (data.burstHadRealMove && shortFreeze && burstPackets) {
+                        if (data.lastLagRangeBurstTime == 0L
+                                || now - data.lastLagRangeBurstTime <= LAG_RANGE_PATTERN_WINDOW_MS) {
+                            data.lagRangePatternVl++;
+                        } else {
+                            data.lagRangePatternVl = 1;
+                        }
 
-                        alert(player, LAG_RANGE);
+                        data.lastLagRangeBurstTime = now;
 
                         System.out.printf(
-                                "[S] %s detected for LagRange: " + "Frozen=%d MovePackets=%d%n",
+                                "[S] %s LagRange pattern: "
+                                        + "VL=%d Frozen=%d MovePackets=%d%n",
                                 player.getName(),
+                                data.lagRangePatternVl,
                                 data.consecutiveFrozenTicks,
                                 data.movePacketsSinceFreeze
                         );
+
+                        if (data.lagRangePatternVl >= LAG_RANGE_PATTERN_FLAGS_REQUIRED) {
+                            alert(player, LAG_RANGE);
+
+                            System.out.printf(
+                                    "[S] %s detected for LagRange: "
+                                            + "VL=%d Frozen=%d MovePackets=%d%n",
+                                    player.getName(),
+                                    data.lagRangePatternVl,
+                                    data.consecutiveFrozenTicks,
+                                    data.movePacketsSinceFreeze
+                            );
+                        }
+                    } else if (!shortFreeze || data.movePacketsSinceFreeze > MAX_SHORT_BURST_MOVE_PACKETS) {
+                        data.lagRangePatternVl = 0;
+                        data.lastLagRangeBurstTime = 0L;
                     }
 
                     resetLagRangeState(data);
@@ -440,6 +482,12 @@ public final class Anticheat {
         data.serverPosX = serverPosX;
         data.serverPosZ = serverPosZ;
         data.lastHorizontalSpeed = data.speed;
+    }
+
+    private static void resetLagRangeTracking(PlayerData data) {
+        resetLagRangeState(data);
+        data.lagRangePatternVl = 0;
+        data.lastLagRangeBurstTime = 0L;
     }
 
     private static void resetLagRangeState(PlayerData data) {
