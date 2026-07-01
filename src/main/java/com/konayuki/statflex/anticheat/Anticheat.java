@@ -46,17 +46,16 @@ public final class Anticheat {
     private static final int MIN_BURST_MOVE_PACKETS = 1;
     private static final int MAX_SHORT_BURST_MOVE_PACKETS = 3;
     private static final int LAG_RANGE_PATTERN_FLAGS_REQUIRED = 4;
+    private static final int MAX_BURST_FROZEN_TICKS_SPREAD = 1;
+
     private static final long LAG_RANGE_PATTERN_WINDOW_MS = 1200L;
+
     private static final double MIN_MOVEMENT_SPEED = 0.03D;
     private static final double SERVER_POS_EPSILON = 0.001D;
     private static final double NEARBY_ENEMY_RANGE = 15.0D;
-
     private static final double MAX_PRE_FREEZE_SPEED_VARIANCE = 0.0006D;
-
     private static final double MIN_EXPECTED_MOVE_PER_FROZEN_TICK = 0.05D;
     private static final double MAX_EXPECTED_MOVE_PER_FROZEN_TICK = 0.45D;
-
-    private static final int MAX_BURST_FROZEN_TICKS_SPREAD = 1;
 
     private static boolean registered;
 
@@ -89,6 +88,7 @@ public final class Anticheat {
             PlayerData data = players.get(player.getUniqueID());
             if (data == null) {
                 data = new PlayerData();
+                data.player = player;
             }
 
             data.update(player);
@@ -160,20 +160,66 @@ public final class Anticheat {
     public void onSendPacket(SentPacketDetector event) {
         Packet<?> packet = event.getPacket();
 
-        if (packet instanceof C02PacketUseEntity) {
-            C02PacketUseEntity use = (C02PacketUseEntity) packet;
+        if (!(packet instanceof C02PacketUseEntity) || mc.theWorld == null) {
+            return;
+        }
 
-            if (use.getAction() == C02PacketUseEntity.Action.ATTACK && mc.theWorld != null) {
+        C02PacketUseEntity use = (C02PacketUseEntity) packet;
 
-                Entity entity = use.getEntityFromWorld(mc.theWorld);
+        if (use.getAction() != C02PacketUseEntity.Action.ATTACK) {
+            return;
+        }
 
-                if (entity instanceof EntityPlayer) {
-                    PlayerData data = players.get(entity.getUniqueID());
+        Entity entity = use.getEntityFromWorld(mc.theWorld);
 
-                    if (data != null) {
-                        data.lastAttackPacketTime = System.currentTimeMillis();
-                    }
-                }
+        if (!(entity instanceof EntityPlayer)) {
+            return;
+        }
+
+        PlayerData data = players.get(entity.getUniqueID());
+
+        if (data == null) {
+            return;
+        }
+
+        long now = System.currentTimeMillis();
+
+        if (data.pendingBurst
+                && now - data.lastBurstTime <= 300L) {
+
+            data.pendingBurst = false;
+
+            if (data.lastLagRangeBurstTime == 0L
+                    || now - data.lastLagRangeBurstTime <= LAG_RANGE_PATTERN_WINDOW_MS) {
+
+                data.lagRangePatternVl++;
+
+            } else {
+
+                data.lagRangePatternVl = 1;
+                data.resetBurstHistory();
+            }
+
+            data.lastLagRangeBurstTime = now;
+
+            data.pushBurstFrozenTicks(data.pendingFrozenTicks);
+
+            int spread = data.computeBurstFrozenTicksSpread();
+
+            System.out.printf(
+                    "[S] %s confirmed LagRange: VL=%d Spread=%s%n",
+                    data.player.getName(),
+                    data.lagRangePatternVl,
+                    spread == Integer.MAX_VALUE
+                            ? "n/a"
+                            : String.valueOf(spread)
+            );
+
+            if (data.lagRangePatternVl >= LAG_RANGE_PATTERN_FLAGS_REQUIRED
+                    && spread != Integer.MAX_VALUE
+                    && spread <= MAX_BURST_FROZEN_TICKS_SPREAD) {
+
+                alert(data.player, LAG_RANGE);
             }
         }
     }
@@ -345,8 +391,11 @@ public final class Anticheat {
                 Math.abs(data.serverPosX - serverPosX) > SERVER_POS_EPSILON
                         || Math.abs(data.serverPosZ - serverPosZ) > SERVER_POS_EPSILON;
         boolean packetFrozen    = isMoving && !serverPosChanged;
-        boolean recentAttack = data.lastAttackPacketTime != Long.MIN_VALUE
-                && now - data.lastAttackPacketTime < 300;
+        if (data.pendingBurst
+                && now - data.lastBurstTime > 300L) {
+
+            data.pendingBurst = false;
+        }
         boolean continuingPattern = data.lagRangePatternVl > 0
                 && now - data.lastLagRangeBurstTime <= LAG_RANGE_PATTERN_WINDOW_MS;
 
@@ -359,11 +408,11 @@ public final class Anticheat {
         switch (data.lagRangeState) {
 
             case IDLE:
-                if (recentAttack || continuingPattern) {
+                if (continuingPattern) {
                     double preFreezeVariance = data.computePreFreezeSpeedVariance();
                     if (preFreezeVariance > MAX_PRE_FREEZE_SPEED_VARIANCE) {
                         System.out.printf(
-                                "[S] %s is a lagger: (variance=%.6f)%n",
+                                "[S] %s detected unstable connection: (variance=%.6f)%n",
                                 player.getName(),
                                 preFreezeVariance
                         );
@@ -371,9 +420,8 @@ public final class Anticheat {
                     }
 
                     System.out.printf(
-                            "[S] %s detected suspicious LagRange: Attack=%b VL=%d Variance=%.6f%n",
+                            "[S] %s detected suspicious LagRange: VL=%d Variance=%.6f%n",
                             player.getName(),
-                            recentAttack,
                             data.lagRangePatternVl,
                             preFreezeVariance
                     );
@@ -460,7 +508,6 @@ public final class Anticheat {
                                     + "MovePackets=%d "
                                     + "BurstMove=%b "
                                     + "ShortFreeze=%b "
-                                    + "Attack=%b "
                                     + "MovePerFrozenTick=%.4f "
                                     + "ValidMoveRatio=%b%n",
 
@@ -469,57 +516,24 @@ public final class Anticheat {
                             data.movePacketsSinceFreeze,
                             data.burstHadRealMove,
                             shortFreeze,
-                            recentAttack,
                             movePerFrozenTick,
                             validMoveRatio
                     );
 
                     if (data.burstHadRealMove && shortFreeze && burstPackets && validMoveRatio) {
-                        if (data.lastLagRangeBurstTime == 0L
-                                || now - data.lastLagRangeBurstTime <= LAG_RANGE_PATTERN_WINDOW_MS) {
-                            data.lagRangePatternVl++;
-                        } else {
-                            data.lagRangePatternVl = 1;
-                            data.resetBurstHistory();
-                        }
-
-                        data.lastLagRangeBurstTime = now;
-
-                        data.pushBurstFrozenTicks(data.consecutiveFrozenTicks);
-                        int spread = data.computeBurstFrozenTicksSpread();
-
+                        data.pendingBurst = true;
+                        data.lastBurstTime = now;
+                        data.pendingFrozenTicks = data.consecutiveFrozenTicks;
                         System.out.printf(
-                                "[S] %s LagRange pattern: "
-                                        + "VL=%d Frozen=%d MovePackets=%d Spread=%s%n",
-                                player.getName(),
-                                data.lagRangePatternVl,
-                                data.consecutiveFrozenTicks,
-                                data.movePacketsSinceFreeze,
-                                spread == Integer.MAX_VALUE ? "n/a" : String.valueOf(spread)
+                                "[S] %s Burst detected. waiting for attack%n",
+                                player.getName()
                         );
-
-                        if (data.lagRangePatternVl >= LAG_RANGE_PATTERN_FLAGS_REQUIRED
-                                && spread != Integer.MAX_VALUE
-                                && spread <= MAX_BURST_FROZEN_TICKS_SPREAD) {
-                            alert(player, LAG_RANGE);
-
-                            System.out.printf(
-                                    "[S] %s flagged LagRange: "
-                                            + "VL=%d Frozen=%d MovePackets=%d Spread=%d%n",
-                                    player.getName(),
-                                    data.lagRangePatternVl,
-                                    data.consecutiveFrozenTicks,
-                                    data.movePacketsSinceFreeze,
-                                    spread
-                            );
-                        }
                     } else if (!shortFreeze || data.movePacketsSinceFreeze > MAX_SHORT_BURST_MOVE_PACKETS
                             || !validMoveRatio) {
                         data.lagRangePatternVl = 0;
                         data.lastLagRangeBurstTime = 0L;
                         data.resetBurstHistory();
                     }
-
                     resetLagRangeState(data);
                 }
                 break;
@@ -527,13 +541,15 @@ public final class Anticheat {
 
         data.serverPosX = serverPosX;
         data.serverPosZ = serverPosZ;
-        data.lastHorizontalSpeed = data.speed;
     }
 
     private static void resetLagRangeTracking(PlayerData data) {
         resetLagRangeState(data);
         data.lagRangePatternVl = 0;
         data.lastLagRangeBurstTime = 0L;
+        data.lastBurstTime = Long.MIN_VALUE;
+        data.pendingBurst = false;
+        data.pendingFrozenTicks = 0;
         data.resetBurstHistory();
     }
 

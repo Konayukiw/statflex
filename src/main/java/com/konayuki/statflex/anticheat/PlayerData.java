@@ -13,13 +13,14 @@ final class PlayerData {
     int lastSneakTick;
     int sneakTicks;
     int noSlowTicks;
-    int consecutiveFrozenTicks = 0;
+    int consecutiveFrozenTicks;
     int movePacketsSinceFreeze;
     int lagRangePatternVl;
-    int speedHistoryIndex = 0;
-    int speedHistoryFilled = 0;
-    int burstHistoryIndex = 0;
-    int burstHistoryFilled = 0;
+    int pendingFrozenTicks;
+    int speedHistoryIndex;
+    int speedHistoryFilled;
+    int burstHistoryIndex;
+    int burstHistoryFilled;
 
     double posZ;
     double posY;
@@ -29,14 +30,14 @@ final class PlayerData {
     double serverPosZ = Double.NaN;
     double freezeStartServerPosX = Double.NaN;
     double freezeStartServerPosZ = Double.NaN;
-    double lastHorizontalSpeed;
 
     boolean sneaking;
-    boolean burstHadRealMove = false;
+    boolean burstHadRealMove;
+    boolean pendingBurst;
 
-    long lagRangeStateEnteredAt = 0L;
-    long lastLagRangeBurstTime = 0L;
-    long lastAttackPacketTime = Long.MIN_VALUE;
+    long lagRangeStateEnteredAt;
+    long lastLagRangeBurstTime;
+    long lastBurstTime = Long.MIN_VALUE;
 
     static final int SPEED_HISTORY_SIZE = 6;
     static final int BURST_HISTORY_SIZE = 5;
@@ -44,6 +45,8 @@ final class PlayerData {
     final int[] burstFrozenTicksHistory = new int[BURST_HISTORY_SIZE];
 
     final double[] speedHistory = new double[SPEED_HISTORY_SIZE];
+
+    EntityPlayer player;
 
     enum LagRangeState { IDLE, WAITING_FREEZE, FROZEN }
     LagRangeState lagRangeState = LagRangeState.IDLE;
