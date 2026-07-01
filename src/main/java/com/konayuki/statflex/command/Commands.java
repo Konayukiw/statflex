@@ -15,6 +15,7 @@ import com.konayuki.statflex.stats.duels.DuelsFetcherUpdated;
 import com.konayuki.statflex.stats.skywars.SkywarsFetcher;
 import com.konayuki.statflex.update.UpdateChecker;
 import com.konayuki.statflex.update.UpdateGuiScreen;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
@@ -23,6 +24,7 @@ import net.minecraft.event.HoverEvent;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.IChatComponent;
+
 import net.minecraftforge.client.ClientCommandHandler;
 
 import java.io.File;

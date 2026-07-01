@@ -1,54 +1,53 @@
 package com.konayuki.statflex.anticheat;
 
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemBlock;
 
 final class PlayerData {
+    int burstHistoryIndex = 0;
+    int burstHistoryFilled = 0;
 
-    double speed;
-    int aboveVoidTicks;
     int fastTick;
     int autoBlockTicks;
     int ticksExisted;
     int lastSneakTick;
     int sneakTicks;
     int noSlowTicks;
+    int aboveVoidTicks;
     int consecutiveFrozenTicks;
     int movePacketsSinceFreeze;
+    int freezeCandidateTicks;
     int lagRangePatternVl;
-    int pendingFrozenTicks;
-    int speedHistoryIndex;
-    int speedHistoryFilled;
-    int burstHistoryIndex;
-    int burstHistoryFilled;
+    int speedHistoryIndex = 0;
+    int speedHistoryFilled = 0;
 
-    double posZ;
-    double posY;
-    double posX;
+    double speed;
+    double posX, posY, posZ;
     double serverPosX = Double.NaN;
     double serverPosY = Double.NaN;
     double serverPosZ = Double.NaN;
     double freezeStartServerPosX = Double.NaN;
     double freezeStartServerPosZ = Double.NaN;
+    double preFreezeAverageSpeed = Double.NaN;
 
-    boolean sneaking;
-    boolean burstHadRealMove;
-    boolean pendingBurst;
-
-    long lagRangeStateEnteredAt;
     long lastLagRangeBurstTime;
-    long lastBurstTime = Long.MIN_VALUE;
+    long lagRangeStateEnteredAt;
+    boolean burstHadRealMove;
 
     static final int SPEED_HISTORY_SIZE = 6;
     static final int BURST_HISTORY_SIZE = 5;
-
     final int[] burstFrozenTicksHistory = new int[BURST_HISTORY_SIZE];
-
     final double[] speedHistory = new double[SPEED_HISTORY_SIZE];
+
+    boolean sneaking;
 
     EntityPlayer player;
 
-    enum LagRangeState { IDLE, WAITING_FREEZE, FROZEN }
+    enum LagRangeState {
+        IDLE,
+        WAITING_FREEZE,
+        FROZEN
+    }
+
     LagRangeState lagRangeState = LagRangeState.IDLE;
 
     void update(EntityPlayer player) {
@@ -89,7 +88,7 @@ final class PlayerData {
 
         if (player.rotationPitch >= 70.0F
                 && player.getHeldItem() != null
-                && player.getHeldItem().getItem() instanceof ItemBlock) {
+                && player.getHeldItem().getItem() instanceof net.minecraft.item.ItemBlock) {
             if (AnticheatUtils.getSprintingTicksLeft(player) == 1) {
                 if (!sneaking && player.isSneaking()) {
                     sneakTicks++;
@@ -112,48 +111,41 @@ final class PlayerData {
         serverPosZ = AnticheatUtils.getServerPosZ(player);
     }
 
-    private void pushSpeedHistory(double value) {
+    void pushSpeedHistory(double value) {
         speedHistory[speedHistoryIndex] = value;
         speedHistoryIndex = (speedHistoryIndex + 1) % SPEED_HISTORY_SIZE;
-        if (speedHistoryFilled < SPEED_HISTORY_SIZE) {
-            speedHistoryFilled++;
-        }
+        if (speedHistoryFilled < SPEED_HISTORY_SIZE) speedHistoryFilled++;
+    }
+
+    double getAverageSpeed() {
+        if (speedHistoryFilled == 0) return 0.0;
+        double total = 0.0;
+        for (int i = 0; i < speedHistoryFilled; i++) total += speedHistory[i];
+        return total / speedHistoryFilled;
     }
 
     double computePreFreezeSpeedVariance() {
-        if (speedHistoryFilled < SPEED_HISTORY_SIZE) {
-            return Double.MAX_VALUE;
-        }
-
+        if (speedHistoryFilled < SPEED_HISTORY_SIZE) return Double.MAX_VALUE;
         double mean = 0.0D;
-        for (double v : speedHistory) {
-            mean += v;
-        }
+        for (double v : speedHistory) mean += v;
         mean /= speedHistoryFilled;
-
         double variance = 0.0D;
         for (double v : speedHistory) {
             double diff = v - mean;
             variance += diff * diff;
         }
         variance /= speedHistoryFilled;
-
         return variance;
     }
 
     void pushBurstFrozenTicks(int frozenTicks) {
         burstFrozenTicksHistory[burstHistoryIndex] = frozenTicks;
         burstHistoryIndex = (burstHistoryIndex + 1) % BURST_HISTORY_SIZE;
-        if (burstHistoryFilled < BURST_HISTORY_SIZE) {
-            burstHistoryFilled++;
-        }
+        if (burstHistoryFilled < BURST_HISTORY_SIZE) burstHistoryFilled++;
     }
 
     int computeBurstFrozenTicksSpread() {
-        if (burstHistoryFilled < BURST_HISTORY_SIZE) {
-            return Integer.MAX_VALUE;
-        }
-
+        if (burstHistoryFilled < BURST_HISTORY_SIZE) return Integer.MAX_VALUE;
         int min = Integer.MAX_VALUE;
         int max = Integer.MIN_VALUE;
         for (int i = 0; i < burstHistoryFilled; i++) {
@@ -161,7 +153,6 @@ final class PlayerData {
             if (v < min) min = v;
             if (v > max) max = v;
         }
-
         return max - min;
     }
 

@@ -13,8 +13,10 @@ import com.konayuki.statflex.stats.bedwars.BedwarsStatsLister;
 import com.konayuki.statflex.stats.duels.ScoreboardManager;
 import com.konayuki.statflex.update.UpdateChecker;
 import com.konayuki.statflex.update.UpdateGuiHandler;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ChatComponentText;
+
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;

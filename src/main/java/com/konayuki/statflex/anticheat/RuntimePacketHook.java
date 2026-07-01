@@ -2,11 +2,12 @@ package com.konayuki.statflex.anticheat;
 
 import com.konayuki.statflex.anticheat.event.ReceivedPacketDetector;
 import com.konayuki.statflex.anticheat.event.SentPacketDetector;
+
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.Packet;

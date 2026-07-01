@@ -10,10 +10,12 @@ import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.event.HoverEvent;
+
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
