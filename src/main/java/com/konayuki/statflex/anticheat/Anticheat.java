@@ -426,10 +426,29 @@ public final class Anticheat {
 
         for (EntityPlayer other : nearby) {
 
+            if (other == player)
+                continue;
+
+            if (other.isDead)
+                continue;
+
+            if (player.getDistanceSqToEntity(other)
+                    > NEARBY_ENEMY_RANGE * NEARBY_ENEMY_RANGE)
+                continue;
+
+            if (mc.getNetHandler() == null)
+                continue;
+
             NetworkPlayerInfo info =
                     mc.getNetHandler().getPlayerInfo(other.getUniqueID());
 
+            if (info == null)
+                continue;
+
             GameProfile profile = info.getGameProfile();
+
+            if (profile == null)
+                continue;
 
             String name = profile.getName();
 
@@ -444,27 +463,10 @@ public final class Anticheat {
 
             Team otherTeam = other.getTeam();
 
-            if (other == player)
-                continue;
-
-            if (other.isDead)
-                continue;
-
-            if (player.getDistanceSqToEntity(other)
-                    > NEARBY_ENEMY_RANGE * NEARBY_ENEMY_RANGE)
-                continue;
-
-            if (info == null)
-                continue;
-
-            if (profile == null)
-                continue;
-
             if (profile.getId() != null && profile.getId().version() == 2)
                 continue;
 
-            if (clean.contains("[NPC]")
-                    || name.contains("[NPC]"))
+            if (clean.contains("[NPC]") || name.contains("[NPC]"))
                 continue;
 
             if (info.getResponseTime() <= 0)
