@@ -2,13 +2,13 @@
   {
     "modid": "statflex",
     "name": "statflex",
-    "description": "/s for the better Hypixel experience!",
-    "version": "2.20",
+    "description": "Hypixel stats viewer, overall utility mod for 1.8.9",
+    "version": "2.21",
     "mcversion": "1.8.9",
     "url": "https://github.com/Konayukiw/statflex",
     "updateUrl": "",
     "authorList": ["Konayuki", "Sirapixel"],
-    "credits": "Konayuki (@Konayukiw) on YouTube, X, Discord. Super thanks to Sirapixel, also thanks to aurorq3 and Telegnosis helped with the development.",
+    "credits": "Konayuki (@Konayukiw) on YouTube, X, Discord. Super thanks to Sirapixel, also thanks to Telegnosis for testing and helping <3",
     "logoFile": "",
     "screenshots": [],
     "requiredMods": []
