@@ -30,8 +30,6 @@ minecraft {
     mappings = "stable_22"
 }
 
-
-
 mixin {
     defaultObfuscationEnv notch
     add sourceSets.main, "statflex.refmap.json"

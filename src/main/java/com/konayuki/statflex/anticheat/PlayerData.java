@@ -10,13 +10,9 @@ final class PlayerData {
     int sneakTicks;
     int noSlowTicks;
     int aboveVoidTicks;
-    int lagRangePatternVl;
+
     int speedHistoryIndex;
     int speedHistoryFilled;
-    int combatHistoryIndex;
-    int normalHistoryIndex;
-    int combatHistoryFilled;
-    int normalHistoryFilled;
 
     double speed;
     double posX, posY, posZ;
@@ -24,131 +20,49 @@ final class PlayerData {
     double serverPosY = Double.NaN;
     double serverPosZ = Double.NaN;
 
-    long combatUntil;
-
-    static final int SPEED_HISTORY_SIZE = 6;
-    static final int FREEZE_HISTORY_SIZE = 64;
-    static final int MIN_FREEZE_HISTORY_SIZE = 24;
-
-
-    final double[] speedHistory = new double[SPEED_HISTORY_SIZE];
-    final boolean[] combatFreezeHistory = new boolean[FREEZE_HISTORY_SIZE];
-    final boolean[] normalFreezeHistory = new boolean[FREEZE_HISTORY_SIZE];
-
     boolean sneaking;
-    boolean lagRangeAboveThreshold;
-    boolean isInCombat() {
-        return System.currentTimeMillis() < combatUntil;
-    }
-
     EntityPlayer player;
 
-    double getCombatFreezeRate() {
-        if (combatHistoryFilled == 0)
-            return 0;
+    final double[] speedHistory = new double[SPEED_HISTORY_SIZE];
 
-        int freeze = 0;
+    static final int SPEED_HISTORY_SIZE = 6;
+    static final int PACKET_HISTORY_SIZE = 100;
+    static final int MIN_HISTORY_SIZE = 40;
+    static final int COMBAT_END_DELAY_MS = 10000;
+    static final int LAG_RANGE_VL_ALERT = 2;
+    
+    static final double BURST_RATIO = 4.0D;
+    static final int MIN_BURST_PACKETS = 3;
+    
+    static final double MIN_ZERO_RATE_COMBAT = 0.30D;
+    static final double MIN_ZERO_DIFF = 0.20D;
+    static final double ZERO_RATIO_THRESHOLD = 2.5D;
+    static final double SUSPICIOUS_THRESHOLD = 0.5D;
 
-        for (int i = 0; i < combatHistoryFilled; i++)
-            if (combatFreezeHistory[i])
-                freeze++;
+    int combatPacketHistoryIndex;
+    int combatPacketHistoryFilled;
+    int normalPacketHistoryIndex;
+    int normalPacketHistoryFilled;
 
-        return (double) freeze / combatHistoryFilled;
-    }
+    int movementPacketsThisTick;
+    int lagRangeVl;
+    int consecutiveZeroTicks;
 
-    double getNormalFreezeRate() {
-        if (normalHistoryFilled == 0)
-            return 0;
+    double lastCombatPacketAverage;
+    double lastNormalPacketAverage;
+    double lastCombatZeroRate;
+    double lastNormalZeroRate;
 
-        int freeze = 0;
+    long combatUntil;
+    long lastSwingEndAt;
+    long lastVlIncreaseAt;
 
-        for (int i = 0; i < normalHistoryFilled; i++)
-            if (normalFreezeHistory[i])
-                freeze++;
+    boolean inCombat;
+    boolean isSuspicious;
+    boolean wasSwinging;
 
-        return (double) freeze / normalHistoryFilled;
-    }
-
-    void pushCombatFreeze(boolean freeze) {
-        combatFreezeHistory[combatHistoryIndex] = freeze;
-        combatHistoryIndex = (combatHistoryIndex + 1) % FREEZE_HISTORY_SIZE;
-
-        if (combatHistoryFilled < FREEZE_HISTORY_SIZE)
-            combatHistoryFilled++;
-    }
-
-    void pushNormalFreeze(boolean freeze) {
-        normalFreezeHistory[normalHistoryIndex] = freeze;
-        normalHistoryIndex = (normalHistoryIndex + 1) % FREEZE_HISTORY_SIZE;
-
-        if (normalHistoryFilled < FREEZE_HISTORY_SIZE)
-            normalHistoryFilled++;
-    }
-
-    void update(EntityPlayer player) {
-        int currentTicks = player.ticksExisted;
-        posX = player.posX - player.prevPosX;
-        posY = player.posY - player.prevPosY;
-        posZ = player.posZ - player.prevPosZ;
-        speed = Math.max(Math.abs(posX), Math.abs(posZ));
-
-        pushSpeedHistory(speed);
-
-        if (speed >= 0.07D) {
-            fastTick++;
-            ticksExisted = currentTicks;
-        } else {
-            fastTick = 0;
-        }
-
-        if (Math.abs(posY) >= 0.1D) {
-            aboveVoidTicks = currentTicks;
-        }
-
-        if (player.isSneaking()) {
-            lastSneakTick = currentTicks;
-        }
-
-        if (player.isSwingInProgress && player.isBlocking()) {
-            autoBlockTicks++;
-        } else {
-            autoBlockTicks = 0;
-        }
-
-        if (player.isSprinting() && player.isUsingItem()) {
-            noSlowTicks++;
-        } else {
-            noSlowTicks = 0;
-        }
-
-        if (player.rotationPitch >= 70.0F
-                && player.getHeldItem() != null
-                && player.getHeldItem().getItem() instanceof net.minecraft.item.ItemBlock) {
-            if (AnticheatUtils.getSprintingTicksLeft(player) == 1) {
-                if (!sneaking && player.isSneaking()) {
-                    sneakTicks++;
-                } else {
-                    sneakTicks = 0;
-                }
-            }
-        } else {
-            sneakTicks = 0;
-        }
-    }
-
-    void updateSneak(EntityPlayer player) {
-        sneaking = player.isSneaking();
-    }
-
-    void updateServerPos(EntityPlayer player) {
-        serverPosX = AnticheatUtils.getServerPosX(player);
-        serverPosY = AnticheatUtils.getServerPosY(player);
-        serverPosZ = AnticheatUtils.getServerPosZ(player);
-    }
-
-    void pushSpeedHistory(double value) {
-        speedHistory[speedHistoryIndex] = value;
-        speedHistoryIndex = (speedHistoryIndex + 1) % SPEED_HISTORY_SIZE;
-        if (speedHistoryFilled < SPEED_HISTORY_SIZE) speedHistoryFilled++;
-    }
+    final int[] combatMovementPacketHistory = new int[PACKET_HISTORY_SIZE];
+    final int[] normalMovementPacketHistory = new int[PACKET_HISTORY_SIZE];
+    final boolean[] combatZeroPacketHistory = new boolean[PACKET_HISTORY_SIZE];
+    final boolean[] normalZeroPacketHistory = new boolean[PACKET_HISTORY_SIZE];
 }

@@ -7,7 +7,11 @@ import com.konayuki.statflex.system.Messages;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.network.NetworkPlayerInfo;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.network.Packet;
+import net.minecraft.network.play.server.S14PacketEntity;
+import net.minecraft.network.play.server.S19PacketEntityHeadLook;
 import net.minecraft.scoreboard.Team;
 import net.minecraft.world.World;
 import net.minecraft.util.IChatComponent;
@@ -23,6 +27,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class Anticheat {
     private static final Minecraft mc = Minecraft.getMinecraft();
@@ -33,16 +38,14 @@ public final class Anticheat {
     private static final String NO_SLOW = "NoSlow";
     private static final String SCAFFOLD = "Scaffold";
     private static final String LEGIT_SCAFFOLD = "Legit Scaffold";
-    private static final String LAG_RANGE = "Lag Range";
+    private static final String LAG_RANGE = "Suspicious Lag Range";
 
-    private static final double MIN_MOVEMENT_SPEED = 0.03D;
-    private static final double SERVER_POS_EPSILON = 0.0015D;
     private static final double NEARBY_ENEMY_RANGE = 15.0D;
 
     private static boolean registered;
 
     private final Map<UUID, Map<String, Long>> flags = new HashMap<>();
-    private final Map<UUID, PlayerData> players = new HashMap<>();
+    private final Map<UUID, PlayerData> players = new ConcurrentHashMap<UUID, PlayerData>();
     private long lastAlert;
     private long lastClientBoundPacket;
 
@@ -66,28 +69,22 @@ public final class Anticheat {
         for (EntityPlayer player : mc.theWorld.playerEntities) {
             if (!isCheckTarget(player)) continue;
 
-            PlayerData data = players.get(player.getUniqueID());
-            if (data == null) {
-                data = new PlayerData();
-                data.player = player;
-            }
+            PlayerData data = getData(player);
 
-            data.update(player);
-
-            if (player.isSwingInProgress && hasNearbyEnemy(player)) {
-                data.combatUntil = System.currentTimeMillis() + 5000L;
-            }
+            updatePlayerData(player, data);
+            updateCombatState(player, data);
+            checkLagRange(player, data);
 
             performCheck(player, data);
-            data.updateServerPos(player);
-            data.updateSneak(player);
-            players.put(player.getUniqueID(), data);
+            updateServerPos(player, data);
+            updateSneak(player, data);
         }
     }
 
     @SubscribeEvent
     public void onReceivePacket(ReceivedPacketDetector event) {
         lastClientBoundPacket = System.currentTimeMillis();
+        trackMovementPacket(event.getPacket());
     }
 
     @SubscribeEvent
@@ -106,6 +103,75 @@ public final class Anticheat {
                 && !player.isDead
                 && player.getName() != null
                 && !player.getName().isEmpty();
+    }
+
+    private PlayerData getData(EntityPlayer player) {
+        PlayerData data = players.get(player.getUniqueID());
+        if (data == null) {
+            data = new PlayerData();
+            data.player = player;
+            players.put(player.getUniqueID(), data);
+        }
+        return data;
+    }
+
+    private void updatePlayerData(EntityPlayer player, PlayerData data) {
+        data.ticksExisted = player.ticksExisted;
+        double dx = player.posX - data.posX;
+        double dz = player.posZ - data.posZ;
+
+        data.speed = Math.sqrt(dx * dx + dz * dz);
+
+        data.posX = player.posX;
+        data.posY = player.posY;
+        data.posZ = player.posZ;
+        
+        data.speedHistory[data.speedHistoryIndex] = data.speed;
+        data.speedHistoryIndex = (data.speedHistoryIndex + 1) % PlayerData.SPEED_HISTORY_SIZE;
+        if (data.speedHistoryFilled < PlayerData.SPEED_HISTORY_SIZE) {
+            data.speedHistoryFilled++;
+        }
+    }
+
+    private void updateCombatState(EntityPlayer player, PlayerData data) {
+        boolean isSwinging = player.isSwingInProgress;
+        boolean hasEnemy = hasNearbyEnemy(player);
+        long now = System.currentTimeMillis();
+
+        if (isSwinging && !data.wasSwinging) {
+            data.lastSwingEndAt = 0;
+        } else if (!isSwinging && data.wasSwinging) {
+            data.lastSwingEndAt = now;
+        }
+        data.wasSwinging = isSwinging;
+
+        boolean shouldBeInCombat = isSwinging && hasEnemy;
+        
+        if (shouldBeInCombat) {
+            data.inCombat = true;
+            data.combatUntil = now + PlayerData.COMBAT_END_DELAY_MS;
+        } else if (data.inCombat && now >= data.combatUntil) {
+            data.inCombat = false;
+        }
+    }
+
+    private void updateServerPos(EntityPlayer player, PlayerData data) {
+        data.serverPosX = AnticheatUtils.getServerPosX(player);
+        data.serverPosY = AnticheatUtils.getServerPosY(player);
+        data.serverPosZ = AnticheatUtils.getServerPosZ(player);
+    }
+
+    private void updateSneak(EntityPlayer player, PlayerData data) {
+        if (player.isSneaking()) {
+            if (!data.sneaking) {
+                data.sneaking = true;
+                data.lastSneakTick = player.ticksExisted;
+            }
+            data.sneakTicks++;
+        } else {
+            data.sneaking = false;
+            data.sneakTicks = 0;
+        }
     }
 
     private void performCheck(EntityPlayer player, PlayerData data) {
@@ -222,82 +288,96 @@ public final class Anticheat {
     }
 
     private void checkLagRange(EntityPlayer player, PlayerData data) {
-
         if (!isLagRangeEligible(player)) {
-            System.out.println("[S] Not eligible: " + player.getName());
             return;
         }
 
-        double serverPosX = AnticheatUtils.getServerPosX(player);
-        double serverPosZ = AnticheatUtils.getServerPosZ(player);
-
-        if (Double.isNaN(serverPosX)
-                || Double.isNaN(serverPosZ)
-                || Double.isNaN(data.serverPosX)
-                || Double.isNaN(data.serverPosZ)) {
-            System.out.println("[S] ServerPos is null: " + player.getName());
-            return;
-        }
-
-        boolean moving = data.speed > MIN_MOVEMENT_SPEED;
-
-        boolean serverMoved =
-                Math.abs(serverPosX - data.serverPosX) > SERVER_POS_EPSILON
-                        || Math.abs(serverPosZ - data.serverPosZ) > SERVER_POS_EPSILON;
-
-        boolean freeze = moving && !serverMoved;
-        boolean combat = data.isInCombat() && hasNearbyEnemy(player);
-
-        System.out.println("[S] LagRange detection for: " + player.getName()
-                + " moving: " + moving
-                + " serverMoved: " + serverMoved
-                + " freeze: " + freeze
-                + " combat: " + combat);
-
-        if (combat) {
-            data.pushCombatFreeze(freeze);
+        int currentPackets = data.movementPacketsThisTick;
+        boolean isZeroPacket = currentPackets == 0;
+        
+        if (data.inCombat) {
+            data.combatMovementPacketHistory[data.combatPacketHistoryIndex] = currentPackets;
+            data.combatZeroPacketHistory[data.combatPacketHistoryIndex] = isZeroPacket;
+            data.combatPacketHistoryIndex = (data.combatPacketHistoryIndex + 1) % PlayerData.PACKET_HISTORY_SIZE;
+            if (data.combatPacketHistoryFilled < PlayerData.PACKET_HISTORY_SIZE) {
+                data.combatPacketHistoryFilled++;
+            }
         } else {
-            data.pushNormalFreeze(freeze);
+            data.normalMovementPacketHistory[data.normalPacketHistoryIndex] = currentPackets;
+            data.normalZeroPacketHistory[data.normalPacketHistoryIndex] = isZeroPacket;
+            data.normalPacketHistoryIndex = (data.normalPacketHistoryIndex + 1) % PlayerData.PACKET_HISTORY_SIZE;
+            if (data.normalPacketHistoryFilled < PlayerData.PACKET_HISTORY_SIZE) {
+                data.normalPacketHistoryFilled++;
+            }
         }
 
-        System.out.println("[S] Combat history: " + data.combatHistoryFilled
-                + " Normal history: " + data.normalHistoryFilled);
+        data.movementPacketsThisTick = 0;
 
-        if (data.combatHistoryFilled >= data.MIN_FREEZE_HISTORY_SIZE
-                && data.normalHistoryFilled >= data.MIN_FREEZE_HISTORY_SIZE) {
+        if (data.combatPacketHistoryFilled >= PlayerData.MIN_HISTORY_SIZE
+                && data.normalPacketHistoryFilled >= PlayerData.MIN_HISTORY_SIZE) {
+            
+            double combatAvg = calculateAverage(data.combatMovementPacketHistory, data.combatPacketHistoryFilled);
+            double normalAvg = calculateAverage(data.normalMovementPacketHistory, data.normalPacketHistoryFilled);
+            
+            double combatZeroRate = calculateZeroRate(data.combatZeroPacketHistory, data.combatPacketHistoryFilled);
+            double normalZeroRate = calculateZeroRate(data.normalZeroPacketHistory, data.normalPacketHistoryFilled);
+            
+            data.lastCombatPacketAverage = combatAvg;
+            data.lastNormalPacketAverage = normalAvg;
+            data.lastCombatZeroRate = combatZeroRate;
+            data.lastNormalZeroRate = normalZeroRate;
 
-            double combatRate = data.getCombatFreezeRate();
-            double normalRate = data.getNormalFreezeRate();
+            double zeroDiff = combatZeroRate - normalZeroRate;
+            double zeroRatio = combatZeroRate / Math.max(normalZeroRate, 0.01D);
+            
+            boolean suspiciousPattern = 
+                    combatZeroRate >= PlayerData.MIN_ZERO_RATE_COMBAT &&
+                    zeroDiff >= PlayerData.MIN_ZERO_DIFF &&
+                    zeroRatio >= PlayerData.ZERO_RATIO_THRESHOLD &&
+                    combatAvg < normalAvg*PlayerData.SUSPICIOUS_THRESHOLD;
 
-            double diff = combatRate - normalRate;
-            double ratio = combatRate / Math.max(normalRate, 0.01D);
+            if (suspiciousPattern && !data.isSuspicious) {
+                data.isSuspicious = true;
+                resetVl(data);
+                debug("[S] %s marked as suspicious - CombatZero: %.2f, NormalZero: %.2f, Diff: %.2f, Ratio: %.2f",
+                        player.getName(), combatZeroRate, normalZeroRate, zeroDiff, zeroRatio);
+            } else if (!suspiciousPattern && data.isSuspicious) {
+                data.isSuspicious = false;
+                resetVl(data);
+                debug("[S] %s no longer suspicious", player.getName());
+            }
 
-            System.out.println("[S] Combat rate: " + combatRate
-                    + " normalRate: " + normalRate
-                    + " diff: " + diff
-                    + " ratio: " + ratio);
+            if (data.isSuspicious && data.inCombat) {
+                double average = data.inCombat
+                        ? data.lastCombatPacketAverage
+                        : data.lastNormalPacketAverage;
 
-            boolean suspicious =
-                    diff >= 0.10D &&
-                            ratio >= 3.0D;
+                boolean isBurst =
+                        data.movementPacketsThisTick >= PlayerData.MIN_BURST_PACKETS
+                                && data.movementPacketsThisTick >= average * PlayerData.BURST_RATIO;
 
-            System.out.println("[S] Detected suspicious lag: " + suspicious
-                    + " patternVl: " + data.lagRangePatternVl);
+                if (isBurst && data.consecutiveZeroTicks >= 2) {
+                    long now = System.currentTimeMillis();
+                    if (now - data.lastVlIncreaseAt >= 500L) {
+                        data.lagRangeVl++;
+                        data.lastVlIncreaseAt = now;
+                        debug("[S] %s VL++ to %d (Burst after freeze: %d packets after %d zero ticks)",
+                                player.getName(), data.lagRangeVl, currentPackets, data.consecutiveZeroTicks);
+                        
+                        if (data.lagRangeVl >= PlayerData.LAG_RANGE_VL_ALERT) {
+                            alert(player, LAG_RANGE);
+                            data.lagRangeVl = 0;
+                        }
+                    }
+                }
+            }
 
-            if (suspicious) {
-                data.lagRangePatternVl++;
+            if (isZeroPacket) {
+                data.consecutiveZeroTicks++;
             } else {
-                data.lagRangePatternVl = Math.max(0, data.lagRangePatternVl - 1);
-            }
-
-            if (data.lagRangePatternVl >= 4) {
-                System.out.println("[S] " + player.getName() + "flagged LagRange");
-                alert(player, LAG_RANGE);
+                data.consecutiveZeroTicks = 0;
             }
         }
-
-        data.serverPosX = serverPosX;
-        data.serverPosZ = serverPosZ;
     }
 
     private boolean isLagRangeEligible(EntityPlayer player) {
@@ -306,6 +386,24 @@ public final class Anticheat {
                 && !player.isInLava()
                 && !player.isRiding()
                 && !AnticheatUtils.onLadder(player);
+    }
+
+    private double calculateAverage(int[] history, int filled) {
+        if (filled == 0) return 0.0D;
+        long sum = 0;
+        for (int i = 0; i < filled; i++) {
+            sum += history[i];
+        }
+        return (double) sum / filled;
+    }
+
+    private double calculateZeroRate(boolean[] history, int filled) {
+        if (filled == 0) return 0.0D;
+        int zeroCount = 0;
+        for (int i = 0; i < filled; i++) {
+            if (history[i]) zeroCount++;
+        }
+        return (double) zeroCount / filled;
     }
 
     @SuppressWarnings("unchecked")
@@ -328,29 +426,10 @@ public final class Anticheat {
 
         for (EntityPlayer other : nearby) {
 
-            if (other == player)
-                continue;
-
-            if (other.isDead)
-                continue;
-
-            if (player.getDistanceSqToEntity(other)
-                    > NEARBY_ENEMY_RANGE * NEARBY_ENEMY_RANGE)
-                continue;
-
             NetworkPlayerInfo info =
                     mc.getNetHandler().getPlayerInfo(other.getUniqueID());
 
-            if (info == null)
-                continue;
-
             GameProfile profile = info.getGameProfile();
-
-            if (profile == null)
-                continue;
-
-            if (profile.getId() != null && profile.getId().version() == 2)
-                continue;
 
             String name = profile.getName();
 
@@ -363,14 +442,33 @@ public final class Anticheat {
                     .trim()
                     .replaceAll("\\s+", "");
 
+            Team otherTeam = other.getTeam();
+
+            if (other == player)
+                continue;
+
+            if (other.isDead)
+                continue;
+
+            if (player.getDistanceSqToEntity(other)
+                    > NEARBY_ENEMY_RANGE * NEARBY_ENEMY_RANGE)
+                continue;
+
+            if (info == null)
+                continue;
+
+            if (profile == null)
+                continue;
+
+            if (profile.getId() != null && profile.getId().version() == 2)
+                continue;
+
             if (clean.contains("[NPC]")
                     || name.contains("[NPC]"))
                 continue;
 
             if (info.getResponseTime() <= 0)
                 continue;
-
-            Team otherTeam = other.getTeam();
 
             if (playerTeam != null
                     && otherTeam != null
@@ -442,5 +540,49 @@ public final class Anticheat {
         try {
             System.out.printf(fmt + "%n", args);
         } catch (Throwable ignored) {}
+    }
+
+    private void resetVl(PlayerData data) {
+        data.lagRangeVl = 0;
+        data.consecutiveZeroTicks = 0;
+    }
+
+    private void trackMovementPacket(Packet packet) {
+        if (!(packet instanceof S14PacketEntity
+                || packet instanceof S14PacketEntity.S15PacketEntityRelMove
+                || packet instanceof S14PacketEntity.S16PacketEntityLook
+                || packet instanceof S14PacketEntity.S17PacketEntityLookMove
+                || packet instanceof S19PacketEntityHeadLook)) {
+            return;
+        }
+
+        int entityId = getPacketEntityId(packet);
+        if (entityId == -1) return;
+
+        for (EntityPlayer player : mc.theWorld.playerEntities) {
+            if (player.getEntityId() == entityId) {
+                PlayerData data = getData(player);
+                data.movementPacketsThisTick++;
+                break;
+            }
+        }
+    }
+
+    private int getPacketEntityId(Packet packet) {
+        try {
+            Field field = packet.getClass().getDeclaredField("entityId");
+            field.setAccessible(true);
+            return field.getInt(packet);
+        } catch (NoSuchFieldException e) {
+            try {
+                Field field = packet.getClass().getDeclaredField("field_145963_a");
+                field.setAccessible(true);
+                return field.getInt(packet);
+            } catch (Exception ignored) {
+                return -1;
+            }
+        } catch (Exception ignored) {
+            return -1;
+        }
     }
 }
