@@ -1,6 +1,7 @@
 package com.konayuki.statflex.anticheat;
 
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemBlock;
 
 final class PlayerData {
     int fastTick;
@@ -37,7 +38,6 @@ final class PlayerData {
     static final double MIN_ZERO_RATE_COMBAT = 0.30D;
     static final double MIN_ZERO_DIFF = 0.20D;
     static final double ZERO_RATIO_THRESHOLD = 2.5D;
-    static final double SUSPICIOUS_THRESHOLD = 0.5D;
 
     int combatPacketHistoryIndex;
     int combatPacketHistoryFilled;
@@ -65,4 +65,73 @@ final class PlayerData {
     final int[] normalMovementPacketHistory = new int[PACKET_HISTORY_SIZE];
     final boolean[] combatZeroPacketHistory = new boolean[PACKET_HISTORY_SIZE];
     final boolean[] normalZeroPacketHistory = new boolean[PACKET_HISTORY_SIZE];
+
+        void update(EntityPlayer player) {
+            int currentTicks = player.ticksExisted;
+            posX = player.posX - player.prevPosX;
+            posY = player.posY - player.prevPosY;
+            posZ = player.posZ - player.prevPosZ;
+            speed = Math.max(Math.abs(posX), Math.abs(posZ));
+
+            pushSpeedHistory(speed);
+
+            if (speed >= 0.07D) {
+                fastTick++;
+                ticksExisted = currentTicks;
+            } else {
+                fastTick = 0;
+            }
+
+            if (Math.abs(posY) >= 0.1D) {
+                aboveVoidTicks = currentTicks;
+            }
+
+            if (player.isSneaking()) {
+                lastSneakTick = currentTicks;
+            }
+
+            if (player.isSwingInProgress && player.isBlocking()) {
+                autoBlockTicks++;
+            } else {
+                autoBlockTicks = 0;
+            }
+
+            if (player.isSprinting() && player.isUsingItem()) {
+                noSlowTicks++;
+            } else {
+                noSlowTicks = 0;
+            }
+
+            if (player.rotationPitch >= 70.0F
+                    && player.getHeldItem() != null
+                    && player.getHeldItem().getItem() instanceof ItemBlock) {
+                if (AnticheatUtils.getSprintingTicksLeft(player) == 1) {
+                    if (!sneaking && player.isSneaking()) {
+                        sneakTicks++;
+                    } else {
+                        sneakTicks = 0;
+                    }
+                }
+            } else {
+                sneakTicks = 0;
+            }
+        }
+
+        void updateSneak(EntityPlayer player) {
+            sneaking = player.isSneaking();
+        }
+
+        void updateServerPos(EntityPlayer player) {
+            serverPosX = AnticheatUtils.getServerPosX(player);
+            serverPosY = AnticheatUtils.getServerPosY(player);
+            serverPosZ = AnticheatUtils.getServerPosZ(player);
+        }
+
+        private void pushSpeedHistory(double value) {
+            speedHistory[speedHistoryIndex] = value;
+            speedHistoryIndex = (speedHistoryIndex + 1) % SPEED_HISTORY_SIZE;
+            if (speedHistoryFilled < SPEED_HISTORY_SIZE) {
+                speedHistoryFilled++;
+            }
+        }
 }

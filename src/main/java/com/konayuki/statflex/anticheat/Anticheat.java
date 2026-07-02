@@ -71,6 +71,10 @@ public final class Anticheat {
 
             PlayerData data = getData(player);
 
+            data.update(player);
+            data.updateServerPos(player);
+            data.updateSneak(player);
+
             updatePlayerData(player, data);
             updateCombatState(player, data);
             checkLagRange(player, data);
@@ -85,6 +89,7 @@ public final class Anticheat {
     public void onReceivePacket(ReceivedPacketDetector event) {
         lastClientBoundPacket = System.currentTimeMillis();
         trackMovementPacket(event.getPacket());
+        debug("[S] Packet: " + event.getPacket().getClass().getName());
     }
 
     @SubscribeEvent
@@ -333,8 +338,7 @@ public final class Anticheat {
             boolean suspiciousPattern = 
                     combatZeroRate >= PlayerData.MIN_ZERO_RATE_COMBAT &&
                     zeroDiff >= PlayerData.MIN_ZERO_DIFF &&
-                    zeroRatio >= PlayerData.ZERO_RATIO_THRESHOLD &&
-                    combatAvg < normalAvg*PlayerData.SUSPICIOUS_THRESHOLD;
+                    zeroRatio >= PlayerData.ZERO_RATIO_THRESHOLD;
 
             if (suspiciousPattern && !data.isSuspicious) {
                 data.isSuspicious = true;
@@ -353,8 +357,8 @@ public final class Anticheat {
                         : data.lastNormalPacketAverage;
 
                 boolean isBurst =
-                        data.movementPacketsThisTick >= PlayerData.MIN_BURST_PACKETS
-                                && data.movementPacketsThisTick >= average * PlayerData.BURST_RATIO;
+                        currentPackets >= PlayerData.MIN_BURST_PACKETS &&
+                                currentPackets >= average * PlayerData.BURST_RATIO;
 
                 if (isBurst && data.consecutiveZeroTicks >= 2) {
                     long now = System.currentTimeMillis();
@@ -574,6 +578,7 @@ public final class Anticheat {
         try {
             Field field = packet.getClass().getDeclaredField("entityId");
             field.setAccessible(true);
+            debug("[S ]EntityID: " + getPacketEntityId(packet));
             return field.getInt(packet);
         } catch (NoSuchFieldException e) {
             try {
