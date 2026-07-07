@@ -1,7 +1,7 @@
 {
   "required": true,
   "minVersion": "0.7.10",
-  "package": "com.konayuki.statflex.anticheat.mixin",
+  "package": "com.konayuki.statflex.utils.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [],
   "client": [],

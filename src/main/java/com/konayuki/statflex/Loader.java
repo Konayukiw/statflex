@@ -1,5 +1,7 @@
 package com.konayuki.statflex;
 
+import com.konayuki.statflex.utils.Debug;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.security.CodeSource;
@@ -13,7 +15,7 @@ public class Loader {
             }
 
             JarLauncher.launch(codeSource.getLocation(), Loader.class.getClassLoader());
-            System.out.println("statflex successfully injected!");
+            Debug.log("statflex successfully injected!");
         } catch (Throwable throwable) {
             throwable.printStackTrace();
         }
@@ -28,7 +30,7 @@ public class Loader {
             }
 
             JarLauncher.launch(tempJar.toURI().toURL(), Loader.class.getClassLoader());
-            System.out.println("statflex successfully injected!");
+            Debug.log("statflex successfully injected!");
         } catch (Throwable throwable) {
             throwable.printStackTrace();
         }

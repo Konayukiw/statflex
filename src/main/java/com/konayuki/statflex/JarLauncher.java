@@ -52,7 +52,7 @@ final class JarLauncher {
         }
 
         for (ClassLoader candidate : candidates) {
-            if (canLoad(candidate, "net.minecraft.client.Minecraft")
+            if (canLoad(candidate, "net.minecraft.mod.Minecraft")
                     && canLoad(candidate, "net.minecraftforge.common.MinecraftForge")) {
                 return candidate;
             }

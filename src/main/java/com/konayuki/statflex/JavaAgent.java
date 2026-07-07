@@ -1,5 +1,7 @@
 package com.konayuki.statflex;
 
+import com.konayuki.statflex.utils.Debug;
+
 import java.lang.instrument.Instrumentation;
 import java.net.URL;
 import java.security.CodeSource;
@@ -27,7 +29,7 @@ public final class JavaAgent {
     private static void launch() {
         try {
             JarLauncher.launch(getOwnJarUrl(), Thread.currentThread().getContextClassLoader());
-            System.out.println("[S] Agent entrypoint completed.");
+            Debug.log("Agent entrypoint completed.");
         } catch (Throwable throwable) {
             throwable.printStackTrace();
         }

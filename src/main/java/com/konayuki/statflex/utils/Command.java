@@ -1,20 +1,14 @@
-package com.konayuki.statflex.command;
+package com.konayuki.statflex.utils;
 
-import com.konayuki.statflex.client.ChatManager;
-import com.konayuki.statflex.client.ChatOverlayManager;
-import com.konayuki.statflex.config.ApiKeyManager;
-import com.konayuki.statflex.config.Toggles;
-import com.konayuki.statflex.config.Settings;
-import com.konayuki.statflex.feature.autogg.AutoGG;
-import com.konayuki.statflex.feature.skin.SkinSaver;
-import com.konayuki.statflex.system.Messages;
-import com.konayuki.statflex.feature.namehistory.NameHistory;
-import com.konayuki.statflex.stats.bedwars.BedwarsFetcher;
-import com.konayuki.statflex.stats.duels.DuelsFetcher;
-import com.konayuki.statflex.stats.duels.DuelsFetcherUpdated;
-import com.konayuki.statflex.stats.skywars.SkywarsFetcher;
-import com.konayuki.statflex.update.UpdateChecker;
-import com.konayuki.statflex.update.UpdateGuiScreen;
+import com.konayuki.statflex.features.autogg.AutoGG;
+import com.konayuki.statflex.features.skin.Skin;
+import com.konayuki.statflex.features.namehistory.NameHistory;
+import com.konayuki.statflex.features.bedwars.Bedwars;
+import com.konayuki.statflex.features.duels.Duels;
+import com.konayuki.statflex.features.duels.DuelsUpdated;
+import com.konayuki.statflex.features.skywars.Skywars;
+import com.konayuki.statflex.update.Update;
+import com.konayuki.statflex.update.UpdateGui;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.ICommand;
@@ -33,7 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class Commands implements ICommand {
+public class Command implements ICommand {
 
     private final List<String> aliases = Arrays.asList("s");
 
@@ -50,7 +44,7 @@ public class Commands implements ICommand {
             return;
         }
 
-        ClientCommandHandler.instance.registerCommand(new Commands());
+        ClientCommandHandler.instance.registerCommand(new Command());
         registered = true;
     }
 
@@ -72,23 +66,22 @@ public class Commands implements ICommand {
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
         if (args.length < 1) {
-            ChatManager.send(Messages.USAGE);
+            Chat.send(Messages.USAGE);
             return;
         }
 
         switch (args[0].toLowerCase()) {
             case "api":
                 if (args.length < 2) {
-                    ChatManager.send(Messages.USAGE);
+                    Chat.send(Messages.USAGE);
                     return;
                 }
                 String key = args[1];
 
-                ApiKeyManager.setApiKey(args[1]);
-                ApiKeyManager.setApiKey(key);
+                HypixelApiUtils.setApiKey(key);
                 Settings.getInstance().apiKey = key;
                 Settings.save();
-                ChatManager.send(Messages.API_SET);
+                Chat.send(Messages.API_SET);
                 break;
 
             case "flag":
@@ -99,36 +92,36 @@ public class Commands implements ICommand {
             case "bw":
             case "bedwars":
                 if (args.length < 2) {
-                    ChatManager.send(Messages.USAGE);
+                    Chat.send(Messages.USAGE);
                     return;
                 }
                 String bwName = args[1];
                 String bwMode = (args.length >= 3 && args[2].startsWith("-")) ? args[2].substring(1) : null;
-                BedwarsFetcher.fetchStats(bwName, bwMode);
+                Bedwars.fetchStats(bwName, bwMode);
                 break;
 
             case "sw":
             case "skywars":
                 if (args.length < 2) {
-                    ChatManager.send(Messages.USAGE);
+                    Chat.send(Messages.USAGE);
                     return;
                 }
                 String swName = args[1];
                 String swMode = (args.length >= 3 && args[2].startsWith("-")) ? args[2].substring(1) : null;
-                SkywarsFetcher.fetchStats(swName, swMode);
+                Skywars.fetchStats(swName, swMode);
                 break;
 
             case "duels":
                 if (args.length < 2) {
-                    ChatManager.send(Messages.USAGE);
+                    Chat.send(Messages.USAGE);
                     return;
                 }
                 String duelsName = args[1];
                 String duelsMode = (args.length >= 3 && args[2].startsWith("-")) ? args[2].substring(1) : null;
                 if (Toggles.duelsUpdate) {
-                    DuelsFetcherUpdated.fetchStats(duelsName, duelsMode);
+                    DuelsUpdated.fetchStats(duelsName, duelsMode);
                 } else {
-                    DuelsFetcher.fetchStats(duelsName, duelsMode);
+                    Duels.fetchStats(duelsName, duelsMode);
                 }
                 break;
 
@@ -157,7 +150,7 @@ public class Commands implements ICommand {
 
             case "skin":
                 if (args.length < 2) {
-                    ChatManager.send(Messages.USAGE);
+                    Chat.send(Messages.USAGE);
                     return;
                 }
                 String skinPlayerName = args[1];
@@ -166,7 +159,7 @@ public class Commands implements ICommand {
                 if (args.length >= 3 && args[2].equalsIgnoreCase("-npcskin")) {
                     useNpcSkin = true;
                 }
-                SkinSaver.savePlayerSkinAsync(skinPlayerName, useNpcSkin);
+                Skin.savePlayerSkinAsync(skinPlayerName, useNpcSkin);
                 break;
 
             case "autogg":
@@ -192,7 +185,7 @@ public class Commands implements ICommand {
 
             case "warn":
                 if (args.length < 2) {
-                    ChatManager.send("§8[§cS§8]§7 Usage: /s warn [Level] [FKDR] / /s warn [Level] / /s warn [FKDR]");
+                    Chat.send("§8[§cS§8]§7 Usage: /s warn [Level] [FKDR] / /s warn [Level] / /s warn [FKDR]");
                     return;
                 }
                 try {
@@ -202,45 +195,45 @@ public class Commands implements ICommand {
                         if (args[1].contains(".")) {
                             settings.warnLevel = 0;
                             settings.warnFKDR = Double.parseDouble(args[1]);
-                            ChatManager.send("§8[§cS§8]§7 Players higher than §e§l" + settings.warnFKDR + " FKDR §7will be warned.");
+                            Chat.send("§8[§cS§8]§7 Players higher than §e§l" + settings.warnFKDR + " FKDR §7will be warned.");
                         } else {
                             settings.warnLevel = Integer.parseInt(args[1]);
                             settings.warnFKDR = 0;
-                            ChatManager.send("§8[§cS§8]§7 Players higher than §e§l✫" + settings.warnLevel + "§7 will be warned.");
+                            Chat.send("§8[§cS§8]§7 Players higher than §e§l✫" + settings.warnLevel + "§7 will be warned.");
                         }
                     } else {
                         settings.warnLevel = Integer.parseInt(args[1]);
                         settings.warnFKDR = Double.parseDouble(args[2]);
-                        ChatManager.send("§8[§cS§8]§7 Players higher than §e§l✫" + settings.warnLevel + "§7, §e§l" + settings.warnFKDR + " FKDR §7will be warned.");
+                        Chat.send("§8[§cS§8]§7 Players higher than §e§l✫" + settings.warnLevel + "§7, §e§l" + settings.warnFKDR + " FKDR §7will be warned.");
                     }
 
                     Settings.save();
                 } catch (NumberFormatException e) {
-                    ChatManager.send("§8[§cS§8]§7 Invalid number format.");
+                    Chat.send("§8[§cS§8]§7 Invalid number format.");
                 }
                 break;
 
             case "update": {
-                ChatManager.send("§8[§cS§8]§7 Checking for updates...");
+                Chat.send("§8[§cS§8]§7 Checking for updates...");
 
                 new Thread(() -> {
-                    UpdateChecker.UpdateState state = UpdateChecker.checkNow();
+                    Update.UpdateState state = Update.checkNow();
 
                     Minecraft.getMinecraft().addScheduledTask(() -> {
                         switch (state) {
                             case UP_TO_DATE:
-                                ChatManager.send("§8[§cS§8]§7 statflex is up-to-date!");
+                                Chat.send("§8[§cS§8]§7 statflex is up-to-date!");
                                 break;
 
                             case UPDATE_AVAILABLE:
-                                ChatManager.send("§8[§cS§8]§7 Update is available.");
+                                Chat.send("§8[§cS§8]§7 Update is available.");
                                 Minecraft.getMinecraft().displayGuiScreen(
-                                        new UpdateGuiScreen()
+                                        new UpdateGui()
                                 );
                                 break;
 
                             case ERROR:
-                                ChatManager.send("§8[§cS§8]§7 Failed to check updates.");
+                                Chat.send("§8[§cS§8]§7 Failed to check updates.");
                                 break;
                         }
                     });
@@ -256,35 +249,35 @@ public class Commands implements ICommand {
                     File dir = new File(rawPath);
 
                     if (!dir.isAbsolute()) {
-                        ChatManager.send("§8[§cS§8]§7 No relative paths are allowed.");
+                        Chat.send("§8[§cS§8]§7 No relative paths are allowed.");
                         break;
                     }
 
                     try {
                         dir = dir.getCanonicalFile();
                     } catch (IOException e) {
-                        ChatManager.send("§8[§cS§8]§7 Invalid path.");
+                        Chat.send("§8[§cS§8]§7 Invalid path.");
                         break;
                     }
 
                     if (!dir.exists() && !dir.mkdirs()) {
-                        ChatManager.send("§8[§cS§8]§7 Failed to create directory.");
-                        ChatManager.send("§8[§cS§8]§7 statflex may fail configure files under C:/Windows or C:/Program Files.");
+                        Chat.send("§8[§cS§8]§7 Failed to create directory.");
+                        Chat.send("§8[§cS§8]§7 statflex may fail configure files under C:/Windows or C:/Program Files.");
                         break;
                     }
 
                     if (!dir.isDirectory()) {
-                        ChatManager.send("§8[§cS§8]§7 Select a directory.");
+                        Chat.send("§8[§cS§8]§7 Select a directory.");
                         break;
                     }
 
                     Settings.getInstance().setSkinSaveDir(dir);
 
-                    ChatManager.send("§8[§cS§8]§7 Skin save directory set to:" + "§e" + dir.getAbsolutePath());
+                    Chat.send("§8[§cS§8]§7 Skin save directory set to:" + "§e" + dir.getAbsolutePath());
                     break;
 
                 } else {
-                    ChatManager.send("§8[§cS§8]§7 Usage: /s dir §e[Path]§7 to determine the path.");
+                    Chat.send("§8[§cS§8]§7 Usage: /s dir §e[Path]§7 to determine the path.");
                     break;
                 }
 
@@ -313,12 +306,12 @@ public class Commands implements ICommand {
                             Toggles.toggleKeepWho(true);
                             break;
                         default:
-                            ChatManager.send(Messages.USAGE);
+                            Chat.send(Messages.USAGE);
                             return;
                     }
                     sendSettings();
                 } else {
-                    ChatManager.send(Messages.INVALID_COMMAND);
+                    Chat.send(Messages.INVALID_COMMAND);
                 }
                 break;
 
@@ -327,46 +320,46 @@ public class Commands implements ICommand {
                 break;
 
             case "help":
-                ChatManager.send("§8[§cS§8] §7Available commands:");
-                ChatManager.send("§c || §7/s api §b[API Key] §8: §7Sets Hypixel API Key to enable stats viewer.");
-                ChatManager.send("§c || §7- You must get API Key from §ehttps://developer.hypixel.net");
-                ChatManager.send("§c || §7/s flag §8: §7Sets Anticheat flag interval. It's up to you.");
-                ChatManager.send("§c || §7/s bw §e[Player] -[Mode] §8: §7Shows their Bedwars stats in-game.");
-                ChatManager.send("§c || §7/s sw §e[Player] -[Mode] §8: §7Shows their Skywars stats in-game.");
-                ChatManager.send("§c || §7/s duels §e[Player] -[Mode] §8: §7Shows their Duels stats in-game.");
-                ChatManager.send("§c || §7/s nh §e[Player] §8: §7Shows their Name History.");
-                ChatManager.send("§c || §7/s autogg §8: §7Shows current AutoGG messages.");
-                ChatManager.send("§c || §7/s autogg §e[Message] §8: §7Add new AutoGG message.");
-                ChatManager.send("§c || §7- Keep it under 9 messages or get blocked for spamming.");
-                ChatManager.send("§c || §7/s list §8: §7Toggles whether the stats list is displayed with /who.");
-                ChatManager.send("§c || §7/s auto §8: §7Toggles auto stats viewer for Duels.");
-                ChatManager.send("§c || §7/s denick §8: §7Toggles Denicker which can denick original skin users.");
-                ChatManager.send("§c || §7- It's possibly bannable, use at your own risk.");
-                ChatManager.send("§c || §7/s keepwho §8: §7Toggles whether the original /who message remains visible.");
-                ChatManager.send("§c || §7/s skin §e[Player] §8: §7Download their skin locally.");
-                ChatManager.send("§c || §7- Add -npcSkin to force saving NPC or Nick Skin if they have existing username.");
-                ChatManager.send("§c || §7/s dir §e[Path] §8: §7Determines the directory to save skin files.");
-                ChatManager.send("§c || §7/s add §e[Player] [Reason] §8: §7Reports cheaters to share and notify when you queued them.");
-                ChatManager.send("§c || §7/s settings §8: §7Opens togglable settings");
-                ChatManager.send("§c || §7/s secure §8: §7Toggles secure connections.");
-                ChatManager.send("§c || §7- This should be disabled if you have errors while getting stats.");
-                ChatManager.send("§c || §7- Usually, disabling this is not recommended as it can be insecure.");
-                ChatManager.send(" ");
-                ChatManager.send("§c || §7/s update §8: §7Check for latest version of the mod.");
-                ChatManager.send("§c || §7/s help §8: §7Opens this help");
-                ChatManager.send("§c || §7If you don't understand well, watch introduction video!");
-                ChatManager.send("§c || §7 §ehttps://www.youtube.com/watch?v=(UPLOAD_SOON)");
+                Chat.send("§8[§cS§8] §7Available commands:");
+                Chat.send("§c || §7/s api §b[API Key] §8: §7Sets Hypixel API Key to enable stats viewer.");
+                Chat.send("§c || §7- You must get API Key from §ehttps://developer.hypixel.net");
+                Chat.send("§c || §7/s flag §8: §7Sets Anticheat flag interval. It's up to you.");
+                Chat.send("§c || §7/s bw §e[Player] -[Mode] §8: §7Shows their Bedwars stats in-game.");
+                Chat.send("§c || §7/s sw §e[Player] -[Mode] §8: §7Shows their Skywars stats in-game.");
+                Chat.send("§c || §7/s duels §e[Player] -[Mode] §8: §7Shows their Duels stats in-game.");
+                Chat.send("§c || §7/s nh §e[Player] §8: §7Shows their Name History.");
+                Chat.send("§c || §7/s autogg §8: §7Shows current AutoGG messages.");
+                Chat.send("§c || §7/s autogg §e[Message] §8: §7Add new AutoGG message.");
+                Chat.send("§c || §7- Keep it under 9 messages or get blocked for spamming.");
+                Chat.send("§c || §7/s list §8: §7Toggles whether the stats list is displayed with /who.");
+                Chat.send("§c || §7/s auto §8: §7Toggles auto stats viewer for Duels.");
+                Chat.send("§c || §7/s denick §8: §7Toggles Denicker which can denick original skin users.");
+                Chat.send("§c || §7- It's possibly bannable, use at your own risk.");
+                Chat.send("§c || §7/s keepwho §8: §7Toggles whether the original /who message remains visible.");
+                Chat.send("§c || §7/s skin §e[Player] §8: §7Download their skin locally.");
+                Chat.send("§c || §7- Add -npcSkin to force saving NPC or Nick Skin if they have existing username.");
+                Chat.send("§c || §7/s dir §e[Path] §8: §7Determines the directory to save skin files.");
+                Chat.send("§c || §7/s add §e[Player] [Reason] §8: §7Reports cheaters to share and notify when you queued them.");
+                Chat.send("§c || §7/s settings §8: §7Opens togglable settings");
+                Chat.send("§c || §7/s secure §8: §7Toggles secure connections.");
+                Chat.send("§c || §7- This should be disabled if you have errors while getting stats.");
+                Chat.send("§c || §7- Usually, disabling this is not recommended as it can be insecure.");
+                Chat.send(" ");
+                Chat.send("§c || §7/s update §8: §7Check for latest version of the mod.");
+                Chat.send("§c || §7/s help §8: §7Opens this help");
+                Chat.send("§c || §7If you don't understand well, watch introduction video!");
+                Chat.send("§c || §7 §ehttps://www.youtube.com/watch?v=(UPLOAD_SOON)");
                 break;
 
             default:
-                ChatManager.send(Messages.INVALID_COMMAND);
+                Chat.send(Messages.INVALID_COMMAND);
         }
     }
 
     private void handleFlagCommand(ICommandSender sender, String[] args) {
         if (args.length < 2) {
-            ChatManager.send(Messages.USAGE);
-            ChatManager.send("§c || §7Current value: §e§l" + Settings.getInstance().getFlagInterval() + "§7s");
+            Chat.send(Messages.USAGE);
+            Chat.send("§c || §7Current value: §e§l" + Settings.getInstance().getFlagInterval() + "§7s");
             return;
         }
 
@@ -377,9 +370,9 @@ public class Commands implements ICommand {
 
             Settings.getInstance().setFlagInterval(value);
 
-            ChatManager.send("§c || §7Set flag interval to §e§l" + value + "§7s");
+            Chat.send("§c || §7Set flag interval to §e§l" + value + "§7s");
         } catch (NumberFormatException e) {
-            ChatManager.send("§c || §7Invalid value. Min: 0, Max: 20");
+            Chat.send("§c || §7Invalid value. Min: 0, Max: 20");
         }
     }
 
@@ -416,11 +409,11 @@ public class Commands implements ICommand {
                 root.appendSibling(line);
             }
 
-            ChatOverlayManager.registerMessage(SETTINGS_CHAT_ID, root);
+            ChatUtils.registerMessage(SETTINGS_CHAT_ID, root);
 
         } catch (Exception e) {
             e.printStackTrace();
-            ChatManager.send("§8[§cS§8] §7Failed to open settings.");
+            Chat.send("§8[§cS§8] §7Failed to open settings.");
         }
     }
 
