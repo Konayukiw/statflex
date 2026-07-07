@@ -1,7 +1,7 @@
 package com.konayuki.statflex.features.skin;
 
 import com.konayuki.statflex.utils.Chat;
-import com.konayuki.statflex.utils.HttpSecurityUtil;
+import com.konayuki.statflex.utils.HttpSecurityUtils;
 import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.utils.Settings;
 import com.konayuki.statflex.utils.Toggles;
@@ -136,7 +136,7 @@ public class Skin {
             conn.setRequestProperty("User-Agent", "Mozilla/5.0");
 
             if (Toggles.ignoreCertificates && conn instanceof HttpsURLConnection) {
-                HttpSecurityUtil.trustAllCertificates((HttpsURLConnection) conn);
+                HttpSecurityUtils.trustAllCertificates((HttpsURLConnection) conn);
             }
 
             if (conn.getResponseCode() != 200) {
@@ -175,7 +175,7 @@ public class Skin {
             conn.setRequestProperty("User-Agent", "Mozilla/5.0");
 
             if (Toggles.ignoreCertificates && conn instanceof HttpsURLConnection) {
-                HttpSecurityUtil.trustAllCertificates((HttpsURLConnection) conn);
+                HttpSecurityUtils.trustAllCertificates((HttpsURLConnection) conn);
             }
 
             BufferedImage image;

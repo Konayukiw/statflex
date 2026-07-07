@@ -2,7 +2,7 @@ package com.konayuki.statflex.features.namehistory;
 
 import com.konayuki.statflex.utils.Chat;
 import com.konayuki.statflex.utils.Format;
-import com.konayuki.statflex.utils.HttpSecurityUtil;
+import com.konayuki.statflex.utils.HttpSecurityUtils;
 import com.konayuki.statflex.utils.Messages;
 
 import com.google.gson.JsonArray;
@@ -41,7 +41,7 @@ public class NameHistory {
                 // connection.setRequestProperty("Accept-Language", "en-US,en;q=0.9");
                 // connection.setRequestProperty("Referer", "https://crafty.gg/");
 
-                HttpSecurityUtil.applyIfIgnoringCertificates(connection);
+                HttpSecurityUtils.applyIfIgnoringCertificates(connection);
 
                 InputStreamReader reader = new InputStreamReader(connection.getInputStream());
                 JsonParser parser = new JsonParser();

@@ -16,7 +16,7 @@ public final class ProfileUtils {
         try {
             URL url = new URL("https://crafthead.net/profile/" + name);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            HttpSecurityUtil.applyIfIgnoringCertificates(connection);
+            HttpSecurityUtils.applyIfIgnoringCertificates(connection);
 
             connection.setRequestMethod("GET");
             connection.setRequestProperty(
