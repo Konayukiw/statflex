@@ -2,13 +2,13 @@ package com.konayuki.statflex.features.namehistory;
 
 import com.konayuki.statflex.utils.Chat;
 import com.konayuki.statflex.utils.Format;
-import com.konayuki.statflex.utils.HttpSecurityUtils;
+import com.konayuki.statflex.utils.HttpSecurityUtil;
 import com.konayuki.statflex.utils.Messages;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.konayuki.statflex.utils.ProfileUtils;
+import com.konayuki.statflex.utils.ProfileUtil;
 
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -21,7 +21,7 @@ public class NameHistory {
     public static void fetchNameHistory(String inputName) {
         new Thread(() -> {
             try {
-                ProfileUtils.PlayerInfo info = ProfileUtils.getPlayerInfo(inputName);
+                ProfileUtil.PlayerInfo info = ProfileUtil.getPlayerInfo(inputName);
                 if (info == null) {
                     Chat.send(Messages.PLAYER_NOT_FOUND + inputName);
                     return;
@@ -41,7 +41,7 @@ public class NameHistory {
                 // connection.setRequestProperty("Accept-Language", "en-US,en;q=0.9");
                 // connection.setRequestProperty("Referer", "https://crafty.gg/");
 
-                HttpSecurityUtils.applyIfIgnoringCertificates(connection);
+                HttpSecurityUtil.applyIfIgnoringCertificates(connection);
 
                 InputStreamReader reader = new InputStreamReader(connection.getInputStream());
                 JsonParser parser = new JsonParser();

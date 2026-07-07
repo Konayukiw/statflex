@@ -2,8 +2,8 @@ package com.konayuki.statflex.features.duels;
 
 import com.konayuki.statflex.utils.Chat;
 import com.konayuki.statflex.utils.Debug;
-import com.konayuki.statflex.utils.HypixelApiUtils;
-import com.konayuki.statflex.utils.ProfileUtils;
+import com.konayuki.statflex.utils.HypixelApiUtil;
+import com.konayuki.statflex.utils.ProfileUtil;
 import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.utils.Format;
 
@@ -66,13 +66,13 @@ public class DuelsUpdated {
     public static void fetchStats(String inputName, String mode, boolean auto) {
         new Thread(() -> {
             try {
-                String apiKey = HypixelApiUtils.getApiKey();
+                String apiKey = HypixelApiUtil.getApiKey();
                 if (apiKey.equals("N/A")) {
                     Chat.send(Messages.INVALID_API);
                     return;
                 }
 
-                ProfileUtils.PlayerInfo info = ProfileUtils.getPlayerInfo(inputName);
+                ProfileUtil.PlayerInfo info = ProfileUtil.getPlayerInfo(inputName);
                 if (info == null) {
                     Debug.log(Messages.FETCH_ERROR + inputName);
                     return;

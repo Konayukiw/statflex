@@ -7,11 +7,11 @@ import net.minecraft.util.IChatComponent;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class ChatUtils {
+public final class ChatUtil {
     private static int nextId = 0;
     private static final Map<Integer, IChatComponent> messages = new HashMap<Integer, IChatComponent>();
 
-    private ChatUtils() {
+    private ChatUtil() {
     }
 
     public static int newMessageId() {

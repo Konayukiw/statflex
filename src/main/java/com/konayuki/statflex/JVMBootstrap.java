@@ -1,9 +1,8 @@
 package com.konayuki.statflex;
 
 import com.konayuki.statflex.features.anticheat.Anticheat;
-import com.konayuki.statflex.features.duels.Duels;
 import com.konayuki.statflex.update.Update;
-import com.konayuki.statflex.update.UpdateGuiUtils;
+import com.konayuki.statflex.update.UpdateGuiUtil;
 import com.konayuki.statflex.utils.*;
 import com.konayuki.statflex.utils.Command;
 import com.konayuki.statflex.features.denick.Denick;
@@ -31,7 +30,7 @@ public final class JVMBootstrap {
     private static BedwarsList bwListStats;
     private static Denick denick;
     private static AutoGG autoGG;
-    private static UpdateGuiUtils updaterGuiHandler;
+    private static UpdateGuiUtil updaterGuiHandler;
     private static DuelsList duelsList;
     private static LocrawManager locrawManager;
 
@@ -64,11 +63,11 @@ public final class JVMBootstrap {
 
             Settings.load();
             Toggles.syncFromSettings(Settings.getInstance());
-            HypixelApiUtils.init();
+            HypixelApiUtil.init();
             registerEventHandlers();
             Command.register();
             Anticheat.register();
-            PacketUtils.register();
+            PacketUtil.register();
             startUpdateCheck();
 
             requestLoadedMessage();
@@ -88,7 +87,7 @@ public final class JVMBootstrap {
             bwListStats = new BedwarsList();
             denick = new Denick();
             autoGG = new AutoGG();
-            updaterGuiHandler = new UpdateGuiUtils();
+            updaterGuiHandler = new UpdateGuiUtil();
             duelsList = new DuelsList();
             locrawManager = LocrawManager.getInstance();
 
@@ -154,7 +153,7 @@ public final class JVMBootstrap {
                 return;
             }
 
-            PacketUtils.ensureInstalled();
+            PacketUtil.ensureInstalled();
             flushLoadedMessage();
         }
     }

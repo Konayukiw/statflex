@@ -1,9 +1,9 @@
 package com.konayuki.statflex.utils;
 
-public final class HypixelApiUtils {
+public final class HypixelApiUtil {
     private static String apiKey = null;
 
-    private HypixelApiUtils() {
+    private HypixelApiUtil() {
     }
 
     public static void init() {

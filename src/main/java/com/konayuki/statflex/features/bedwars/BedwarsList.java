@@ -1,8 +1,8 @@
 package com.konayuki.statflex.features.bedwars;
 
 import com.konayuki.statflex.utils.Chat;
-import com.konayuki.statflex.utils.HypixelApiUtils;
-import com.konayuki.statflex.utils.ProfileUtils;
+import com.konayuki.statflex.utils.HypixelApiUtil;
+import com.konayuki.statflex.utils.ProfileUtil;
 import com.konayuki.statflex.utils.Toggles;
 import com.konayuki.statflex.utils.Settings;
 import com.konayuki.statflex.utils.Messages;
@@ -113,8 +113,8 @@ public class BedwarsList {
         for (String name : playerNames) {
             new Thread(() -> {
                 try {
-                    String apiKey = HypixelApiUtils.getApiKey();
-                    ProfileUtils.PlayerInfo info = ProfileUtils.getPlayerInfo(name);
+                    String apiKey = HypixelApiUtil.getApiKey();
+                    ProfileUtil.PlayerInfo info = ProfileUtil.getPlayerInfo(name);
 
                     if (info == null) {
                         latch.countDown();

@@ -8,15 +8,15 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public final class ProfileUtils {
-    private ProfileUtils() {
+public final class ProfileUtil {
+    private ProfileUtil() {
     }
 
     public static PlayerInfo getPlayerInfo(String name) {
         try {
             URL url = new URL("https://crafthead.net/profile/" + name);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            HttpSecurityUtils.applyIfIgnoringCertificates(connection);
+            HttpSecurityUtil.applyIfIgnoringCertificates(connection);
 
             connection.setRequestMethod("GET");
             connection.setRequestProperty(

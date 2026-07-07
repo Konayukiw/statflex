@@ -15,12 +15,12 @@ import net.minecraft.entity.Entity;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.MathHelper;
 
-public final class AnticheatUtils {
+public final class AnticheatUtil {
     private static final Minecraft mc = Minecraft.getMinecraft();
     private static final Map<String, Field> fieldCache = new HashMap<String, Field>();
     private static final Set<String> missingFields = new HashSet<String>();
 
-    private AnticheatUtils() {
+    private AnticheatUtil() {
     }
 
     public static boolean nullCheck() {

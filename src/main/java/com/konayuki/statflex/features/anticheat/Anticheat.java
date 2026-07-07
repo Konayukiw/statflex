@@ -1,10 +1,7 @@
 package com.konayuki.statflex.features.anticheat;
 
+import com.konayuki.statflex.utils.*;
 import com.konayuki.statflex.utils.event.ReceivedPacketDetector;
-import com.konayuki.statflex.utils.Chat;
-import com.konayuki.statflex.utils.Debug;
-import com.konayuki.statflex.utils.Messages;
-import com.konayuki.statflex.utils.Settings;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.network.NetworkPlayerInfo;
@@ -45,7 +42,7 @@ public final class Anticheat {
     private static boolean registered;
 
     private final Map<UUID, Map<String, Long>> flags = new HashMap<>();
-    private final Map<UUID, com.konayuki.statflex.utils.PlayerUtils> players = new ConcurrentHashMap<UUID, com.konayuki.statflex.utils.PlayerUtils>();
+    private final Map<UUID, PlayerUtil> players = new ConcurrentHashMap<UUID, PlayerUtil>();
     private long lastAlert;
     private long lastClientBoundPacket;
 
@@ -60,7 +57,7 @@ public final class Anticheat {
 
     @SubscribeEvent
     public void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !AnticheatUtils.nullCheck() || mc.isSingleplayer()) {
+        if (event.phase != TickEvent.Phase.END || !AnticheatUtil.nullCheck() || mc.isSingleplayer()) {
             return;
         }
 
@@ -69,7 +66,7 @@ public final class Anticheat {
         for (EntityPlayer player : mc.theWorld.playerEntities) {
             if (!isCheckTarget(player)) continue;
 
-            com.konayuki.statflex.utils.PlayerUtils data = getData(player);
+            PlayerUtil data = getData(player);
 
             data.update(player);
             performCheck(player, data);
@@ -105,17 +102,17 @@ public final class Anticheat {
                 && !player.getName().isEmpty();
     }
 
-    private com.konayuki.statflex.utils.PlayerUtils getData(EntityPlayer player) {
-        com.konayuki.statflex.utils.PlayerUtils data = players.get(player.getUniqueID());
+    private PlayerUtil getData(EntityPlayer player) {
+        PlayerUtil data = players.get(player.getUniqueID());
         if (data == null) {
-            data = new com.konayuki.statflex.utils.PlayerUtils();
+            data = new PlayerUtil();
             data.player = player;
             players.put(player.getUniqueID(), data);
         }
         return data;
     }
 
-    private void updatePlayerData(EntityPlayer player, com.konayuki.statflex.utils.PlayerUtils data) {
+    private void updatePlayerData(EntityPlayer player, PlayerUtil data) {
         data.ticksExisted = player.ticksExisted;
         double dx = player.posX - data.posX;
         double dz = player.posZ - data.posZ;
@@ -127,19 +124,19 @@ public final class Anticheat {
         data.posZ = player.posZ;
         
         data.speedHistory[data.speedHistoryIndex] = data.speed;
-        data.speedHistoryIndex = (data.speedHistoryIndex + 1) % com.konayuki.statflex.utils.PlayerUtils.SPEED_HISTORY_SIZE;
-        if (data.speedHistoryFilled < com.konayuki.statflex.utils.PlayerUtils.SPEED_HISTORY_SIZE) {
+        data.speedHistoryIndex = (data.speedHistoryIndex + 1) % PlayerUtil.SPEED_HISTORY_SIZE;
+        if (data.speedHistoryFilled < PlayerUtil.SPEED_HISTORY_SIZE) {
             data.speedHistoryFilled++;
         }
     }
 
-    private void updateServerPos(EntityPlayer player, com.konayuki.statflex.utils.PlayerUtils data) {
-        data.serverPosX = AnticheatUtils.getServerPosX(player);
-        data.serverPosY = AnticheatUtils.getServerPosY(player);
-        data.serverPosZ = AnticheatUtils.getServerPosZ(player);
+    private void updateServerPos(EntityPlayer player, PlayerUtil data) {
+        data.serverPosX = AnticheatUtil.getServerPosX(player);
+        data.serverPosY = AnticheatUtil.getServerPosY(player);
+        data.serverPosZ = AnticheatUtil.getServerPosZ(player);
     }
 
-    private void updateSneak(EntityPlayer player, com.konayuki.statflex.utils.PlayerUtils data) {
+    private void updateSneak(EntityPlayer player, PlayerUtil data) {
         if (player.isSneaking()) {
             if (!data.sneaking) {
                 data.sneaking = true;
@@ -152,7 +149,7 @@ public final class Anticheat {
         }
     }
 
-    private void performCheck(EntityPlayer player, com.konayuki.statflex.utils.PlayerUtils data) {
+    private void performCheck(EntityPlayer player, PlayerUtil data) {
         if (data.autoBlockTicks >= 10) {
             alert(player, AUTO_BLOCK);
             return;
@@ -179,7 +176,7 @@ public final class Anticheat {
             net.minecraft.util.BlockPos blockPos = player.getPosition().down(2);
             boolean overAir = true;
             for (int i = 0; i < 4; i++) {
-                if (!(AnticheatUtils.getBlock(blockPos) instanceof net.minecraft.block.BlockAir)) {
+                if (!(AnticheatUtil.getBlock(blockPos) instanceof net.minecraft.block.BlockAir)) {
                     overAir = false;
                     break;
                 }
@@ -192,11 +189,11 @@ public final class Anticheat {
         }
 
         if (!player.capabilities.disableDamage
-                && AnticheatUtils.timeBetween(System.currentTimeMillis(), lastClientBoundPacket) <= 200L) {
+                && AnticheatUtil.timeBetween(System.currentTimeMillis(), lastClientBoundPacket) <= 200L) {
 
-            double serverPosX = AnticheatUtils.getServerPosX(player);
-            double serverPosY = AnticheatUtils.getServerPosY(player);
-            double serverPosZ = AnticheatUtils.getServerPosZ(player);
+            double serverPosX = AnticheatUtil.getServerPosX(player);
+            double serverPosY = AnticheatUtil.getServerPosY(player);
+            double serverPosZ = AnticheatUtil.getServerPosZ(player);
 
             if (Double.isNaN(serverPosX) || Double.isNaN(serverPosY) || Double.isNaN(serverPosZ)
                     || Double.isNaN(data.serverPosX) || Double.isNaN(data.serverPosY) || Double.isNaN(data.serverPosZ)) {
@@ -211,9 +208,9 @@ public final class Anticheat {
                     && deltaX <= 10.0D
                     && deltaZ <= 10.0D
                     && deltaY <= 40.0D
-                    && !AnticheatUtils.overVoid(serverPosX, serverPosY, serverPosZ)
-                    && AnticheatUtils.distanceToGround(player) > 3.0D
-                    && !AnticheatUtils.onLadder(player)
+                    && !AnticheatUtil.overVoid(serverPosX, serverPosY, serverPosZ)
+                    && AnticheatUtil.distanceToGround(player) > 3.0D
+                    && !AnticheatUtil.onLadder(player)
                     && !player.isInWater()
                     && !player.isInLava()) {
                 alert(player, NO_FALL);
@@ -265,7 +262,7 @@ public final class Anticheat {
         return value;
     }
 
-    private void checkLagRange(EntityPlayer player, com.konayuki.statflex.utils.PlayerUtils data) {
+    private void checkLagRange(EntityPlayer player, PlayerUtil data) {
         if (!isLagRangeEligible(player)) {
             return;
         }
@@ -289,7 +286,7 @@ public final class Anticheat {
         boolean swingStarted = player.isSwingInProgress && !data.wasSwinging;
         data.wasSwinging = player.isSwingInProgress;
 
-        boolean burst = currentPackets >= com.konayuki.statflex.utils.PlayerUtils.MIN_BURST_PACKETS;
+        boolean burst = currentPackets >= PlayerUtil.MIN_BURST_PACKETS;
 
         Debug.log("%s waiting=%s waitTicks=%d zeroTicks=%d packets=%d approaching=%s swing=%s vl=%d",
                 player.getName(), data.waitingForBurst, data.waitingTicks,
@@ -308,7 +305,7 @@ public final class Anticheat {
             Debug.log("%s VL++ to %d (burst=%d packets, swingStarted=%s)",
                     player.getName(), data.lagRangeVl, currentPackets, swingStarted);
 
-            if (data.lagRangeVl >= com.konayuki.statflex.utils.PlayerUtils.LAG_RANGE_VL_ALERT) {
+            if (data.lagRangeVl >= PlayerUtil.LAG_RANGE_VL_ALERT) {
                 alert(player, LAG_RANGE);
                 data.lagRangeVl = 0;
             }
@@ -317,7 +314,7 @@ public final class Anticheat {
         data.movementPacketsThisTick = 0;
     }
 
-    private void updateApproachState(EntityPlayer player, com.konayuki.statflex.utils.PlayerUtils data) {
+    private void updateApproachState(EntityPlayer player, PlayerUtil data) {
         double distanceSq = player.getDistanceSqToEntity(mc.thePlayer);
 
         if (Double.isNaN(data.lastDistanceSq)) {
@@ -331,20 +328,20 @@ public final class Anticheat {
         data.lastDistanceSq = distanceSq;
     }
 
-    private void updateFreezeState(com.konayuki.statflex.utils.PlayerUtils data, int currentPackets) {
+    private void updateFreezeState(PlayerUtil data, int currentPackets) {
         if (data.approaching && currentPackets == 0) {
             data.consecutiveZeroTicks++;
         } else {
             data.consecutiveZeroTicks = 0;
         }
 
-        if (data.consecutiveZeroTicks >= com.konayuki.statflex.utils.PlayerUtils.FREEZE_TICKS_THRESHOLD) {
+        if (data.consecutiveZeroTicks >= PlayerUtil.FREEZE_TICKS_THRESHOLD) {
             data.waitingForBurst = true;
-            data.waitingTicks = com.konayuki.statflex.utils.PlayerUtils.BURST_WINDOW_TICKS;
+            data.waitingTicks = PlayerUtil.BURST_WINDOW_TICKS;
         }
     }
 
-    private void updateWaitingForBurst(com.konayuki.statflex.utils.PlayerUtils data) {
+    private void updateWaitingForBurst(PlayerUtil data) {
         if (!data.waitingForBurst) {
             return;
         }
@@ -354,7 +351,7 @@ public final class Anticheat {
         }
     }
 
-    private void decayLagRangeVl(com.konayuki.statflex.utils.PlayerUtils data, long now) {
+    private void decayLagRangeVl(PlayerUtil data, long now) {
         if (data.lagRangeVl <= 0) {
             return;
         }
@@ -362,10 +359,10 @@ public final class Anticheat {
         if (elapsed <= 0) {
             return;
         }
-        int steps = (int) (elapsed / com.konayuki.statflex.utils.PlayerUtils.VL_DECAY_STEP_MS);
+        int steps = (int) (elapsed / PlayerUtil.VL_DECAY_STEP_MS);
         if (steps > 0) {
             data.lagRangeVl = Math.max(0, data.lagRangeVl - steps);
-            data.lastVlIncreaseAt += steps * com.konayuki.statflex.utils.PlayerUtils.VL_DECAY_STEP_MS;
+            data.lastVlIncreaseAt += steps * PlayerUtil.VL_DECAY_STEP_MS;
         }
     }
 
@@ -374,7 +371,7 @@ public final class Anticheat {
                 && !player.isInWater()
                 && !player.isInLava()
                 && !player.isRiding()
-                && !AnticheatUtils.onLadder(player);
+                && !AnticheatUtil.onLadder(player);
     }
 
     @SuppressWarnings("unchecked")
@@ -464,7 +461,7 @@ public final class Anticheat {
                 playerFlags = new HashMap<>();
             } else {
                 Long previous = playerFlags.get(cheat);
-                if (previous != null && AnticheatUtils.timeBetween(previous.longValue(), now) <= (long) (interval * 1000.0D)) {
+                if (previous != null && AnticheatUtil.timeBetween(previous.longValue(), now) <= (long) (interval * 1000.0D)) {
                     return;
                 }
             }
@@ -474,7 +471,7 @@ public final class Anticheat {
 
         String displayName = player.getDisplayName() == null ? player.getName() : player.getDisplayName().getFormattedText();
         Chat.send(Messages.PREFIX + "§e" + displayName + " §7flagged §c" + cheat);
-        if (AnticheatUtils.timeBetween(lastAlert, now) >= 1500L) {
+        if (AnticheatUtil.timeBetween(lastAlert, now) >= 1500L) {
             mc.thePlayer.playSound("note.pling", 1.0F, 1.0F);
             lastAlert = now;
         }
@@ -524,7 +521,7 @@ public final class Anticheat {
 
         for (EntityPlayer player : mc.theWorld.playerEntities) {
             if (player.getEntityId() == entityId) {
-                com.konayuki.statflex.utils.PlayerUtils data = getData(player);
+                PlayerUtil data = getData(player);
                 data.movementPacketsThisTick++;
                 break;
             }

@@ -17,8 +17,8 @@ import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 
 import java.lang.reflect.Field;
 
-public final class PacketUtils {
-    private static final PacketUtils INSTANCE = new PacketUtils();
+public final class PacketUtil {
+    private static final PacketUtil INSTANCE = new PacketUtil();
     private static final String HANDLER_NAME = "statflex_packet_hook";
 
     private static boolean registered;
@@ -26,11 +26,11 @@ public final class PacketUtils {
     private NetworkManager hookedManager;
     private Channel hookedChannel;
 
-    private PacketUtils() {
+    private PacketUtil() {
     }
 
     public static void register() {
-        synchronized (PacketUtils.class) {
+        synchronized (PacketUtil.class) {
             if (!registered) {
                 MinecraftForge.EVENT_BUS.register(INSTANCE);
                 registered = true;

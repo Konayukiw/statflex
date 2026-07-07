@@ -1,10 +1,10 @@
 package com.konayuki.statflex.utils;
 
-import com.konayuki.statflex.features.anticheat.AnticheatUtils;
+import com.konayuki.statflex.features.anticheat.AnticheatUtil;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemBlock;
 
-public final class PlayerUtils {
+public final class PlayerUtil {
     public int fastTick;
     public int autoBlockTicks;
     public int ticksExisted;
@@ -88,7 +88,7 @@ public final class PlayerUtils {
         if (player.rotationPitch >= 70.0F
                 && player.getHeldItem() != null
                 && player.getHeldItem().getItem() instanceof ItemBlock) {
-            if (AnticheatUtils.getSprintingTicksLeft(player) == 1) {
+            if (AnticheatUtil.getSprintingTicksLeft(player) == 1) {
                 if (!sneaking && player.isSneaking()) {
                     sneakTicks++;
                 } else {
@@ -105,9 +105,9 @@ public final class PlayerUtils {
     }
 
     public void updateServerPos(EntityPlayer player) {
-        serverPosX = AnticheatUtils.getServerPosX(player);
-        serverPosY = AnticheatUtils.getServerPosY(player);
-        serverPosZ = AnticheatUtils.getServerPosZ(player);
+        serverPosX = AnticheatUtil.getServerPosX(player);
+        serverPosY = AnticheatUtil.getServerPosY(player);
+        serverPosZ = AnticheatUtil.getServerPosZ(player);
     }
 
     private void pushSpeedHistory(double value) {

@@ -1,8 +1,8 @@
 package com.konayuki.statflex.features.duels;
 
 import com.konayuki.statflex.utils.Chat;
-import com.konayuki.statflex.utils.HypixelApiUtils;
-import com.konayuki.statflex.utils.ProfileUtils;
+import com.konayuki.statflex.utils.HypixelApiUtil;
+import com.konayuki.statflex.utils.ProfileUtil;
 import com.konayuki.statflex.utils.Debug;
 import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.utils.Format;
@@ -10,18 +10,11 @@ import com.konayuki.statflex.utils.Format;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.minecraft.client.Minecraft;
-import net.minecraft.scoreboard.Score;
-import net.minecraft.scoreboard.ScoreObjective;
-import net.minecraft.scoreboard.Scoreboard;
 
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 public class Duels {
 
@@ -32,13 +25,13 @@ public class Duels {
     public static void fetchStats(String inputName, String mode, boolean auto) {
         new Thread(() -> {
             try {
-                String apiKey = HypixelApiUtils.getApiKey();
+                String apiKey = HypixelApiUtil.getApiKey();
                 if (apiKey.equals("N/A")) {
                     Chat.send(Messages.INVALID_API);
                     return;
                 }
 
-                ProfileUtils.PlayerInfo info = ProfileUtils.getPlayerInfo(inputName);
+                ProfileUtil.PlayerInfo info = ProfileUtil.getPlayerInfo(inputName);
                 if (info == null) {
                     Debug.log("Failed to fetch player stats: " + inputName);
                     return;

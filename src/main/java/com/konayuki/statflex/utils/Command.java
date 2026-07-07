@@ -78,7 +78,7 @@ public class Command implements ICommand {
                 }
                 String key = args[1];
 
-                HypixelApiUtils.setApiKey(key);
+                HypixelApiUtil.setApiKey(key);
                 Settings.getInstance().apiKey = key;
                 Settings.save();
                 Chat.send(Messages.API_SET);
@@ -409,7 +409,7 @@ public class Command implements ICommand {
                 root.appendSibling(line);
             }
 
-            ChatUtils.registerMessage(SETTINGS_CHAT_ID, root);
+            ChatUtil.registerMessage(SETTINGS_CHAT_ID, root);
 
         } catch (Exception e) {
             e.printStackTrace();

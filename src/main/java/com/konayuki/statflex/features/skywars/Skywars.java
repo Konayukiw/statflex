@@ -2,9 +2,9 @@ package com.konayuki.statflex.features.skywars;
 
 import com.konayuki.statflex.utils.Chat;
 import com.konayuki.statflex.utils.Format;
-import com.konayuki.statflex.utils.HypixelApiUtils;
+import com.konayuki.statflex.utils.HypixelApiUtil;
 import com.konayuki.statflex.utils.Messages;
-import com.konayuki.statflex.utils.ProfileUtils;
+import com.konayuki.statflex.utils.ProfileUtil;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -20,13 +20,13 @@ public class Skywars {
     public static void fetchStats(String playerName, String mode) {
         new Thread(() -> {
             try {
-                String apiKey = HypixelApiUtils.getApiKey();
+                String apiKey = HypixelApiUtil.getApiKey();
                 if (apiKey.equals("N/A")) {
                     Chat.send(Messages.INVALID_API);
                     return;
                 }
 
-                ProfileUtils.PlayerInfo info = ProfileUtils.getPlayerInfo(playerName);
+                ProfileUtil.PlayerInfo info = ProfileUtil.getPlayerInfo(playerName);
                 if (info == null) {
                     Chat.send(Messages.PLAYER_NOT_FOUND);
                     return;
