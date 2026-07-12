@@ -27,12 +27,12 @@ public final class JVMBootstrap {
     private static boolean pendingLoadedMessage;
     private static String initializedBy = "unknown";
 
-    private static BedwarsList bwListStats;
+    private static BedwarsList bwList;
     private static Denick denick;
     private static AutoGG autoGG;
     private static UpdateGuiUtil updaterGuiHandler;
     private static DuelsList duelsList;
-    private static LocrawManager locrawManager;
+    private static Locraw locraw;
 
     private JVMBootstrap() {
     }
@@ -63,13 +63,12 @@ public final class JVMBootstrap {
 
             Settings.load();
             Toggles.syncFromSettings(Settings.getInstance());
+            Anticheat.register();
+            PacketUtil.register();
             HypixelApiUtil.init();
             registerEventHandlers();
             Command.register();
-            Anticheat.register();
-            PacketUtil.register();
             startUpdateCheck();
-
             requestLoadedMessage();
             return true;
         } catch (Throwable throwable) {
@@ -84,16 +83,16 @@ public final class JVMBootstrap {
                 return;
             }
 
-            bwListStats = new BedwarsList();
+            bwList = new BedwarsList();
             denick = new Denick();
             autoGG = new AutoGG();
             updaterGuiHandler = new UpdateGuiUtil();
             duelsList = new DuelsList();
-            locrawManager = LocrawManager.getInstance();
+            locraw = Locraw.getInstance();
 
             MinecraftForge.EVENT_BUS.register(LIFECYCLE_HANDLER);
-            MinecraftForge.EVENT_BUS.register(locrawManager);
-            MinecraftForge.EVENT_BUS.register(bwListStats);
+            MinecraftForge.EVENT_BUS.register(locraw);
+            MinecraftForge.EVENT_BUS.register(bwList);
             MinecraftForge.EVENT_BUS.register(denick);
             MinecraftForge.EVENT_BUS.register(autoGG);
             MinecraftForge.EVENT_BUS.register(updaterGuiHandler);

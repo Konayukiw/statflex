@@ -38,7 +38,7 @@ public final class JavaAgent {
     private static URL getOwnJarUrl() {
         CodeSource codeSource = JavaAgent.class.getProtectionDomain().getCodeSource();
         if (codeSource == null || codeSource.getLocation() == null) {
-            throw new IllegalStateException("Unable to resolve statflex jar location.");
+            Debug.error("Unable to resolve statflex jar location.");
         }
         return codeSource.getLocation();
     }

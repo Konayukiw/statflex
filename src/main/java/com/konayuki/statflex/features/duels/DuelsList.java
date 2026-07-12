@@ -1,7 +1,7 @@
 package com.konayuki.statflex.features.duels;
 
 import com.konayuki.statflex.utils.Debug;
-import com.konayuki.statflex.utils.LocrawManager;
+import com.konayuki.statflex.utils.Locraw;
 import com.konayuki.statflex.utils.Toggles;
 
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
@@ -55,7 +55,7 @@ public class DuelsList {
         }
 
         // Request locraw to get current game mode
-        LocrawManager.getInstance().requestLocraw(new LocrawManager.LocrawCallback() {
+        Locraw.getInstance().requestLocraw(new Locraw.LocrawCallback() {
             @Override
             public void onLocrawReceived(String gameType, String mode) {
                 if ("DUELS".equals(gameType)) {

@@ -5,12 +5,11 @@ import com.konayuki.statflex.utils.Debug;
 import com.konayuki.statflex.utils.Format;
 import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.utils.Toggles;
-import com.konayuki.statflex.utils.LocrawManager;
+import com.konayuki.statflex.utils.Locraw;
 import com.konayuki.statflex.features.bedwars.BedwarsList;
 import com.konayuki.statflex.features.duels.Duels;
 import com.konayuki.statflex.features.skywars.Skywars;
 
-import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -21,7 +20,6 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 
 import java.net.HttpURLConnection;
@@ -146,8 +144,8 @@ public class Denick {
                 if (!profileName.contains(displayName)) {
                     Chat.send("§8[§cS§8]§c " + profileName + " §7is nicked as §c" + displayName + "§7!");
 
-                    // Use LocrawManager to get game type for stats processing
-                    LocrawManager.getInstance().requestLocraw(new LocrawManager.LocrawCallback() {
+                    // Use Locraw to get game type for stats processing
+                    Locraw.getInstance().requestLocraw(new Locraw.LocrawCallback() {
                         @Override
                         public void onLocrawReceived(String gameType, String mode) {
                             processStats(profileName, gameType, mode);

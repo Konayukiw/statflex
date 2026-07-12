@@ -4,15 +4,7 @@ import com.konayuki.statflex.utils.*;
 import com.konayuki.statflex.utils.event.ReceivedPacketDetector;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.network.Packet;
-import net.minecraft.network.play.server.S14PacketEntity;
-import net.minecraft.network.play.server.S19PacketEntityHeadLook;
-import net.minecraft.scoreboard.Team;
-import net.minecraft.world.World;
-import net.minecraft.util.IChatComponent;
-import com.mojang.authlib.GameProfile;
 
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -35,14 +27,11 @@ public final class Anticheat {
     private static final String NO_SLOW = "NoSlow";
     private static final String SCAFFOLD = "Scaffold";
     private static final String LEGIT_SCAFFOLD = "Legit Scaffold";
-    private static final String LAG_RANGE = "Suspicious Lag Range";
-
-    private static final double NEARBY_ENEMY_RANGE = 15.0D;
 
     private static boolean registered;
 
     private final Map<UUID, Map<String, Long>> flags = new HashMap<>();
-    private final Map<UUID, PlayerUtil> players = new ConcurrentHashMap<UUID, PlayerUtil>();
+    private final Map<UUID, AnticheatUtil> players = new ConcurrentHashMap<UUID, AnticheatUtil>();
     private long lastAlert;
     private long lastClientBoundPacket;
 
@@ -66,7 +55,7 @@ public final class Anticheat {
         for (EntityPlayer player : mc.theWorld.playerEntities) {
             if (!isCheckTarget(player)) continue;
 
-            PlayerUtil data = getData(player);
+            AnticheatUtil data = getData(player);
 
             data.update(player);
             performCheck(player, data);
@@ -74,14 +63,12 @@ public final class Anticheat {
             data.updateSneak(player);
 
             updatePlayerData(player, data);
-            checkLagRange(player, data);
         }
     }
 
     @SubscribeEvent
     public void onReceivePacket(ReceivedPacketDetector event) {
         lastClientBoundPacket = System.currentTimeMillis();
-        trackMovementPacket(event.getPacket());
     }
 
     @SubscribeEvent
@@ -102,17 +89,17 @@ public final class Anticheat {
                 && !player.getName().isEmpty();
     }
 
-    private PlayerUtil getData(EntityPlayer player) {
-        PlayerUtil data = players.get(player.getUniqueID());
+    private AnticheatUtil getData(EntityPlayer player) {
+        AnticheatUtil data = players.get(player.getUniqueID());
         if (data == null) {
-            data = new PlayerUtil();
+            data = new AnticheatUtil();
             data.player = player;
             players.put(player.getUniqueID(), data);
         }
         return data;
     }
 
-    private void updatePlayerData(EntityPlayer player, PlayerUtil data) {
+    private void updatePlayerData(EntityPlayer player, AnticheatUtil data) {
         data.ticksExisted = player.ticksExisted;
         double dx = player.posX - data.posX;
         double dz = player.posZ - data.posZ;
@@ -124,32 +111,13 @@ public final class Anticheat {
         data.posZ = player.posZ;
         
         data.speedHistory[data.speedHistoryIndex] = data.speed;
-        data.speedHistoryIndex = (data.speedHistoryIndex + 1) % PlayerUtil.SPEED_HISTORY_SIZE;
-        if (data.speedHistoryFilled < PlayerUtil.SPEED_HISTORY_SIZE) {
+        data.speedHistoryIndex = (data.speedHistoryIndex + 1) % AnticheatUtil.SPEED_HISTORY_SIZE;
+        if (data.speedHistoryFilled < AnticheatUtil.SPEED_HISTORY_SIZE) {
             data.speedHistoryFilled++;
         }
     }
 
-    private void updateServerPos(EntityPlayer player, PlayerUtil data) {
-        data.serverPosX = AnticheatUtil.getServerPosX(player);
-        data.serverPosY = AnticheatUtil.getServerPosY(player);
-        data.serverPosZ = AnticheatUtil.getServerPosZ(player);
-    }
-
-    private void updateSneak(EntityPlayer player, PlayerUtil data) {
-        if (player.isSneaking()) {
-            if (!data.sneaking) {
-                data.sneaking = true;
-                data.lastSneakTick = player.ticksExisted;
-            }
-            data.sneakTicks++;
-        } else {
-            data.sneaking = false;
-            data.sneakTicks = 0;
-        }
-    }
-
-    private void performCheck(EntityPlayer player, PlayerUtil data) {
+    private void performCheck(EntityPlayer player, AnticheatUtil data) {
         if (data.autoBlockTicks >= 10) {
             alert(player, AUTO_BLOCK);
             return;
@@ -215,8 +183,6 @@ public final class Anticheat {
                     && !player.isInLava()) {
                 alert(player, NO_FALL);
             }
-
-            checkLagRange(player, data);
         }
     }
 
@@ -260,195 +226,6 @@ public final class Anticheat {
         if (value < 0.0D) return 0.0D;
         if (value > 20.0D) return 20.0D;
         return value;
-    }
-
-    private void checkLagRange(EntityPlayer player, PlayerUtil data) {
-        if (!isLagRangeEligible(player)) {
-            return;
-        }
-
-        long now = System.currentTimeMillis();
-        decayLagRangeVl(data, now);
-
-        int currentPackets = data.movementPacketsThisTick;
-
-        boolean hasEnemy = hasNearbyEnemy(player);
-        if (hasEnemy) {
-            updateApproachState(player, data);
-            updateFreezeState(data, currentPackets);
-        } else {
-            data.approaching = false;
-            data.consecutiveZeroTicks = 0;
-        }
-
-        updateWaitingForBurst(data);
-
-        boolean swingStarted = player.isSwingInProgress && !data.wasSwinging;
-        data.wasSwinging = player.isSwingInProgress;
-
-        boolean burst = currentPackets >= PlayerUtil.MIN_BURST_PACKETS;
-
-        Debug.log("%s waiting=%s waitTicks=%d zeroTicks=%d packets=%d approaching=%s swing=%s vl=%d",
-                player.getName(), data.waitingForBurst, data.waitingTicks,
-                data.consecutiveZeroTicks, currentPackets, data.approaching,
-                player.isSwingInProgress, data.lagRangeVl);
-
-        if (data.waitingForBurst
-                && burst
-                && (swingStarted || player.isSwingInProgress)) {
-
-            data.lagRangeVl++;
-            data.lastVlIncreaseAt = now;
-            data.waitingForBurst = false;
-            data.consecutiveZeroTicks = 0;
-
-            Debug.log("%s VL++ to %d (burst=%d packets, swingStarted=%s)",
-                    player.getName(), data.lagRangeVl, currentPackets, swingStarted);
-
-            if (data.lagRangeVl >= PlayerUtil.LAG_RANGE_VL_ALERT) {
-                alert(player, LAG_RANGE);
-                data.lagRangeVl = 0;
-            }
-        }
-
-        data.movementPacketsThisTick = 0;
-    }
-
-    private void updateApproachState(EntityPlayer player, PlayerUtil data) {
-        double distanceSq = player.getDistanceSqToEntity(mc.thePlayer);
-
-        if (Double.isNaN(data.lastDistanceSq)) {
-            data.lastDistanceSq = distanceSq;
-            data.approaching = false;
-            return;
-        }
-
-        data.approaching = distanceSq < data.lastDistanceSq;
-
-        data.lastDistanceSq = distanceSq;
-    }
-
-    private void updateFreezeState(PlayerUtil data, int currentPackets) {
-        if (data.approaching && currentPackets == 0) {
-            data.consecutiveZeroTicks++;
-        } else {
-            data.consecutiveZeroTicks = 0;
-        }
-
-        if (data.consecutiveZeroTicks >= PlayerUtil.FREEZE_TICKS_THRESHOLD) {
-            data.waitingForBurst = true;
-            data.waitingTicks = PlayerUtil.BURST_WINDOW_TICKS;
-        }
-    }
-
-    private void updateWaitingForBurst(PlayerUtil data) {
-        if (!data.waitingForBurst) {
-            return;
-        }
-        data.waitingTicks--;
-        if (data.waitingTicks <= 0) {
-            data.waitingForBurst = false;
-        }
-    }
-
-    private void decayLagRangeVl(PlayerUtil data, long now) {
-        if (data.lagRangeVl <= 0) {
-            return;
-        }
-        long elapsed = now - data.lastVlIncreaseAt;
-        if (elapsed <= 0) {
-            return;
-        }
-        int steps = (int) (elapsed / PlayerUtil.VL_DECAY_STEP_MS);
-        if (steps > 0) {
-            data.lagRangeVl = Math.max(0, data.lagRangeVl - steps);
-            data.lastVlIncreaseAt += steps * PlayerUtil.VL_DECAY_STEP_MS;
-        }
-    }
-
-    private boolean isLagRangeEligible(EntityPlayer player) {
-        return player.ticksExisted >= 60
-                && !player.isInWater()
-                && !player.isInLava()
-                && !player.isRiding()
-                && !AnticheatUtil.onLadder(player);
-    }
-
-    @SuppressWarnings("unchecked")
-    private boolean hasNearbyEnemy(EntityPlayer player) {
-        World world = player.worldObj;
-        if (world == null) {
-            return false;
-        }
-
-        @SuppressWarnings("unchecked")
-        List<EntityPlayer> nearby = world.getEntitiesWithinAABB(
-                EntityPlayer.class,
-                player.getEntityBoundingBox().expand(
-                        NEARBY_ENEMY_RANGE,
-                        NEARBY_ENEMY_RANGE,
-                        NEARBY_ENEMY_RANGE)
-        );
-
-        Team playerTeam = player.getTeam();
-
-        for (EntityPlayer other : nearby) {
-
-            if (other == player)
-                continue;
-
-            if (other.isDead)
-                continue;
-
-            if (player.getDistanceSqToEntity(other)
-                    > NEARBY_ENEMY_RANGE * NEARBY_ENEMY_RANGE)
-                continue;
-
-            if (mc.getNetHandler() == null)
-                continue;
-
-            NetworkPlayerInfo info =
-                    mc.getNetHandler().getPlayerInfo(other.getUniqueID());
-
-            if (info == null)
-                continue;
-
-            GameProfile profile = info.getGameProfile();
-
-            if (profile == null)
-                continue;
-
-            String name = profile.getName();
-
-            IChatComponent display = info.getDisplayName();
-
-            String clean = cleanName(
-                    display != null
-                            ? display.getFormattedText()
-                            : name)
-                    .trim()
-                    .replaceAll("\\s+", "");
-
-            Team otherTeam = other.getTeam();
-
-            if (profile.getId() != null && profile.getId().version() == 2)
-                continue;
-
-            if (clean.contains("[NPC]") || name.contains("[NPC]"))
-                continue;
-
-            if (info.getResponseTime() <= 0)
-                continue;
-
-            if (playerTeam != null
-                    && otherTeam != null
-                    && playerTeam.isSameTeam(otherTeam))
-                continue;
-
-            return true;
-        }
-
-        return false;
     }
 
     private void alert(EntityPlayer player, String cheat) {
@@ -500,57 +277,5 @@ public final class Anticheat {
             } catch (Throwable ignored) {}
         }
         return fallback;
-    }
-
-    private static String cleanName(String name) {
-        return name.replaceAll("§[0-9a-frk-o]", "").trim();
-    }
-
-    private void trackMovementPacket(Packet packet) {
-        Debug.log(packet.getClass().getSimpleName());
-        if (!(packet instanceof S14PacketEntity
-                || packet instanceof S14PacketEntity.S15PacketEntityRelMove
-                || packet instanceof S14PacketEntity.S16PacketEntityLook
-                || packet instanceof S14PacketEntity.S17PacketEntityLookMove
-                || packet instanceof S19PacketEntityHeadLook)) {
-            return;
-        }
-
-        int entityId = getPacketEntityId(packet);
-        if (entityId == -1) return;
-
-        for (EntityPlayer player : mc.theWorld.playerEntities) {
-            if (player.getEntityId() == entityId) {
-                PlayerUtil data = getData(player);
-                data.movementPacketsThisTick++;
-                break;
-            }
-        }
-    }
-
-    private int getPacketEntityId(Packet packet) {
-        try {
-            Field field = packet.getClass().getDeclaredField("entityId");
-            field.setAccessible(true);
-
-            int entityId = field.getInt(packet);
-            Debug.log("EntityID: %d", entityId);
-
-            return entityId;
-        } catch (NoSuchFieldException e) {
-            try {
-                Field field = packet.getClass().getDeclaredField("field_145963_a");
-                field.setAccessible(true);
-
-                int entityId = field.getInt(packet);
-                Debug.log("EntityID: %d", entityId);
-
-                return entityId;
-            } catch (Exception ignored) {
-                return -1;
-            }
-        } catch (Exception ignored) {
-            return -1;
-        }
     }
 }

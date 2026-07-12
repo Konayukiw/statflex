@@ -7,8 +7,8 @@ import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
-public class LocrawManager {
-    private static LocrawManager instance;
+public class Locraw {
+    private static Locraw instance;
 
     private boolean awaitingLocraw = false;
     private String gameType = null;
@@ -16,11 +16,11 @@ public class LocrawManager {
     private int locrawTimeout = 0;
     private LocrawCallback pendingCallback = null;
 
-    private LocrawManager() {}
+    private Locraw() {}
 
-    public static synchronized LocrawManager getInstance() {
+    public static synchronized Locraw getInstance() {
         if (instance == null) {
-            instance = new LocrawManager();
+            instance = new Locraw();
         }
         return instance;
     }
