@@ -61,6 +61,32 @@ function Strip-Whitespace {
     return $text -replace '\s+', ''
 }
 
+function Revert-Version {
+    param(
+        [string]$filePath,
+        [string]$pattern,
+        [string]$oldVersion,
+        [string]$newVersion
+    )
+    if (-not (Test-Path $filePath)) {
+        Write-Warning "File not found: $filePath"
+        return $false
+    }
+    $content = Get-Content $filePath -Raw
+    $regex = $pattern
+    $match = [regex]::Match($content, $regex)
+    if ($match.Success) {
+        $replacement = $match.Value -replace [regex]::Escape($newVersion), $oldVersion
+        $newContent = $content -replace $regex, $replacement
+        Set-Content -Path $filePath -Value $newContent -NoNewline
+        Write-Host "Reverted $filePath"
+        return $true
+    } else {
+        Write-Warning "Pattern not found in $filePath"
+        return $false
+    }
+}
+
 $javaFile = Join-Path $projectRoot "src/main/java/com/konayuki/statflex/statflex.java"
 $versionPattern = 'public static final String VERSION = "([^"]+)"'
 $currentVersion = Get-VersionFromFile $javaFile $versionPattern
@@ -105,6 +131,19 @@ if ($LASTEXITCODE -ne 0) {
 $diffResult = git diff --cached --quiet 2>&1
 if ($LASTEXITCODE -eq 0) {
     Write-Host "Repository is up-to-date!"
+    Write-Host "Reverting version changes..."
+    # statflex.java
+    $pattern = '(public static final String VERSION = ")[^"]+(")'
+    Revert-Version $javaFile $pattern $currentVersion $newVersion
+    # mcmod.info
+    $pattern = '("version":\s*")[^"]+(")'
+    Revert-Version $mcmodFile $pattern $currentVersion $newVersion
+    # build.gradle
+    $pattern = '(?m)^(version\s*=\s*")[^"]+(")'
+    Revert-Version $gradleFile $pattern $currentVersion $newVersion
+    # main.md
+    $pattern = '(# version:\s*)[\d.]+'
+    Revert-Version $mainMdFile $pattern $currentVersion $newVersion
     Pop-Location
     exit 0
 }
@@ -136,6 +175,19 @@ if ($LASTEXITCODE -ne 0) {
         $response = Read-Host
         if ($response -ne 'y') {
             Write-Host "Aborted."
+            Write-Host "Reverting version changes..."
+            # statflex.java
+            $pattern = '(public static final String VERSION = ")[^"]+(")'
+            Revert-Version $javaFile $pattern $currentVersion $newVersion
+            # mcmod.info
+            $pattern = '("version":\s*")[^"]+(")'
+            Revert-Version $mcmodFile $pattern $currentVersion $newVersion
+            # build.gradle
+            $pattern = '(?m)^(version\s*=\s*")[^"]+(")'
+            Revert-Version $gradleFile $pattern $currentVersion $newVersion
+            # main.md
+            $pattern = '(# version:\s*)[\d.]+'
+            Revert-Version $mainMdFile $pattern $currentVersion $newVersion
             Pop-Location
             exit 0
         }
