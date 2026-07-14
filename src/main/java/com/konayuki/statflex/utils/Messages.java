@@ -9,7 +9,6 @@ public final class Messages {
     public static final String INVALID_API = PREFIX + "API Key is invalid or not set. Use /s api §e[API Key]§7 to set.";
     public static final String INVALID_MODE = PREFIX + "Invalid mode: ";
     public static final String PLAYER_NOT_FOUND = PREFIX + "Player not found or stats unavailable.";
-    public static final String FRESH_STATS = PREFIX + "Fresh stats";
     public static final String FETCH_ERROR = PREFIX + "Failed to fetch player stats: ";
     public static final String UNEXPECTED_ERROR = PREFIX + "Unexpected error.";
     public static final String BEDWARS_STATS = PREFIX + "§c§lBed§f§lWars §7stats | ";
