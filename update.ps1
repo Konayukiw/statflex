@@ -4,13 +4,24 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$projectRoot = $PSScriptRoot
-if (-not $projectRoot) { $projectRoot = Get-Location }
+$projectRoot = if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+
+function Read-TextFile {
+    param([string]$Path)
+    return [System.IO.File]::ReadAllText($Path, $utf8NoBom)
+}
+
+function Write-TextFile {
+    param([string]$Path, [string]$Content)
+    [System.IO.File]::WriteAllText($Path, $Content, $utf8NoBom)
+}
 
 function Increment-Version {
     param([string]$versionStr)
-    $ver = [double]::Parse($versionStr, [System.Globalization.CultureInfo]::InvariantCulture)
-    $newVer = $ver + 0.01
+    # decimal avoids floating-point drift (e.g. 2.29 + 0.01)
+    $ver = [decimal]::Parse($versionStr, [System.Globalization.CultureInfo]::InvariantCulture)
+    $newVer = $ver + [decimal]"0.01"
     return $newVer.ToString("0.00", [System.Globalization.CultureInfo]::InvariantCulture)
 }
 
@@ -18,40 +29,38 @@ function Update-FileVersion {
     param(
         [string]$filePath,
         [string]$pattern,
-        [string]$newVersion,
         [string]$replacementFormat
     )
-    if (-not (Test-Path $filePath)) {
+    if (-not (Test-Path -LiteralPath $filePath)) {
         Write-Warning "File not found: $filePath"
         return $false
     }
-    $content = Get-Content $filePath -Raw
-    $regex = $pattern
-    $match = [regex]::Match($content, $regex)
-    if ($match.Success) {
-        $newContent = $content -replace $regex, $replacementFormat
-        Set-Content -Path $filePath -Value $newContent -NoNewline
-        Write-Host "Updated $filePath"
-        return $true
-    } else {
+    $content = Read-TextFile -Path $filePath
+    $match = [regex]::Match($content, $pattern)
+    if (-not $match.Success) {
         Write-Warning "Pattern not found in $filePath"
         return $false
     }
+    $newContent = [regex]::Replace($content, $pattern, $replacementFormat, 1)
+    Write-TextFile -Path $filePath -Content $newContent
+    Write-Host "Updated $filePath"
+    return $true
 }
 
 function Get-VersionFromFile {
     param([string]$filePath, [string]$pattern)
-    $content = Get-Content $filePath -Raw
-    if ($content -match $pattern) {
-        return $matches[1]
+    $content = Read-TextFile -Path $filePath
+    $match = [regex]::Match($content, $pattern)
+    if (-not $match.Success) {
+        throw "Version not found in $filePath"
     }
-    throw "Version not found in $filePath"
+    return $match.Groups[1].Value
 }
 
 function Get-ContentBetweenQuotes {
     param([string]$line)
     if ($line -match ':\s*"([^"]*)"') {
-        return $matches[1]
+        return $Matches[1]
     }
     return ""
 }
@@ -61,286 +70,213 @@ function Strip-Whitespace {
     return $text -replace '\s+', ''
 }
 
-function Revert-Version {
+function Get-VersionReplacement {
     param(
-        [string]$filePath,
-        [string]$pattern,
-        [string]$oldVersion,
-        [string]$newVersion
+        [hashtable]$Target,
+        [string]$Version
     )
-    if (-not (Test-Path $filePath)) {
-        Write-Warning "File not found: $filePath"
-        return $false
-    }
-    $content = Get-Content $filePath -Raw
-    $regex = $pattern
-    $match = [regex]::Match($content, $regex)
-    if ($match.Success) {
-        $replacement = $match.Value -replace [regex]::Escape($newVersion), $oldVersion
-        $newContent = $content -replace $regex, $replacement
-        Set-Content -Path $filePath -Value $newContent -NoNewline
-        Write-Host "Reverted $filePath"
-        return $true
-    } else {
-        Write-Warning "Pattern not found in $filePath"
-        return $false
-    }
+    return $Target.Replacement.Replace('{VERSION}', $Version)
 }
 
-$javaFile = Join-Path $projectRoot "src/main/java/com/konayuki/statflex/statflex.java"
+function Update-AllVersions {
+    param([string]$Version)
+    $any = $false
+    foreach ($target in $script:versionTargets) {
+        $replacement = Get-VersionReplacement -Target $target -Version $Version
+        if (Update-FileVersion -filePath $target.File -pattern $target.Pattern -replacementFormat $replacement) {
+            $any = $true
+        }
+    }
+    return $any
+}
+
+function Revert-AllVersions {
+    param(
+        [string]$OldVersion,
+        [string]$Reason
+    )
+    if ($Reason) {
+        Write-Host $Reason
+    }
+    Write-Host "Reverting version changes..."
+    [void](Update-AllVersions -Version $OldVersion)
+}
+
+function Exit-WithRevert {
+    param(
+        [string]$OldVersion,
+        [string]$Reason,
+        [switch]$Restage
+    )
+    Revert-AllVersions -OldVersion $OldVersion -Reason $Reason
+    if ($Restage) {
+        # Keep index in sync with working tree after an early abort (post git add).
+        $paths = $script:versionTargets | ForEach-Object { $_.File }
+        git add -- $paths 2>$null | Out-Null
+    }
+    exit 0
+}
+
+# --- paths & version targets (single source of truth) ---
+$javaFile   = Join-Path $projectRoot "src/main/java/com/konayuki/statflex/statflex.java"
+$mcmodFile  = Join-Path $projectRoot "src/main/resources/mcmod.info"
+$gradleFile = Join-Path $projectRoot "build.gradle"
+$mainMdFile = Join-Path $projectRoot "main.md"
+
+$script:versionTargets = @(
+    @{
+        File        = $javaFile
+        Pattern     = '(public static final String VERSION = ")[^"]+(")'
+        Replacement = '${1}{VERSION}${2}'
+    },
+    @{
+        File        = $mcmodFile
+        Pattern     = '("version":\s*")[^"]+(")'
+        Replacement = '${1}{VERSION}${2}'
+    },
+    @{
+        File        = $gradleFile
+        Pattern     = '(?m)^(version\s*=\s*")[^"]+(")'
+        Replacement = '${1}{VERSION}${2}'
+    },
+    @{
+        File        = $mainMdFile
+        Pattern     = '(# version:\s*)[\d.]+'
+        Replacement = '${1}{VERSION}'
+    }
+)
+
 $versionPattern = 'public static final String VERSION = "([^"]+)"'
-$currentVersion = Get-VersionFromFile $javaFile $versionPattern
+$currentVersion = Get-VersionFromFile -filePath $javaFile -pattern $versionPattern
 Write-Host "Current version: $currentVersion"
 
-$newVersion = Increment-Version $currentVersion
+$newVersion = Increment-Version -versionStr $currentVersion
 Write-Host "New version: $newVersion"
 
-$updated = $false
+[void](Update-AllVersions -Version $newVersion)
 
-# statflex.java
-$pattern = '(public static final String VERSION = ")[^"]+(")'
-$replacement = '${1}' + $newVersion + '${2}'
-if (Update-FileVersion $javaFile $pattern $newVersion $replacement) { $updated = $true }
+# Always load main.md (used for changelog + release notes)
+$mainMdContent = Read-TextFile -Path $mainMdFile
+$changelogLine = ($mainMdContent -split "`r?`n" | Where-Object { $_ -match '^# changelog:' } | Select-Object -First 1)
+$changelog = if ($changelogLine) { Get-ContentBetweenQuotes -line $changelogLine } else { "" }
 
-# mcmod.info
-$mcmodFile = Join-Path $projectRoot "src/main/resources/mcmod.info"
-$pattern = '("version":\s*")[^"]+(")'
-$replacement = '${1}' + $newVersion + '${2}'
-if (Update-FileVersion $mcmodFile $pattern $newVersion $replacement) { $updated = $true }
-
-# build.gradle
-$gradleFile = Join-Path $projectRoot "build.gradle"
-$pattern = '(?m)^(version\s*=\s*")[^"]+(")'
-$replacement = '${1}' + $newVersion + '${2}'
-if (Update-FileVersion $gradleFile $pattern $newVersion $replacement) { $updated = $true }
-
-# main.md
-$mainMdFile = Join-Path $projectRoot "main.md"
-$pattern = '(# version:\s*)[\d.]+'
-$replacement = '${1}' + $newVersion
-if (Update-FileVersion $mainMdFile $pattern $newVersion $replacement) { $updated = $true }
-
-# git add .
-Write-Host "Running git add . ..."
 Push-Location $projectRoot
-git add .
-if ($LASTEXITCODE -ne 0) {
-    throw "Add failed"
-}
-
-$diffResult = git diff --cached --quiet 2>&1
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "Repository is up-to-date!"
-    Write-Host "Reverting version changes..."
-    # statflex.java
-    $pattern = '(public static final String VERSION = ")[^"]+(")'
-    Revert-Version $javaFile $pattern $currentVersion $newVersion
-    # mcmod.info
-    $pattern = '("version":\s*")[^"]+(")'
-    Revert-Version $mcmodFile $pattern $currentVersion $newVersion
-    # build.gradle
-    $pattern = '(?m)^(version\s*=\s*")[^"]+(")'
-    Revert-Version $gradleFile $pattern $currentVersion $newVersion
-    # main.md
-    $pattern = '(# version:\s*)[\d.]+'
-    Revert-Version $mainMdFile $pattern $currentVersion $newVersion
-    Pop-Location
-    exit 0
-}
-
-# Compare with latest commit on origin/main
-$logOutput = git log origin/main -1 --pretty=full
-if ($LASTEXITCODE -ne 0) {
-    Write-Warning "Could not fetch latest commit. Skipping checking duplicated commit."
-} else {
-    $lines = $logOutput -split "`r`n|`n"
-    $body = if ($lines.Count -gt 3) {
-        $lines[3..($lines.Count-1)] -join "`n"
-    } else {
-        ""
+try {
+    Write-Host "Running git add . ..."
+    git add .
+    if ($LASTEXITCODE -ne 0) {
+        throw "Add failed"
     }
-    $strippedCommit = Strip-Whitespace $body
 
-    $mainMdContent = Get-Content $mainMdFile -Raw
-    $changelogLine = ($mainMdContent -split "`r`n|`n" | Where-Object { $_ -match '^# changelog:' })
-    if ($changelogLine) {
-        $changelog = Get-ContentBetweenQuotes $changelogLine
-    } else {
-        $changelog = ""
+    git diff --cached --quiet 2>$null
+    if ($LASTEXITCODE -eq 0) {
+        Exit-WithRevert -OldVersion $currentVersion -Reason "Repository is up-to-date!" -Restage
     }
-    $strippedChangelog = Strip-Whitespace $changelog
 
-    if ($strippedCommit -eq $strippedChangelog) {
-        Write-Host "The same text was already committed. Will you continue? (Y/N)" -ForegroundColor Yellow
-        $response = Read-Host
-        if ($response -ne 'y') {
-            Write-Host "Aborted."
-            Write-Host "Reverting version changes..."
-            # statflex.java
-            $pattern = '(public static final String VERSION = ")[^"]+(")'
-            Revert-Version $javaFile $pattern $currentVersion $newVersion
-            # mcmod.info
-            $pattern = '("version":\s*")[^"]+(")'
-            Revert-Version $mcmodFile $pattern $currentVersion $newVersion
-            # build.gradle
-            $pattern = '(?m)^(version\s*=\s*")[^"]+(")'
-            Revert-Version $gradleFile $pattern $currentVersion $newVersion
-            # main.md
-            $pattern = '(# version:\s*)[\d.]+'
-            Revert-Version $mainMdFile $pattern $currentVersion $newVersion
-            Pop-Location
-            exit 0
+    # Compare with latest commit on origin/main
+    $logOutput = git log origin/main -1 --pretty=full 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "Could not fetch latest commit. Skipping checking duplicated commit."
+    } else {
+        $lines = @($logOutput -split "`r?`n")
+        $body = if ($lines.Count -gt 3) {
+            ($lines[3..($lines.Count - 1)] -join "`n")
+        } else {
+            ""
+        }
+        $strippedCommit = Strip-Whitespace -text $body
+        $strippedChangelog = Strip-Whitespace -text $changelog
+
+        if ($strippedCommit -and ($strippedCommit -eq $strippedChangelog)) {
+            Write-Host "The same text was already committed. Will you continue? (Y/N)" -ForegroundColor Yellow
+            $response = Read-Host
+            if ($response -notmatch '^[yY]$') {
+                Exit-WithRevert -OldVersion $currentVersion -Reason "Aborted." -Restage
+            }
         }
     }
-}
 
-# Commit / push
-$commitMessage = $changelog
-if (-not $commitMessage) {
-    $commitMessage = "Version update to $newVersion"
-    Write-Warning "No changelog found. using default message: '$commitMessage'"
-}
-
-Write-Host "Committing with message: $commitMessage"
-git commit -m $commitMessage
-if ($LASTEXITCODE -ne 0) {
-    throw "Commit failed"
-}
-
-Write-Host "Pushing..."
-git push origin main --force
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Push failed"
-    Write-Host "Reverting version changes..."
-    # statflex.java
-    $pattern = '(public static final String VERSION = ")[^"]+(")'
-    Revert-Version $javaFile $pattern $currentVersion $newVersion
-    # mcmod.info
-    $pattern = '("version":\s*")[^"]+(")'
-    Revert-Version $mcmodFile $pattern $currentVersion $newVersion
-    # build.gradle
-    $pattern = '(?m)^(version\s*=\s*")[^"]+(")'
-    Revert-Version $gradleFile $pattern $currentVersion $newVersion
-    # main.md
-    $pattern = '(# version:\s*)[\d.]+'
-    Revert-Version $mainMdFile $pattern $currentVersion $newVersion
-    Pop-Location
-    exit 0
-}
-
-# Build
-.\gradlew.bat build
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Build failed"
-    Write-Host "Reverting version changes..."
-    # statflex.java
-    $pattern = '(public static final String VERSION = ")[^"]+(")'
-    Revert-Version $javaFile $pattern $currentVersion $newVersion
-    # mcmod.info
-    $pattern = '("version":\s*")[^"]+(")'
-    Revert-Version $mcmodFile $pattern $currentVersion $newVersion
-    # build.gradle
-    $pattern = '(?m)^(version\s*=\s*")[^"]+(")'
-    Revert-Version $gradleFile $pattern $currentVersion $newVersion
-    # main.md
-    $pattern = '(# version:\s*)[\d.]+'
-    Revert-Version $mainMdFile $pattern $currentVersion $newVersion
-    Pop-Location
-    exit 0
-}
-
-# Release
-if ($Release) {
-    Write-Host "Releasing..."
-
-    # Determine project name
-    $gradleContent = Get-Content $gradleFile -Raw
-    $projectName = ""
-    if ($gradleContent -match 'archivesBaseName\s*=\s*"([^"]+)"') {
-        $projectName = $matches[1]
-    } elseif ($gradleContent -match 'baseName\s*=\s*"([^"]+)"') {
-        $projectName = $matches[1]
-    } else {
-        # Fallback to directory name
-        $projectName = Split-Path $projectRoot -Leaf
+    $commitMessage = if ($changelog) { $changelog } else {
+        $msg = "Version update to $newVersion"
+        Write-Warning "No changelog found. using default message: '$msg'"
+        $msg
     }
-    Write-Host "Project name: $projectName"
 
-    $title = "$projectName-$newVersion"
-    Write-Host "Release title: $title"
-
-    # Add tag and push
-    git tag -a $title -m $commitMessage
+    Write-Host "Committing with message: $commitMessage"
+    git commit -m $commitMessage
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "Tag failed"
-        Write-Host "Reverting version changes..."
-        # statflex.java
-        $pattern = '(public static final String VERSION = ")[^"]+(")'
-        Revert-Version $javaFile $pattern $currentVersion $newVersion
-        # mcmod.info
-        $pattern = '("version":\s*")[^"]+(")'
-        Revert-Version $mcmodFile $pattern $currentVersion $newVersion
-        # build.gradle
-        $pattern = '(?m)^(version\s*=\s*")[^"]+(")'
-        Revert-Version $gradleFile $pattern $currentVersion $newVersion
-        # main.md
-        $pattern = '(# version:\s*)[\d.]+'
-        Revert-Version $mainMdFile $pattern $currentVersion $newVersion
-        Pop-Location
-        exit 0
+        throw "Commit failed"
     }
-    git push origin $title
+
+    Write-Host "Pushing..."
+    git push origin main --force
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "Git push tag failed"
-        Write-Host "Reverting version changes..."
-        # statflex.java
-        $pattern = '(public static final String VERSION = ")[^"]+(")'
-        Revert-Version $javaFile $pattern $currentVersion $newVersion
-        # mcmod.info
-        $pattern = '("version":\s*")[^"]+(")'
-        Revert-Version $mcmodFile $pattern $currentVersion $newVersion
-        # build.gradle
-        $pattern = '(?m)^(version\s*=\s*")[^"]+(")'
-        Revert-Version $gradleFile $pattern $currentVersion $newVersion
-        # main.md
-        $pattern = '(# version:\s*)[\d.]+'
-        Revert-Version $mainMdFile $pattern $currentVersion $newVersion
-        Pop-Location
-        exit 0
+        Exit-WithRevert -OldVersion $currentVersion -Reason "Push failed"
     }
 
-    # Copy description from main.md
-    $descMatch = [regex]::Match(
-        $mainMdContent, '(?ms)^desc_s\s*\r?\n(.*?)(?=^desc_e$)')
-    if ($descMatch.Success) {
-        $description = $descMatch.Groups[1].Value.TrimEnd()
-    } else {
-        $description = ""
+    Write-Host "Building..."
+    & .\gradlew.bat build
+    if ($LASTEXITCODE -ne 0) {
+        Exit-WithRevert -OldVersion $currentVersion -Reason "Build failed"
     }
-    $releaseNoteFile = Join-Path $projectRoot "release.md"
-    Set-Content -Path $releaseNoteFile -Value $description -NoNewline
-    Write-Host "release.md could not found, new one created"
 
-    # Create GitHub release
-    $jarFile = Join-Path $projectRoot "build/libs/statflex-$newVersion.jar"
-    $injectorExe = "C:\Users\Konayuki\OneDrive\Desktop\statflex-injector.exe"
-    if (-not (Test-Path $jarFile)) {
-        Write-Warning "Jar file not found: $jarFile. Skipping release creation."
-    } else {
-        $ghArgs = @(
-            "release", "create", $title,
-            $jarFile,
-            $injectorExe,
-            "--title", $title,
-            "--notes-file", $releaseNoteFile
-        )
-        Write-Host "Running: gh $($ghArgs -join ' ')"
-        gh $ghArgs
+    if ($Release) {
+        Write-Host "Releasing..."
+
+        $gradleContent = Read-TextFile -Path $gradleFile
+        if ($gradleContent -match 'archivesBaseName\s*=\s*"([^"]+)"') {
+            $projectName = $Matches[1]
+        } elseif ($gradleContent -match 'baseName\s*=\s*"([^"]+)"') {
+            $projectName = $Matches[1]
+        } else {
+            $projectName = Split-Path $projectRoot -Leaf
+        }
+        Write-Host "Project name: $projectName"
+
+        $title = "$projectName-$newVersion"
+        Write-Host "Release title: $title"
+
+        git tag -a $title -m $commitMessage
         if ($LASTEXITCODE -ne 0) {
-            Write-Warning "gh release create failed with exit code $LASTEXITCODE"
+            Exit-WithRevert -OldVersion $currentVersion -Reason "Tag failed"
+        }
+
+        git push origin $title
+        if ($LASTEXITCODE -ne 0) {
+            Exit-WithRevert -OldVersion $currentVersion -Reason "Git push tag failed"
+        }
+
+        $descMatch = [regex]::Match($mainMdContent, '(?ms)^desc_s\s*\r?\n(.*?)(?=^desc_e$)')
+        $description = if ($descMatch.Success) { $descMatch.Groups[1].Value.TrimEnd() } else { "" }
+
+        $releaseNoteFile = Join-Path $projectRoot "release.md"
+        Write-TextFile -Path $releaseNoteFile -Content $description
+        if (Test-Path -LiteralPath $releaseNoteFile) {
+            Write-Host "Wrote release notes to release.md"
+        }
+
+        $jarFile = Join-Path $projectRoot "build/libs/statflex-$newVersion.jar"
+        $injectorExe = "C:\Users\Konayuki\OneDrive\Desktop\statflex-injector.exe"
+        if (-not (Test-Path -LiteralPath $jarFile)) {
+            Write-Warning "Jar file not found: $jarFile. Skipping release creation."
+        } else {
+            $ghArgs = @(
+                "release", "create", $title,
+                $jarFile,
+                $injectorExe,
+                "--title", $title,
+                "--notes-file", $releaseNoteFile
+            )
+            Write-Host "Running: gh $($ghArgs -join ' ')"
+            & gh @ghArgs
+            if ($LASTEXITCODE -ne 0) {
+                Write-Warning "gh release create failed with exit code $LASTEXITCODE"
+            }
         }
     }
-}
 
-Pop-Location
-Write-Host "Update process done!"
+    Write-Host "Update process done!"
+}
+finally {
+    Pop-Location
+}
