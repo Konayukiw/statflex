@@ -1,4 +1,4 @@
-package com.konayuki.statflex;
+package com.konayuki.statflex.launch;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

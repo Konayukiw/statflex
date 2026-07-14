@@ -41,7 +41,7 @@ public class Locraw {
                     pendingCallback.onLocrawTimeout();
                     pendingCallback = null;
                 }
-                Debug.log("[Locraw] Timeout waiting for /locraw response");
+                Debug.log("[S] Locraw timeout");
             }
         }
     }
@@ -55,7 +55,7 @@ public class Locraw {
                     JsonObject json = new JsonParser().parse(message).getAsJsonObject();
                     gameType = json.has("gametype") ? json.get("gametype").getAsString() : null;
                     mode = json.has("mode") ? json.get("mode").getAsString() : null;
-                    Debug.log("[Locraw] gametype=" + gameType + ", mode=" + mode);
+                    Debug.log("[S] Game=" + gameType + ", Mode=" + mode);
                     event.setCanceled(true);
                     awaitingLocraw = false;
                     locrawTimeout = 0;
@@ -65,7 +65,7 @@ public class Locraw {
                         pendingCallback = null;
                     }
                 } catch (Exception e) {
-                    Debug.log("[Locraw] Failed to parse locraw response: " + e.getMessage());
+                    Debug.log("[S] Failed to parse locraw response: " + e.getMessage());
                     awaitingLocraw = false;
                     locrawTimeout = 0;
                     if (pendingCallback != null) {
@@ -79,13 +79,11 @@ public class Locraw {
 
     public void requestLocraw(LocrawCallback callback) {
         if (awaitingLocraw) {
-            Debug.log("[Locraw] Already waiting for locraw response");
             return;
         }
 
         Minecraft mc = Minecraft.getMinecraft();
         if (mc == null || mc.thePlayer == null) {
-            Debug.log("[Locraw] Player not in world");
             callback.onLocrawTimeout();
             return;
         }

@@ -1,4 +1,4 @@
-package com.konayuki.statflex;
+package com.konayuki.statflex.launch;
 
 import com.konayuki.statflex.utils.Debug;
 

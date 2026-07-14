@@ -1,5 +1,6 @@
 package com.konayuki.statflex;
 
+import com.konayuki.statflex.launch.JVMBootstrap;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 
