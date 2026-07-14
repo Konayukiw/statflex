@@ -209,7 +209,7 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host "Pushing..."
 git push origin main --force
-if ($LASTEXITCODE -eq 0) {
+if ($LASTEXITCODE -ne 0) {
     Write-Host "Push failed"
     Write-Host "Reverting version changes..."
     # statflex.java
@@ -230,7 +230,7 @@ if ($LASTEXITCODE -eq 0) {
 
 # Build
 .\gradlew.bat build
-if ($LASTEXITCODE -eq 0) {
+if ($LASTEXITCODE -ne 0) {
     Write-Host "Build failed"
     Write-Host "Reverting version changes..."
     # statflex.java
@@ -271,7 +271,7 @@ if ($Release) {
 
     # Add tag and push
     git tag -a $title -m $commitMessage
-    if ($LASTEXITCODE -eq 0) {
+    if ($LASTEXITCODE -ne 0) {
         Write-Host "Tag failed"
         Write-Host "Reverting version changes..."
         # statflex.java
@@ -290,8 +290,8 @@ if ($Release) {
         exit 0
     }
     git push origin $title
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "Git push failed"
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Git push tag failed"
         Write-Host "Reverting version changes..."
         # statflex.java
         $pattern = '(public static final String VERSION = ")[^"]+(")'
