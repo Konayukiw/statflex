@@ -209,14 +209,44 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host "Pushing..."
 git push origin main --force
-if ($LASTEXITCODE -ne 0) {
-    throw "Push failed"
+if ($LASTEXITCODE -eq 0) {
+    Write-Host "Push failed"
+    Write-Host "Reverting version changes..."
+    # statflex.java
+    $pattern = '(public static final String VERSION = ")[^"]+(")'
+    Revert-Version $javaFile $pattern $currentVersion $newVersion
+    # mcmod.info
+    $pattern = '("version":\s*")[^"]+(")'
+    Revert-Version $mcmodFile $pattern $currentVersion $newVersion
+    # build.gradle
+    $pattern = '(?m)^(version\s*=\s*")[^"]+(")'
+    Revert-Version $gradleFile $pattern $currentVersion $newVersion
+    # main.md
+    $pattern = '(# version:\s*)[\d.]+'
+    Revert-Version $mainMdFile $pattern $currentVersion $newVersion
+    Pop-Location
+    exit 0
 }
 
 # Build
 .\gradlew.bat build
-if ($LASTEXITCODE -ne 0) {
-    throw "Build failed"
+if ($LASTEXITCODE -eq 0) {
+    Write-Host "Build failed"
+    Write-Host "Reverting version changes..."
+    # statflex.java
+    $pattern = '(public static final String VERSION = ")[^"]+(")'
+    Revert-Version $javaFile $pattern $currentVersion $newVersion
+    # mcmod.info
+    $pattern = '("version":\s*")[^"]+(")'
+    Revert-Version $mcmodFile $pattern $currentVersion $newVersion
+    # build.gradle
+    $pattern = '(?m)^(version\s*=\s*")[^"]+(")'
+    Revert-Version $gradleFile $pattern $currentVersion $newVersion
+    # main.md
+    $pattern = '(# version:\s*)[\d.]+'
+    Revert-Version $mainMdFile $pattern $currentVersion $newVersion
+    Pop-Location
+    exit 0
 }
 
 # Release
@@ -241,12 +271,42 @@ if ($Release) {
 
     # Add tag and push
     git tag -a $title -m $commitMessage
-    if ($LASTEXITCODE -ne 0) {
-        throw "git tag failed"
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Tag failed"
+        Write-Host "Reverting version changes..."
+        # statflex.java
+        $pattern = '(public static final String VERSION = ")[^"]+(")'
+        Revert-Version $javaFile $pattern $currentVersion $newVersion
+        # mcmod.info
+        $pattern = '("version":\s*")[^"]+(")'
+        Revert-Version $mcmodFile $pattern $currentVersion $newVersion
+        # build.gradle
+        $pattern = '(?m)^(version\s*=\s*")[^"]+(")'
+        Revert-Version $gradleFile $pattern $currentVersion $newVersion
+        # main.md
+        $pattern = '(# version:\s*)[\d.]+'
+        Revert-Version $mainMdFile $pattern $currentVersion $newVersion
+        Pop-Location
+        exit 0
     }
     git push origin $title
-    if ($LASTEXITCODE -ne 0) {
-        throw "git push tag failed"
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Git push failed"
+        Write-Host "Reverting version changes..."
+        # statflex.java
+        $pattern = '(public static final String VERSION = ")[^"]+(")'
+        Revert-Version $javaFile $pattern $currentVersion $newVersion
+        # mcmod.info
+        $pattern = '("version":\s*")[^"]+(")'
+        Revert-Version $mcmodFile $pattern $currentVersion $newVersion
+        # build.gradle
+        $pattern = '(?m)^(version\s*=\s*")[^"]+(")'
+        Revert-Version $gradleFile $pattern $currentVersion $newVersion
+        # main.md
+        $pattern = '(# version:\s*)[\d.]+'
+        Revert-Version $mainMdFile $pattern $currentVersion $newVersion
+        Pop-Location
+        exit 0
     }
 
     # Copy description from main.md
