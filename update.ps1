@@ -198,7 +198,7 @@ if ($Release) {
 
     # Copy description from main.md
     $descMatch = [regex]::Match(
-        $mainMdContent, '(?ms)^# desc_s\s*\R(.*?)(?=^# desc_e$)')
+        $mainMdContent, '(?ms)^# desc_s\s*\r?\n(.*?)(?=^# desc_e$)')
     if ($descMatch.Success) {
         $description = $descMatch.Groups[1].Value.TrimEnd()
     } else {
