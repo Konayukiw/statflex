@@ -83,7 +83,7 @@ if (Update-FileVersion $mcmodFile $pattern $newVersion $replacement) { $updated 
 
 # build.gradle
 $gradleFile = Join-Path $projectRoot "build.gradle"
-$pattern = '(version\s*=\s*")[^"]+(")'
+$pattern = '^(version\s*=\s*")[^"]+(")'
 $replacement = '${1}' + $newVersion + '${2}'
 if (Update-FileVersion $gradleFile $pattern $newVersion $replacement) { $updated = $true }
 
