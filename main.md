@@ -1,4 +1,4 @@
-# version: 2.27
+# version: 2.25
 # changelog: "Updater test"
 # description: 
 desc_s
