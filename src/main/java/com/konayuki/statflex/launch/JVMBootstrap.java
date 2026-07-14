@@ -65,9 +65,9 @@ public final class JVMBootstrap {
             Toggles.syncFromSettings(Settings.getInstance());
             Anticheat.register();
             PacketUtil.register();
+            Command.register();
             HypixelApiUtil.init();
             registerEventHandlers();
-            Command.register();
             startUpdateCheck();
             requestLoadedMessage();
             return true;
@@ -129,7 +129,7 @@ public final class JVMBootstrap {
         }
 
         pendingLoadedMessage = false;
-        mc.thePlayer.addChatMessage(new ChatComponentText(Messages.PREFIX + "statflex has been loaded!"));
+        Chat.send(Messages.PREFIX + "statflex has been loaded!");
     }
 
     private static void runOnClientThread(Runnable runnable) {
