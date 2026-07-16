@@ -17,7 +17,7 @@ buildscript {
 apply plugin: 'net.minecraftforge.gradle.forge'
 apply plugin: 'org.spongepowered.mixin'
 
-version = "2.27"
+version = "2.28"
 group = "com.konayuki.statflex"
 archivesBaseName = "statflex"
 

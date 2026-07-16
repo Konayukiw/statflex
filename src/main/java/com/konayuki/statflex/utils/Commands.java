@@ -7,6 +7,7 @@ import com.konayuki.statflex.features.bedwars.Bedwars;
 import com.konayuki.statflex.features.duels.Duels;
 import com.konayuki.statflex.features.duels.DuelsUpdated;
 import com.konayuki.statflex.features.skywars.Skywars;
+import com.konayuki.statflex.gui.ConfigGui;
 import com.konayuki.statflex.update.Update;
 import com.konayuki.statflex.update.UpdateGui;
 
@@ -27,7 +28,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class Command implements ICommand {
+public class Commands implements ICommand {
 
     private final List<String> aliases = Arrays.asList("s");
 
@@ -44,7 +45,7 @@ public class Command implements ICommand {
             return;
         }
 
-        ClientCommandHandler.instance.registerCommand(new Command());
+        ClientCommandHandler.instance.registerCommand(new Commands());
         registered = true;
     }
 
@@ -66,7 +67,7 @@ public class Command implements ICommand {
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
         if (args.length < 1) {
-            Chat.send(Messages.USAGE);
+            mc.displayGuiScreen(new ConfigGui());
             return;
         }
 

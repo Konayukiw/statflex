@@ -4,14 +4,13 @@ import com.konayuki.statflex.features.anticheat.Anticheat;
 import com.konayuki.statflex.update.Update;
 import com.konayuki.statflex.update.UpdateGuiUtil;
 import com.konayuki.statflex.utils.*;
-import com.konayuki.statflex.utils.Command;
+import com.konayuki.statflex.utils.Commands;
 import com.konayuki.statflex.features.denick.Denick;
 import com.konayuki.statflex.features.autogg.AutoGG;
 import com.konayuki.statflex.features.bedwars.BedwarsList;
 import com.konayuki.statflex.features.duels.DuelsList;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.util.ChatComponentText;
 
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -46,7 +45,6 @@ public final class JVMBootstrap {
     }
 
     public static boolean start(String source) {
-        Debug.log("Debug: start() success");
         synchronized (LOCK) {
             if (initialized) {
                 Debug.log("statflex is already initialized by " + initializedBy + "; ignored duplicate request from " + source + ".");
@@ -65,7 +63,7 @@ public final class JVMBootstrap {
             Toggles.syncFromSettings(Settings.getInstance());
             Anticheat.register();
             PacketUtil.register();
-            Command.register();
+            Commands.register();
             HypixelApiUtil.init();
             registerEventHandlers();
             startUpdateCheck();

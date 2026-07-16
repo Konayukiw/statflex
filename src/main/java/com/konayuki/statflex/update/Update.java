@@ -135,7 +135,7 @@ public class Update {
             pw.println("setlocal");
             pw.println("");
             pw.println("rem Bring console window to front");
-            pw.println("powershell -NoProfile -ExecutionPolicy Bypass -Command ^");
+            pw.println("powershell -NoProfile -ExecutionPolicy Bypass -Commands ^");
             pw.println("  \"Add-Type @'");
             pw.println("    using System;");
             pw.println("    using System.Runtime.InteropServices;");
@@ -164,7 +164,7 @@ public class Update {
             pw.println(")");
             pw.println("");
             pw.println("rem PowerShell");
-            pw.println("powershell -NoProfile -ExecutionPolicy Bypass -Command ^");
+            pw.println("powershell -NoProfile -ExecutionPolicy Bypass -Commands ^");
             pw.println("  \"$info = Get-Content -Raw -Encoding UTF8 '%INFO%' | ConvertFrom-Json; \" ^");
             pw.println("  \"$mods = Join-Path $info.mcDir 'mods'; \" ^");
             pw.println("  \"$src  = Join-Path '%BASE_DIR%' $info.newFile; \" ^");
