@@ -1,4 +1,4 @@
-# version: 2.30
+# version: 2.28
 # changelog: "Updater test"
 # description: 
 desc_s
