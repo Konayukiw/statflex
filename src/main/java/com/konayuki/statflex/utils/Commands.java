@@ -21,6 +21,9 @@ import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.IChatComponent;
 
 import net.minecraftforge.client.ClientCommandHandler;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,6 +39,15 @@ public class Commands implements ICommand {
     public static final Minecraft mc = Minecraft.getMinecraft();
     private static boolean registered;
 
+    /**
+     * Client commands run inside GuiChat.keyTyped on the client thread.
+     * Minecraft.addScheduledTask() executes immediately when already on the client
+     * thread, so any displayGuiScreen there is still overwritten by GuiChat's
+     * subsequent displayGuiScreen(null). Open on ClientTickEvent.END instead.
+     * Countdown: 1 = open at the next END phase (after chat has closed).
+     */
+    private static int openConfigGuiTicks = -1;
+
     public static void syncFromSettings(Settings settings) {
         Toggles.syncFromSettings(settings);
     }
@@ -45,8 +57,25 @@ public class Commands implements ICommand {
             return;
         }
 
-        ClientCommandHandler.instance.registerCommand(new Commands());
+        Commands instance = new Commands();
+        ClientCommandHandler.instance.registerCommand(instance);
+        MinecraftForge.EVENT_BUS.register(instance);
         registered = true;
+    }
+
+    @SubscribeEvent
+    public void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) {
+            return;
+        }
+        if (openConfigGuiTicks < 0) {
+            return;
+        }
+        openConfigGuiTicks--;
+        if (openConfigGuiTicks != 0) {
+            return;
+        }
+        mc.displayGuiScreen(new ConfigGui());
     }
 
     @Override
@@ -67,15 +96,7 @@ public class Commands implements ICommand {
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
         if (args.length < 1) {
-            Debug.log("Opening config gui (scheduled)");
-            mc.addScheduledTask(new Runnable() {
-                @Override
-                public void run() {
-                    Debug.log("Opening config gui (next tick)");
-                    mc.displayGuiScreen(new ConfigGui());
-                    Debug.log("Config gui displayGuiScreen called");
-                }
-            });
+            openConfigGuiTicks = 1;
             return;
         }
 

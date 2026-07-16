@@ -33,7 +33,7 @@ public class Duels {
 
                 ProfileUtil.PlayerInfo info = ProfileUtil.getPlayerInfo(inputName);
                 if (info == null) {
-                    Debug.log("Failed to fetch player stats: " + inputName);
+                    Debug.log(Messages.FETCH_ERROR + inputName);
                     return;
                 }
 
@@ -71,7 +71,7 @@ public class Duels {
 
                 JsonElement playerElement = response.get("player");
                 if (playerElement == null || playerElement.isJsonNull()) {
-                    Debug.log("Failed to fetch player stats: " + inputName);
+                    Debug.log(Messages.FETCH_ERROR + inputName);
                     return;
                 }
 

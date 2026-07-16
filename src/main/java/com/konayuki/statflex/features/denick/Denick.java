@@ -108,7 +108,7 @@ public class Denick {
             return;
         }
 
-        Debug.log(displayNameText + ", UUID=" + profile.getId() + ", UUID version" + profile.getId().version() + " confirmed not to be an NPC");
+        Debug.log("[S]" + displayNameText + ", UUID=" + profile.getId() + ", UUID version" + profile.getId().version() + " confirmed not to be an NPC");
 
         for (Property prop : profile.getProperties().get("textures")) {
             try {
@@ -144,7 +144,6 @@ public class Denick {
                 if (!profileName.contains(displayName)) {
                     Chat.send("§8[§cS§8]§c " + profileName + " §7is nicked as §c" + displayName + "§7!");
 
-                    // Use Locraw to get game type for stats processing
                     Locraw.getInstance().requestLocraw(new Locraw.LocrawCallback() {
                         @Override
                         public void onLocrawReceived(String gameType, String mode) {
@@ -153,7 +152,7 @@ public class Denick {
 
                         @Override
                         public void onLocrawTimeout() {
-                            Debug.log("[Denick] Locraw timeout for nicked player stats");
+                            Debug.log("[S] Locraw timeout for nicked player stats");
                         }
                     });
                 }

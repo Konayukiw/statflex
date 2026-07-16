@@ -15,7 +15,7 @@ public class Loader {
             }
 
             JarLauncher.launch(codeSource.getLocation(), Loader.class.getClassLoader());
-            Debug.log("statflex successfully injected!");
+            Debug.log("[S] statflex successfully injected!");
         } catch (Throwable throwable) {
             throwable.printStackTrace();
         }
@@ -30,7 +30,7 @@ public class Loader {
             }
 
             JarLauncher.launch(tempJar.toURI().toURL(), Loader.class.getClassLoader());
-            Debug.log("statflex successfully injected!");
+            Debug.log("[S] statflex successfully injected!");
         } catch (Throwable throwable) {
             throwable.printStackTrace();
         }

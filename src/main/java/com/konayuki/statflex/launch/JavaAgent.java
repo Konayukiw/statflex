@@ -29,7 +29,6 @@ public final class JavaAgent {
     private static void launch() {
         try {
             JarLauncher.launch(getOwnJarUrl(), Thread.currentThread().getContextClassLoader());
-            Debug.log("Agent entrypoint completed.");
         } catch (Throwable throwable) {
             throwable.printStackTrace();
         }

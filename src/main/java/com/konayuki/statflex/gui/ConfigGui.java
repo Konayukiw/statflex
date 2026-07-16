@@ -29,7 +29,6 @@ import java.util.Map;
 public class ConfigGui extends GuiScreen {
 
     public ConfigGui() {
-        Debug.log("ConfigGui constructor");
     }
 
     private int panelX;
@@ -71,7 +70,7 @@ public class ConfigGui extends GuiScreen {
         return tabs.get(currentTabIndex);
     }
 
-    private final String guiTitle = "statflex Settings";
+    private final String guiTitle = "statflex by Konayuki";
     private final int tabButtonWidth = 90;
 
     private float tabScrollX;
@@ -107,7 +106,6 @@ public class ConfigGui extends GuiScreen {
 
     @Override
     public void initGui() {
-        Debug.log("Initialized ConfigGui");
         super.initGui();
         panelWidth = Math.min(800, this.width - 60);
         panelHeight = Math.min(550, this.height - 60);
@@ -394,9 +392,13 @@ public class ConfigGui extends GuiScreen {
         tab.scrollY = Math.max(0f, Math.min((float) tab.maxScrollY, tab.scrollY));
     }
 
+    private boolean loggedFirstDraw;
+
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-        Debug.log("drawScreen");
+        if (!loggedFirstDraw) {
+            loggedFirstDraw = true;
+        }
         Tab activeTab = currentTab();
         if (!"error_no_tabs".equals(activeTab.id)) {
             if (!isDraggingContentScrollbar) {
@@ -826,7 +828,6 @@ public class ConfigGui extends GuiScreen {
     public void onGuiClosed() {
         super.onGuiClosed();
         Keyboard.enableRepeatEvents(false);
-        // Persist any focused textfields by unfocusing (triggers blur save)
         for (Tab tab : tabs) {
             for (GuiComponentBase c : tab.components) {
                 if (c instanceof Text) {

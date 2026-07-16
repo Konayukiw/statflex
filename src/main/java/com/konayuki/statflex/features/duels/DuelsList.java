@@ -2,6 +2,7 @@ package com.konayuki.statflex.features.duels;
 
 import com.konayuki.statflex.utils.Debug;
 import com.konayuki.statflex.utils.Locraw;
+import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.utils.Toggles;
 
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
@@ -28,7 +29,7 @@ public class DuelsList {
                 pendingChatLine = chatLine;
             }
         } catch (Exception e) {
-            Debug.log("Failed to handle chat: " + e.getClass().getSimpleName());
+            Debug.log("[S] Failed to handle chat: " + e.getClass().getSimpleName());
         }
     }
 
@@ -54,7 +55,6 @@ public class DuelsList {
             return;
         }
 
-        // Request locraw to get current game mode
         Locraw.getInstance().requestLocraw(new Locraw.LocrawCallback() {
             @Override
             public void onLocrawReceived(String gameType, String mode) {
@@ -64,17 +64,17 @@ public class DuelsList {
                         try {
                             Duels.fetchStats(playerName, detectedMode, true);
                         } catch (Exception e) {
-                            Debug.log("Failed to fetch stats for " + playerName + ": " + e.getMessage());
+                            Debug.log(Messages.FETCH_ERROR + playerName + ": " + e.getMessage());
                         }
                     }
                 } else {
-                    Debug.log("Not in Duels game type: " + gameType);
+                    Debug.log("[S] Not in Duels game type: " + gameType);
                 }
             }
 
             @Override
             public void onLocrawTimeout() {
-                Debug.log("Locraw timeout when trying to get game mode for auto stats");
+                Debug.log("[S] Locraw timeout when trying to get game mode for auto stats");
             }
         });
     }
@@ -97,7 +97,7 @@ public class DuelsList {
                 }
             }
         } catch (Exception e) {
-            Debug.log("Failed to parse opponents: " + e.getMessage());
+            Debug.log("[S] Failed to parse opponents: " + e.getMessage());
         }
         return opponents;
     }

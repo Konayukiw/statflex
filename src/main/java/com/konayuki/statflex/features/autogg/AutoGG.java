@@ -76,10 +76,9 @@ public class AutoGG {
                     }
                 }
             }
-            Debug.log("Loaded " + triggers.size() + " Hypixel triggers.");
         } catch (Exception e) {
             e.printStackTrace();
-            Debug.log("Failed to load Hypixel triggers.");
+            Debug.log("[S] Failed to load Hypixel triggers.");
         }
     }
 
@@ -96,7 +95,7 @@ public class AutoGG {
         synchronized (triggers) {
             for (Pattern pattern : triggers) {
                 if (pattern.matcher(msg).find()) {
-                    Debug.log("Trigger matched: " + msg);
+                    Debug.log("[S] Trigger matched: " + msg);
                     Settings.load();
                     reloadMessages();
                     synchronized (autoMessages) {
@@ -184,7 +183,6 @@ public class AutoGG {
                     line.appendSibling(remove);
                     mc.thePlayer.addChatMessage(line);
                 }
-                Debug.log("Showing autoMessages: " + autoMessages);
             }
         }
         ChatComponentText add = new ChatComponentText("§7[§a§lAdd§7]");

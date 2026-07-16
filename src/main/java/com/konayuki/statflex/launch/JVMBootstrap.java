@@ -47,7 +47,7 @@ public final class JVMBootstrap {
     public static boolean start(String source) {
         synchronized (LOCK) {
             if (initialized) {
-                Debug.log("statflex is already initialized by " + initializedBy + "; ignored duplicate request from " + source + ".");
+                Debug.log("[S] statflex is already initialized by " + initializedBy + "; ignored duplicate request from " + source + ".");
                 requestLoadedMessage();
                 return false;
             }
