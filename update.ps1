@@ -1,5 +1,6 @@
 param(
-    [switch]$Release
+    [switch]$Release,
+    [switch]$Revert
 )
 
 $ErrorActionPreference = "Stop"
@@ -110,14 +111,12 @@ function Exit-WithRevert {
     )
     Revert-AllVersions -OldVersion $OldVersion -Reason $Reason
     if ($Restage) {
-        # Keep index in sync with working tree after an early abort (post git add).
         $paths = $script:versionTargets | ForEach-Object { $_.File }
         git add -- $paths 2>$null | Out-Null
     }
     exit 0
 }
 
-# --- paths & version targets (single source of truth) ---
 $javaFile   = Join-Path $projectRoot "src/main/java/com/konayuki/statflex/statflex.java"
 $mcmodFile  = Join-Path $projectRoot "src/main/resources/mcmod.info"
 $gradleFile = Join-Path $projectRoot "build.gradle"
@@ -149,6 +148,15 @@ $script:versionTargets = @(
 $versionPattern = 'public static final String VERSION = "([^"]+)"'
 $currentVersion = Get-VersionFromFile -filePath $javaFile -pattern $versionPattern
 Write-Host "Current version: $currentVersion"
+
+if ($Revert) {
+    $previousVersion = [decimal]::Parse($currentVersion, [System.Globalization.CultureInfo]::InvariantCulture) - [decimal]"0.01"
+    $previousVersionStr = $previousVersion.ToString("0.00", [System.Globalization.CultureInfo]::InvariantCulture)
+    Write-Host "Reverting to previous version: $previousVersionStr"
+    Revert-AllVersions -OldVersion $previousVersionStr
+    Write-Host "Revert completed!"
+    exit 0
+}
 
 $newVersion = Increment-Version -versionStr $currentVersion
 Write-Host "New version: $newVersion"
