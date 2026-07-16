@@ -67,9 +67,15 @@ public class Commands implements ICommand {
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
         if (args.length < 1) {
-            Debug.log("Opening config gui");
-            mc.displayGuiScreen(new ConfigGui());
-            Debug.log("Config gui opened (hopefully)");
+            Debug.log("Opening config gui (scheduled)");
+            mc.addScheduledTask(new Runnable() {
+                @Override
+                public void run() {
+                    Debug.log("Opening config gui (next tick)");
+                    mc.displayGuiScreen(new ConfigGui());
+                    Debug.log("Config gui displayGuiScreen called");
+                }
+            });
             return;
         }
 
