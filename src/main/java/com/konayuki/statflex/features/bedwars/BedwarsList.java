@@ -39,6 +39,7 @@ public class BedwarsList {
         String raw = event.message.getUnformattedText();
         String stripped = EnumChatFormatting.getTextWithoutFormattingCodes(raw);
         String lower = stripped.toLowerCase();
+        Minecraft mc = Minecraft.getMinecraft();
 
         if (lower.startsWith("online:")) {
             if (!Toggles.isKeepWhoEnabled()) {
@@ -51,9 +52,9 @@ public class BedwarsList {
             extractPlayerNames(stripped, collectedPlayers);
 
             waitingForParty = true;
-            Minecraft.getMinecraft().addScheduledTask(() -> {
-                if (Minecraft.getMinecraft().thePlayer != null) {
-                    Minecraft.getMinecraft().thePlayer.sendChatMessage("/pl");
+            mc.addScheduledTask(() -> {
+                if (mc.thePlayer != null) {
+                    mc.thePlayer.sendChatMessage("/pl");
                 }
             });
             return;

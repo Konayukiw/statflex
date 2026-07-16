@@ -7,7 +7,7 @@ desc_s
 
 Hypixel stats viewer mod for Forge 1.8.9.
 
-**Version 2.28**
+**Version 2.29**
 
 > Refactoring
 
