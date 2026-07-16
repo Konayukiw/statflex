@@ -23,8 +23,6 @@ public class Update {
 
     private static final String JAR_PREFIX = "statflex-";
 
-    public static boolean guiShown = false;
-
     public static boolean updateAvailable = false;
     public static boolean updateDownloaded = false;
     public static String latestVersion = "";

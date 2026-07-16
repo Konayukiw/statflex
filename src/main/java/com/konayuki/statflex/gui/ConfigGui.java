@@ -1,15 +1,19 @@
 package com.konayuki.statflex.gui;
 
+import com.konayuki.statflex.features.skin.Skin;
 import com.konayuki.statflex.gui.elements.Button;
 import com.konayuki.statflex.gui.elements.Checkbox;
 import com.konayuki.statflex.gui.elements.Dropdown;
 import com.konayuki.statflex.gui.elements.GuiComponentBase;
+import com.konayuki.statflex.gui.elements.Label;
 import com.konayuki.statflex.gui.elements.Slider;
 import com.konayuki.statflex.gui.elements.Text;
-import com.konayuki.statflex.utils.Debug;
+import com.konayuki.statflex.statflex;
+import com.konayuki.statflex.update.Update;
 import com.konayuki.statflex.utils.HypixelApiUtil;
 import com.konayuki.statflex.utils.Settings;
 import com.konayuki.statflex.utils.Toggles;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
@@ -28,7 +32,14 @@ import java.util.Map;
 
 public class ConfigGui extends GuiScreen {
 
+    private final String initialTabId;
+
     public ConfigGui() {
+        this(null);
+    }
+
+    public ConfigGui(String initialTabId) {
+        this.initialTabId = initialTabId;
     }
 
     private int panelX;
@@ -71,7 +82,7 @@ public class ConfigGui extends GuiScreen {
     }
 
     private final String guiTitle = "statflex by Konayuki";
-    private final int tabButtonWidth = 90;
+    private final int tabButtonWidth = 100;
 
     private float tabScrollX;
     private int targetTabScrollX;
@@ -100,6 +111,14 @@ public class ConfigGui extends GuiScreen {
 
     private int nextComponentId = 1;
 
+    /** Draft AutoGG messages while editing (null = use Settings). */
+    private List<String> draftAutoGGMessages;
+    private final List<Text> autoGGTextFields = new ArrayList<Text>();
+
+    private Button updateInstallButton;
+    private Label updateStatusLabel;
+    private boolean updateCheckInProgress;
+
     private int getNextId() {
         return nextComponentId++;
     }
@@ -119,6 +138,7 @@ public class ConfigGui extends GuiScreen {
         tabScrollX = 0f;
         targetTabScrollX = 0;
         isDraggingContentScrollbar = false;
+        updateCheckInProgress = false;
 
         try {
             defineAllPossibleTabs();
@@ -127,11 +147,22 @@ public class ConfigGui extends GuiScreen {
             if (this.tabs.isEmpty()) {
                 return;
             }
+
+            if (initialTabId != null) {
+                for (int i = 0; i < tabs.size(); i++) {
+                    if (initialTabId.equalsIgnoreCase(tabs.get(i).id)
+                            || initialTabId.equalsIgnoreCase(tabs.get(i).name)) {
+                        currentTabIndex = i;
+                        break;
+                    }
+                }
+            }
             if (currentTabIndex >= tabs.size()) {
                 currentTabIndex = 0;
             }
 
             calculateTabScrolling();
+            ensureSelectedTabVisible();
             for (Tab tab : tabs) {
                 calculateContentScrollingForTab(tab);
                 tab.scrollY = 0f;
@@ -144,15 +175,20 @@ public class ConfigGui extends GuiScreen {
 
     private void defineAllPossibleTabs() {
         allPossibleTabsMap.clear();
-        allPossibleTabsMap.put("Toggles", new Tab("Toggles", "Toggles"));
-        allPossibleTabsMap.put("General", new Tab("General", "General"));
-        allPossibleTabsMap.put("Warnings", new Tab("Warnings", "Warnings"));
-        allPossibleTabsMap.put("AutoGG", new Tab("AutoGG", "AutoGG"));
+        allPossibleTabsMap.put("Utility", new Tab("Utility", "Utility"));
+        allPossibleTabsMap.put("Bedwars", new Tab("Bedwars", "Bedwars"));
+        allPossibleTabsMap.put("Skywars", new Tab("Skywars", "Skywars"));
+        allPossibleTabsMap.put("Duels", new Tab("Duels", "Duels"));
+        allPossibleTabsMap.put("Hypixel API", new Tab("Hypixel API", "Hypixel API"));
+        allPossibleTabsMap.put("Skin", new Tab("Skin", "Skin"));
+        allPossibleTabsMap.put("Update", new Tab("Update", "Update"));
     }
 
     private void orderAndPopulateTabs() {
         tabs.clear();
-        String[] order = {"Toggles", "General", "Warnings", "AutoGG"};
+        String[] order = {
+                "Utility", "Bedwars", "Skywars", "Duels", "Hypixel API", "Skin", "Update"
+        };
         for (String tabId : order) {
             Tab tab = allPossibleTabsMap.get(tabId);
             if (tab != null) {
@@ -170,6 +206,21 @@ public class ConfigGui extends GuiScreen {
         }
     }
 
+    private void rebuildTab(String tabId) {
+        for (Tab tab : tabs) {
+            if (tabId.equals(tab.id)) {
+                float savedScroll = tab.scrollY;
+                int savedTarget = tab.targetScrollY;
+                tab.components.clear();
+                populateComponentsForTab(tab);
+                calculateContentScrollingForTab(tab);
+                tab.targetScrollY = Math.max(0, Math.min(tab.maxScrollY, savedTarget));
+                tab.scrollY = Math.max(0f, Math.min((float) tab.maxScrollY, savedScroll));
+                return;
+            }
+        }
+    }
+
     private void populateComponentsForTab(Tab tab) {
         Settings settings = Settings.getInstance();
         int contentAreaWidth = panelWidth - (panelPadding * 2);
@@ -179,187 +230,382 @@ public class ConfigGui extends GuiScreen {
         logicalCurrentY = 0;
         logicalCurrentY += contentPaddingTopForComponents;
 
-        if ("Toggles".equals(tab.id)) {
-            addCheckbox(tab, startX, "Denick Detection", Toggles.denickEnabled, v -> {
-                Toggles.denickEnabled = v;
-                Settings.getInstance().denickEnabled = v;
-                Settings.save();
-            });
-            addCheckbox(tab, startX, "Bedwars Stats List (/who)", Toggles.listStatsEnabled, v -> {
-                Toggles.listStatsEnabled = v;
-                Settings.getInstance().listStatsEnabled = v;
-                Settings.save();
-            });
-            addCheckbox(tab, startX, "Duels Stats", Toggles.autoStatsEnabled, v -> {
-                Toggles.autoStatsEnabled = v;
-                Settings.getInstance().autoStatsEnabled = v;
-                Settings.save();
-            });
-            addCheckbox(tab, startX, "Updated Duels Titles", Toggles.duelsUpdate, v -> {
-                Toggles.duelsUpdate = v;
-                Settings.getInstance().duelsUpdate = v;
-                Settings.save();
-            });
-            addCheckbox(tab, startX, "Secure Connection", !Toggles.ignoreCertificates, v -> {
-                Toggles.ignoreCertificates = !v;
-                Settings.getInstance().ignoreCertificates = !v;
-                Settings.save();
-            });
-            addCheckbox(tab, startX, "Keep Original /who", Toggles.keepWhoEnabled, v -> {
-                Toggles.keepWhoEnabled = v;
-                Settings.getInstance().keepWhoEnabled = v;
-                Settings.save();
-            });
-        } else if ("General".equals(tab.id)) {
-            String apiKey = settings.apiKey != null ? settings.apiKey : "";
-            Text apiKeyField = new Text(
-                    getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
-                    actualComponentWidth, "Hypixel API Key", apiKey,
-                    t -> {
-                        Settings.getInstance().apiKey = t;
-                    },
-                    focused -> {
-                        if (!focused) {
-                            String key = Settings.getInstance().apiKey;
-                            if (key == null) {
-                                key = "";
-                            }
-                            HypixelApiUtil.setApiKey(key);
-                        }
-                    }
-            );
-            tab.components.add(apiKeyField);
-            logicalCurrentY += labelHeightAboveComponent + apiKeyField.height + interComponentSpacing;
-
-            String skinDir = settings.skinSaveDir != null ? settings.skinSaveDir : "";
-            Text skinDirField = new Text(
-                    getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
-                    actualComponentWidth, "Skin Save Directory (absolute path)", skinDir,
-                    t -> {
-                        Settings.getInstance().skinSaveDir = t != null ? t : "";
-                    },
-                    focused -> {
-                        if (!focused) {
-                            String path = Settings.getInstance().skinSaveDir;
-                            if (path != null && !path.isEmpty()) {
-                                File dir = new File(path);
-                                if (dir.isAbsolute()) {
-                                    Settings.getInstance().setSkinSaveDir(dir);
-                                } else {
-                                    Settings.save();
-                                }
-                            } else {
-                                Settings.save();
-                            }
-                        }
-                    }
-            );
-            tab.components.add(skinDirField);
-            logicalCurrentY += labelHeightAboveComponent + skinDirField.height + interComponentSpacing;
-
-            Slider flagIntervalSlider = new Slider(
-                    getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
-                    actualComponentWidth, "Anticheat Flag Interval (seconds)",
-                    (float) settings.flagInterval, 0f, 20f, 0.5f,
-                    v -> String.format(Locale.US, "%.1f s", v),
-                    v -> Settings.getInstance().setFlagInterval(v)
-            );
-            tab.components.add(flagIntervalSlider);
-            logicalCurrentY += labelHeightAboveComponent + flagIntervalSlider.height;
-        } else if ("Warnings".equals(tab.id)) {
-            Slider warnLevelSlider = new Slider(
-                    getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
-                    actualComponentWidth, "Warn Level (Bedwars stars, 0 = off)",
-                    (float) settings.warnLevel, 0f, 3000f, 1f,
-                    v -> v == 0f ? "Disabled" : String.format(Locale.US, "\u272B%.0f", v),
-                    v -> {
-                        Settings.getInstance().warnLevel = Math.round(v);
-                        Settings.save();
-                    }
-            );
-            tab.components.add(warnLevelSlider);
-            logicalCurrentY += labelHeightAboveComponent + warnLevelSlider.height + interComponentSpacing;
-
-            Slider warnFkdrSlider = new Slider(
-                    getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
-                    actualComponentWidth, "Warn FKDR (0 = off)",
-                    (float) settings.warnFKDR, 0f, 50f, 0.1f,
-                    v -> v == 0f ? "Disabled" : String.format(Locale.US, "%.1f FKDR", v),
-                    v -> {
-                        Settings.getInstance().warnFKDR = v;
-                        Settings.save();
-                    }
-            );
-            tab.components.add(warnFkdrSlider);
-            logicalCurrentY += labelHeightAboveComponent + warnFkdrSlider.height;
-        } else if ("AutoGG".equals(tab.id)) {
-            String joined = joinAutoGGMessages(settings.autoGGMessages);
-            final Text[] holder = new Text[1];
-            holder[0] = new Text(
-                    getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
-                    actualComponentWidth, "AutoGG Messages (separate with | )", joined,
-                    t -> {
-                    },
-                    focused -> {
-                        if (!focused && holder[0] != null) {
-                            saveAutoGGMessages(holder[0].getText());
-                        }
-                    }
-            );
-            tab.components.add(holder[0]);
-            logicalCurrentY += labelHeightAboveComponent + holder[0].height + interComponentSpacing;
-
-            Button saveAutoGGButton = new Button(
-                    getNextId(), startX, logicalCurrentY, actualComponentWidth,
-                    "Save AutoGG Messages",
-                    () -> {
-                        if (holder[0] != null) {
-                            saveAutoGGMessages(holder[0].getText());
-                        }
-                    }
-            );
-            tab.components.add(saveAutoGGButton);
-            logicalCurrentY += saveAutoGGButton.height;
+        if ("Utility".equals(tab.id)) {
+            populateUtilityTab(tab, startX, actualComponentWidth, settings);
+        } else if ("Bedwars".equals(tab.id)) {
+            populateBedwarsTab(tab, startX, actualComponentWidth, settings);
+        } else if ("Skywars".equals(tab.id)) {
+            populateSkywarsTab(tab, startX, actualComponentWidth);
+        } else if ("Duels".equals(tab.id)) {
+            populateDuelsTab(tab, startX, actualComponentWidth);
+        } else if ("Hypixel API".equals(tab.id)) {
+            populateHypixelApiTab(tab, startX, actualComponentWidth, settings);
+        } else if ("Skin".equals(tab.id)) {
+            populateSkinTab(tab, startX, actualComponentWidth, settings);
+        } else if ("Update".equals(tab.id)) {
+            populateUpdateTab(tab, startX, actualComponentWidth);
         }
 
         tab.contentHeight = (logicalCurrentY - contentPaddingTopForComponents) + contentPaddingBottomForComponents;
         calculateContentScrollingForTab(tab);
     }
 
+    private void populateUtilityTab(Tab tab, int startX, int actualComponentWidth, Settings settings) {
+        addCheckbox(tab, startX, "Denick Detection", Toggles.denickEnabled, v -> {
+            Toggles.denickEnabled = v;
+            Settings.getInstance().denickEnabled = v;
+            Settings.save();
+        });
+        addCheckbox(tab, startX, "Secure Connection", !Toggles.ignoreCertificates, v -> {
+            Toggles.ignoreCertificates = !v;
+            Settings.getInstance().ignoreCertificates = !v;
+            Settings.save();
+        });
+
+        autoGGTextFields.clear();
+        List<String> messages = resolveAutoGGMessagesForDisplay();
+        for (int i = 0; i < messages.size(); i++) {
+            String label = messages.size() == 1 ? "AutoGG Message" : "AutoGG Message " + (i + 1);
+            Text field = new Text(
+                    getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
+                    actualComponentWidth, label, messages.get(i),
+                    t -> {
+                    },
+                    focused -> {
+                        if (!focused) {
+                            saveAutoGGFromFields();
+                        }
+                    }
+            );
+            autoGGTextFields.add(field);
+            tab.components.add(field);
+            logicalCurrentY += labelHeightAboveComponent + field.height + interComponentSpacing;
+        }
+
+        Button addMessageButton = new Button(
+                getNextId(), startX, logicalCurrentY, actualComponentWidth,
+                "Add message",
+                () -> {
+                    List<String> current = collectAutoGGMessages(true);
+                    current.add("");
+                    draftAutoGGMessages = current;
+                    rebuildTab("Utility");
+                }
+        );
+        tab.components.add(addMessageButton);
+        logicalCurrentY += addMessageButton.height + interComponentSpacing;
+
+        Button saveAutoGGButton = new Button(
+                getNextId(), startX, logicalCurrentY, actualComponentWidth,
+                "Save AutoGG Messages",
+                this::saveAutoGGFromFields
+        );
+        tab.components.add(saveAutoGGButton);
+        logicalCurrentY += saveAutoGGButton.height + interComponentSpacing;
+
+        Slider flagIntervalSlider = new Slider(
+                getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
+                actualComponentWidth, "Anticheat Flag Interval (seconds)",
+                (float) settings.flagInterval, 0f, 20f, 0.5f,
+                v -> String.format(Locale.US, "%.1f s", v),
+                v -> Settings.getInstance().setFlagInterval(v)
+        );
+        tab.components.add(flagIntervalSlider);
+        logicalCurrentY += labelHeightAboveComponent + flagIntervalSlider.height;
+    }
+
+    private void populateBedwarsTab(Tab tab, int startX, int actualComponentWidth, Settings settings) {
+        addCheckbox(tab, startX, "Auto Stats (/who list)", Toggles.listStatsEnabled, v -> {
+            Toggles.listStatsEnabled = v;
+            Settings.getInstance().listStatsEnabled = v;
+            Settings.save();
+        });
+        addCheckbox(tab, startX, "Keep Original /who", Toggles.keepWhoEnabled, v -> {
+            Toggles.keepWhoEnabled = v;
+            Settings.getInstance().keepWhoEnabled = v;
+            Settings.save();
+        });
+
+        Slider warnLevelSlider = new Slider(
+                getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
+                actualComponentWidth, "Warn Level (Bedwars stars, 0 = off)",
+                (float) settings.warnLevel, 0f, 3000f, 1f,
+                v -> v == 0f ? "Disabled" : String.format(Locale.US, "\u272B%.0f", v),
+                v -> {
+                    Settings.getInstance().warnLevel = Math.round(v);
+                    Settings.save();
+                }
+        );
+        tab.components.add(warnLevelSlider);
+        logicalCurrentY += labelHeightAboveComponent + warnLevelSlider.height + interComponentSpacing;
+
+        Slider warnFkdrSlider = new Slider(
+                getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
+                actualComponentWidth, "Warn FKDR (0 = off)",
+                (float) settings.warnFKDR, 0f, 50f, 0.1f,
+                v -> v == 0f ? "Disabled" : String.format(Locale.US, "%.1f FKDR", v),
+                v -> {
+                    Settings.getInstance().warnFKDR = v;
+                    Settings.save();
+                }
+        );
+        tab.components.add(warnFkdrSlider);
+        logicalCurrentY += labelHeightAboveComponent + warnFkdrSlider.height;
+    }
+
+    private void populateSkywarsTab(Tab tab, int startX, int actualComponentWidth) {
+        Label note = new Label(
+                getNextId(), startX, logicalCurrentY, actualComponentWidth,
+                "No configurable options yet. Use /s sw [Player]."
+        );
+        tab.components.add(note);
+        logicalCurrentY += note.height;
+    }
+
+    private void populateDuelsTab(Tab tab, int startX, int actualComponentWidth) {
+        addCheckbox(tab, startX, "Auto Stats", Toggles.autoStatsEnabled, v -> {
+            Toggles.autoStatsEnabled = v;
+            Settings.getInstance().autoStatsEnabled = v;
+            Settings.save();
+        });
+        addCheckbox(tab, startX, "Updated Titles", Toggles.duelsUpdate, v -> {
+            Toggles.duelsUpdate = v;
+            Settings.getInstance().duelsUpdate = v;
+            Settings.save();
+        });
+        if (!tab.components.isEmpty()) {
+            logicalCurrentY -= interComponentSpacing;
+        }
+    }
+
+    private void populateHypixelApiTab(Tab tab, int startX, int actualComponentWidth, Settings settings) {
+        String apiKey = settings.apiKey != null ? settings.apiKey : "";
+        Text apiKeyField = new Text(
+                getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
+                actualComponentWidth, "Hypixel API Key", apiKey,
+                t -> Settings.getInstance().apiKey = t,
+                focused -> {
+                    if (!focused) {
+                        String key = Settings.getInstance().apiKey;
+                        if (key == null) {
+                            key = "";
+                        }
+                        HypixelApiUtil.setApiKey(key);
+                    }
+                }
+        );
+        tab.components.add(apiKeyField);
+        logicalCurrentY += labelHeightAboveComponent + apiKeyField.height + interComponentSpacing;
+
+        Label hint = new Label(
+                getNextId(), startX, logicalCurrentY, actualComponentWidth,
+                "Get a key at https://developer.hypixel.net"
+        );
+        tab.components.add(hint);
+        logicalCurrentY += hint.height;
+    }
+
+    private void populateSkinTab(Tab tab, int startX, int actualComponentWidth, Settings settings) {
+        final Text[] playerHolder = new Text[1];
+        playerHolder[0] = new Text(
+                getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
+                actualComponentWidth, "Player name (skin save)", "",
+                t -> {
+                }
+        );
+        tab.components.add(playerHolder[0]);
+        logicalCurrentY += labelHeightAboveComponent + playerHolder[0].height + interComponentSpacing;
+
+        Button saveSkinButton = new Button(
+                getNextId(), startX, logicalCurrentY, actualComponentWidth,
+                "Save Skin",
+                () -> {
+                    String name = playerHolder[0] != null ? playerHolder[0].getText() : "";
+                    if (name == null) {
+                        name = "";
+                    }
+                    name = name.trim();
+                    if (name.isEmpty()) {
+                        return;
+                    }
+                    Skin.savePlayerSkinAsync(name, false);
+                }
+        );
+        tab.components.add(saveSkinButton);
+        logicalCurrentY += saveSkinButton.height + interComponentSpacing;
+
+        String skinDir = settings.skinSaveDir != null ? settings.skinSaveDir : "";
+        Text skinDirField = new Text(
+                getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
+                actualComponentWidth, "Skin Save Path (absolute path)", skinDir,
+                t -> Settings.getInstance().skinSaveDir = t != null ? t : "",
+                focused -> {
+                    if (!focused) {
+                        String path = Settings.getInstance().skinSaveDir;
+                        if (path != null && !path.isEmpty()) {
+                            File dir = new File(path);
+                            if (dir.isAbsolute()) {
+                                Settings.getInstance().setSkinSaveDir(dir);
+                            } else {
+                                Settings.save();
+                            }
+                        } else {
+                            Settings.save();
+                        }
+                    }
+                }
+        );
+        tab.components.add(skinDirField);
+        logicalCurrentY += labelHeightAboveComponent + skinDirField.height;
+    }
+
+    private void populateUpdateTab(Tab tab, int startX, int actualComponentWidth) {
+        String initialStatus = buildInitialUpdateStatus();
+        updateStatusLabel = new Label(
+                getNextId(), startX, logicalCurrentY, actualComponentWidth, initialStatus
+        );
+        tab.components.add(updateStatusLabel);
+        logicalCurrentY += updateStatusLabel.height + interComponentSpacing;
+
+        Label versionLabel = new Label(
+                getNextId(), startX, logicalCurrentY, actualComponentWidth,
+                "Current version: " + statflex.VERSION
+        );
+        tab.components.add(versionLabel);
+        logicalCurrentY += versionLabel.height + interComponentSpacing;
+
+        Button checkButton = new Button(
+                getNextId(), startX, logicalCurrentY, actualComponentWidth,
+                "Check for Updates",
+                this::runUpdateCheck
+        );
+        tab.components.add(checkButton);
+        logicalCurrentY += checkButton.height + interComponentSpacing;
+
+        updateInstallButton = new Button(
+                getNextId(), startX, logicalCurrentY, actualComponentWidth,
+                "Update",
+                () -> {
+                    if (Update.updateAvailable && Update.updateDownloaded) {
+                        Update.prepareUpdateAndExit();
+                    }
+                }
+        );
+        updateInstallButton.enabled = Update.updateAvailable && Update.updateDownloaded;
+        tab.components.add(updateInstallButton);
+        logicalCurrentY += updateInstallButton.height + interComponentSpacing;
+
+        Label restartHint = new Label(
+                getNextId(), startX, logicalCurrentY, actualComponentWidth,
+                "After updating, restart Minecraft."
+        );
+        tab.components.add(restartHint);
+        logicalCurrentY += restartHint.height;
+    }
+
+    private String buildInitialUpdateStatus() {
+        if (Update.updateAvailable && Update.latestVersion != null && !Update.latestVersion.isEmpty()) {
+            return "Update available: " + Update.latestVersion;
+        }
+        return "Click \"Check for Updates\" to check.";
+    }
+
+    private void runUpdateCheck() {
+        if (updateCheckInProgress) {
+            return;
+        }
+        updateCheckInProgress = true;
+        if (updateStatusLabel != null) {
+            updateStatusLabel.setText("Checking for updates...");
+            updateStatusLabel.setColor(GuiColors.TEXT_SECONDARY);
+        }
+        if (updateInstallButton != null) {
+            updateInstallButton.enabled = false;
+        }
+
+        new Thread(() -> {
+            Update.UpdateState state = Update.checkNow();
+            Minecraft.getMinecraft().addScheduledTask(() -> {
+                updateCheckInProgress = false;
+                if (mc.currentScreen != this) {
+                    return;
+                }
+                applyUpdateCheckResult(state);
+            });
+        }, "statflex-updater-gui").start();
+    }
+
+    private void applyUpdateCheckResult(Update.UpdateState state) {
+        if (updateStatusLabel == null || updateInstallButton == null) {
+            return;
+        }
+        switch (state) {
+            case UP_TO_DATE:
+                updateStatusLabel.setText("statflex is up-to-date.");
+                updateStatusLabel.setColor(GuiColors.TEXT_SECONDARY);
+                updateInstallButton.enabled = false;
+                break;
+            case UPDATE_AVAILABLE:
+                updateStatusLabel.setText("Update available: " + Update.latestVersion);
+                updateStatusLabel.setColor(GuiColors.TEXT_ACCENT);
+                updateInstallButton.enabled = true;
+                break;
+            case ERROR:
+                updateStatusLabel.setText("Failed to check for updates.");
+                updateStatusLabel.setColor(new Color(220, 80, 80).getRGB());
+                updateInstallButton.enabled = false;
+                break;
+            default:
+                break;
+        }
+    }
+
+    private List<String> resolveAutoGGMessagesForDisplay() {
+        if (draftAutoGGMessages != null) {
+            return new ArrayList<String>(draftAutoGGMessages);
+        }
+        String[] saved = Settings.getInstance().autoGGMessages;
+        List<String> list = new ArrayList<String>();
+        if (saved != null) {
+            for (String m : saved) {
+                list.add(m != null ? m : "");
+            }
+        }
+        if (list.isEmpty()) {
+            list.add("");
+        }
+        return list;
+    }
+
+    private List<String> collectAutoGGMessages(boolean keepEmpty) {
+        List<String> list = new ArrayList<String>();
+        for (Text field : autoGGTextFields) {
+            String text = field.getText();
+            if (text == null) {
+                text = "";
+            }
+            String trimmed = text.trim();
+            if (keepEmpty || !trimmed.isEmpty()) {
+                list.add(keepEmpty ? text : trimmed);
+            }
+        }
+        if (keepEmpty && list.isEmpty()) {
+            list.add("");
+        }
+        return list;
+    }
+
+    private void saveAutoGGFromFields() {
+        List<String> list = collectAutoGGMessages(false);
+        Settings.getInstance().autoGGMessages = list.toArray(new String[0]);
+        Settings.save();
+        draftAutoGGMessages = null;
+    }
+
     private void addCheckbox(Tab tab, int startX, String label, boolean initial, Checkbox.OnValueChanged onChange) {
         Checkbox cb = new Checkbox(getNextId(), startX, logicalCurrentY, label, initial, onChange);
         tab.components.add(cb);
         logicalCurrentY += cb.height + interComponentSpacing;
-    }
-
-    private static String joinAutoGGMessages(String[] messages) {
-        if (messages == null || messages.length == 0) {
-            return "";
-        }
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < messages.length; i++) {
-            if (i > 0) {
-                sb.append(" | ");
-            }
-            sb.append(messages[i] != null ? messages[i] : "");
-        }
-        return sb.toString();
-    }
-
-    private static void saveAutoGGMessages(String raw) {
-        if (raw == null) {
-            raw = "";
-        }
-        String[] parts = raw.split("\\|");
-        List<String> list = new ArrayList<String>();
-        for (String part : parts) {
-            String trimmed = part.trim();
-            if (!trimmed.isEmpty()) {
-                list.add(trimmed);
-            }
-        }
-        Settings.getInstance().autoGGMessages = list.toArray(new String[0]);
-        Settings.save();
     }
 
     private void calculateTabScrolling() {
@@ -380,6 +626,21 @@ public class ConfigGui extends GuiScreen {
         maxTabScrollX = Math.max(0, totalTabsWidthUnscrolled - visibleTabBarAreaWidth);
         targetTabScrollX = Math.max(0, Math.min(maxTabScrollX, targetTabScrollX));
         tabScrollX = Math.max(0f, Math.min((float) maxTabScrollX, tabScrollX));
+    }
+
+    private void ensureSelectedTabVisible() {
+        if (tabs.isEmpty() || maxTabScrollX <= 0) {
+            return;
+        }
+        int tabStart = currentTabIndex * (tabButtonWidth + tabButtonSpacing);
+        int tabEnd = tabStart + tabButtonWidth;
+        if (tabStart < targetTabScrollX) {
+            targetTabScrollX = tabStart;
+        } else if (tabEnd > targetTabScrollX + visibleTabBarAreaWidth) {
+            targetTabScrollX = tabEnd - visibleTabBarAreaWidth;
+        }
+        targetTabScrollX = Math.max(0, Math.min(maxTabScrollX, targetTabScrollX));
+        tabScrollX = targetTabScrollX;
     }
 
     private void calculateContentScrollingForTab(Tab tab) {
@@ -835,13 +1096,16 @@ public class ConfigGui extends GuiScreen {
                 }
             }
         }
+        if (!autoGGTextFields.isEmpty()) {
+            saveAutoGGFromFields();
+        }
         Settings.save();
     }
 
     @Override
     public boolean doesGuiPauseGame() {
         return false;
-    }
+    }   
 
     private void startScissor(int x, int y, int width, int height) {
         ScaledResolution sr = new ScaledResolution(mc);

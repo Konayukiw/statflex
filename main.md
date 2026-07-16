@@ -1,5 +1,5 @@
-# version: 2.28
-# changelog: "Updater test"
+# version: 2.29
+# changelog: "aaa"
 # description: 
 desc_s
 
@@ -7,7 +7,7 @@ desc_s
 
 Hypixel stats viewer mod for Forge 1.8.9.
 
-**Version 2.24**
+**Version 2.28**
 
 > Refactoring
 

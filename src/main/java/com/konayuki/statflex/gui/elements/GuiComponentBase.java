@@ -8,9 +8,6 @@ import org.lwjgl.opengl.GL11;
 
 import java.awt.Color;
 
-/**
- * Base class for custom GUI components (ported from WLR GuiComponentBase).
- */
 public abstract class GuiComponentBase {
 
     public static final float DEFAULT_CORNER_RADIUS = 4f;

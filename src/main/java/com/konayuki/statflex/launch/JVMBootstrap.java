@@ -2,7 +2,6 @@ package com.konayuki.statflex.launch;
 
 import com.konayuki.statflex.features.anticheat.Anticheat;
 import com.konayuki.statflex.update.Update;
-import com.konayuki.statflex.update.UpdateGuiUtil;
 import com.konayuki.statflex.utils.*;
 import com.konayuki.statflex.utils.Commands;
 import com.konayuki.statflex.features.denick.Denick;
@@ -29,7 +28,6 @@ public final class JVMBootstrap {
     private static BedwarsList bwList;
     private static Denick denick;
     private static AutoGG autoGG;
-    private static UpdateGuiUtil updaterGuiHandler;
     private static DuelsList duelsList;
     private static Locraw locraw;
 
@@ -84,7 +82,6 @@ public final class JVMBootstrap {
             bwList = new BedwarsList();
             denick = new Denick();
             autoGG = new AutoGG();
-            updaterGuiHandler = new UpdateGuiUtil();
             duelsList = new DuelsList();
             locraw = Locraw.getInstance();
 
@@ -93,7 +90,6 @@ public final class JVMBootstrap {
             MinecraftForge.EVENT_BUS.register(bwList);
             MinecraftForge.EVENT_BUS.register(denick);
             MinecraftForge.EVENT_BUS.register(autoGG);
-            MinecraftForge.EVENT_BUS.register(updaterGuiHandler);
             MinecraftForge.EVENT_BUS.register(duelsList);
             eventHandlersRegistered = true;
         }

@@ -8,8 +8,6 @@ import com.konayuki.statflex.features.duels.Duels;
 import com.konayuki.statflex.features.duels.DuelsUpdated;
 import com.konayuki.statflex.features.skywars.Skywars;
 import com.konayuki.statflex.gui.ConfigGui;
-import com.konayuki.statflex.update.Update;
-import com.konayuki.statflex.update.UpdateGui;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.ICommand;
@@ -47,6 +45,7 @@ public class Commands implements ICommand {
      * Countdown: 1 = open at the next END phase (after chat has closed).
      */
     private static int openConfigGuiTicks = -1;
+    private static String openConfigGuiTab;
 
     public static void syncFromSettings(Settings settings) {
         Toggles.syncFromSettings(settings);
@@ -75,7 +74,14 @@ public class Commands implements ICommand {
         if (openConfigGuiTicks != 0) {
             return;
         }
-        mc.displayGuiScreen(new ConfigGui());
+        String tab = openConfigGuiTab;
+        openConfigGuiTab = null;
+        mc.displayGuiScreen(new ConfigGui(tab));
+    }
+
+    private static void openConfigGui(String tabId) {
+        openConfigGuiTab = tabId;
+        openConfigGuiTicks = 1;
     }
 
     @Override
@@ -96,7 +102,7 @@ public class Commands implements ICommand {
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
         if (args.length < 1) {
-            openConfigGuiTicks = 1;
+            openConfigGui(null);
             return;
         }
 
@@ -243,34 +249,9 @@ public class Commands implements ICommand {
                 }
                 break;
 
-            case "update": {
-                Chat.send("§8[§cS§8]§7 Checking for updates...");
-
-                new Thread(() -> {
-                    Update.UpdateState state = Update.checkNow();
-
-                    Minecraft.getMinecraft().addScheduledTask(() -> {
-                        switch (state) {
-                            case UP_TO_DATE:
-                                Chat.send("§8[§cS§8]§7 statflex is up-to-date!");
-                                break;
-
-                            case UPDATE_AVAILABLE:
-                                Chat.send("§8[§cS§8]§7 Update is available.");
-                                Minecraft.getMinecraft().displayGuiScreen(
-                                        new UpdateGui()
-                                );
-                                break;
-
-                            case ERROR:
-                                Chat.send("§8[§cS§8]§7 Failed to check updates.");
-                                break;
-                        }
-                    });
-                }, "statflex-updater").start();
-
+            case "update":
+                openConfigGui("Update");
                 break;
-            }
 
             case "dir":
                 if (args.length >= 2) {
@@ -375,7 +356,7 @@ public class Commands implements ICommand {
                 Chat.send("§c || §7- This should be disabled if you have errors while getting stats.");
                 Chat.send("§c || §7- Usually, disabling this is not recommended as it can be insecure.");
                 Chat.send(" ");
-                Chat.send("§c || §7/s update §8: §7Check for latest version of the mod.");
+                Chat.send("§c || §7/s update §8: §7Opens the Update tab in the settings GUI.");
                 Chat.send("§c || §7/s help §8: §7Opens this help");
                 Chat.send("§c || §7If you don't understand well, watch introduction video!");
                 Chat.send("§c || §7 §ehttps://www.youtube.com/watch?v=(UPLOAD_SOON)");
