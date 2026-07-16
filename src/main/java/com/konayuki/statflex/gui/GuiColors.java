@@ -2,10 +2,6 @@ package com.konayuki.statflex.gui;
 
 import java.awt.Color;
 
-/**
- * Color palette for the statflex config GUI (ported from WLR GuiColors).
- */
-
 public final class GuiColors {
 
     private GuiColors() {

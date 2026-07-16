@@ -6,6 +6,7 @@ import com.konayuki.statflex.gui.elements.Dropdown;
 import com.konayuki.statflex.gui.elements.GuiComponentBase;
 import com.konayuki.statflex.gui.elements.Slider;
 import com.konayuki.statflex.gui.elements.Text;
+import com.konayuki.statflex.utils.Debug;
 import com.konayuki.statflex.utils.HypixelApiUtil;
 import com.konayuki.statflex.utils.Settings;
 import com.konayuki.statflex.utils.Toggles;
@@ -25,11 +26,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-/**
- * Config GUI ported from WLR ConfigGui, wired to statflex Settings / Toggles.
- */
-
 public class ConfigGui extends GuiScreen {
+
+    public ConfigGui() {
+        Debug.log("ConfigGui constructor");
+    }
 
     private int panelX;
     private int panelY;
@@ -106,6 +107,7 @@ public class ConfigGui extends GuiScreen {
 
     @Override
     public void initGui() {
+        Debug.log("Initialized ConfigGui");
         super.initGui();
         panelWidth = Math.min(800, this.width - 60);
         panelHeight = Math.min(550, this.height - 60);
@@ -394,6 +396,7 @@ public class ConfigGui extends GuiScreen {
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+        Debug.log("drawScreen");
         Tab activeTab = currentTab();
         if (!"error_no_tabs".equals(activeTab.id)) {
             if (!isDraggingContentScrollbar) {
