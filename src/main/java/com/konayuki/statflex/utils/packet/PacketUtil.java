@@ -1,7 +1,4 @@
-package com.konayuki.statflex.utils;
-
-import com.konayuki.statflex.utils.event.ReceivedPacketDetector;
-import com.konayuki.statflex.utils.event.SentPacketDetector;
+package com.konayuki.statflex.utils.packet;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;

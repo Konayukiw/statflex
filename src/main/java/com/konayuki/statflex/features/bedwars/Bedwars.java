@@ -1,10 +1,10 @@
 package com.konayuki.statflex.features.bedwars;
 
-import com.konayuki.statflex.utils.Chat;
-import com.konayuki.statflex.utils.HypixelApiUtil;
-import com.konayuki.statflex.utils.ProfileUtil;
+import com.konayuki.statflex.utils.chat.Chat;
+import com.konayuki.statflex.utils.api.HypixelApiUtil;
+import com.konayuki.statflex.utils.api.ProfileUtil;
 import com.konayuki.statflex.utils.Messages;
-import com.konayuki.statflex.utils.Format;
+import com.konayuki.statflex.utils.Colors;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -102,7 +102,7 @@ public class Bedwars {
                 }
 
                 String coloredLevel = getColoredLevel(level);
-                String coloredPlayerName = Format.getColoredPlayerName(player, properName);
+                String coloredPlayerName = Colors.getColoredPlayerName(player, properName);
                 String formattedFinals = getFormattedFinals(finals);
                 String coloredFKDR = getColoredFKDR(fkdr);
 

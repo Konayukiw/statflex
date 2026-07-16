@@ -2,7 +2,7 @@ package com.konayuki.statflex.update;
 
 import com.konayuki.statflex.statflex;
 import com.konayuki.statflex.utils.Debug;
-import com.konayuki.statflex.utils.HttpSecurityUtil;
+import com.konayuki.statflex.utils.HttpSecureConnection;
 import com.konayuki.statflex.utils.Toggles;
 
 import com.google.gson.JsonObject;
@@ -43,7 +43,7 @@ public class Update {
         URLConnection raw = new URL(API_LATEST).openConnection();
         if (raw instanceof HttpsURLConnection) {
             if (Toggles.ignoreCertificates) {
-                HttpSecurityUtil.trustAllCertificates((HttpsURLConnection) raw);
+                HttpSecureConnection.trustAllCertificates((HttpsURLConnection) raw);
             }
         }
         HttpURLConnection conn = (HttpURLConnection) raw;
@@ -248,7 +248,7 @@ public class Update {
         URLConnection raw = new URL(url).openConnection();
         if (raw instanceof HttpsURLConnection && Toggles.ignoreCertificates) {
             try {
-                HttpSecurityUtil.trustAllCertificates((HttpsURLConnection) raw);
+                HttpSecureConnection.trustAllCertificates((HttpsURLConnection) raw);
             } catch (Exception e) {
                 e.printStackTrace();
             }

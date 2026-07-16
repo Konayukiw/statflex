@@ -1,7 +1,8 @@
-package com.konayuki.statflex.utils;
+package com.konayuki.statflex.utils.chat;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.konayuki.statflex.utils.Debug;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;

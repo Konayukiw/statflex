@@ -10,7 +10,7 @@ import com.konayuki.statflex.gui.elements.Slider;
 import com.konayuki.statflex.gui.elements.Text;
 import com.konayuki.statflex.statflex;
 import com.konayuki.statflex.update.Update;
-import com.konayuki.statflex.utils.HypixelApiUtil;
+import com.konayuki.statflex.utils.api.HypixelApiUtil;
 import com.konayuki.statflex.utils.Settings;
 import com.konayuki.statflex.utils.Toggles;
 import net.minecraft.client.Minecraft;

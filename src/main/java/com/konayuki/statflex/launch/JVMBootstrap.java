@@ -9,6 +9,10 @@ import com.konayuki.statflex.features.autogg.AutoGG;
 import com.konayuki.statflex.features.bedwars.BedwarsList;
 import com.konayuki.statflex.features.duels.DuelsList;
 
+import com.konayuki.statflex.utils.api.HypixelApiUtil;
+import com.konayuki.statflex.utils.chat.Chat;
+import com.konayuki.statflex.utils.chat.Locraw;
+import com.konayuki.statflex.utils.packet.PacketUtil;
 import net.minecraft.client.Minecraft;
 
 import net.minecraftforge.common.MinecraftForge;

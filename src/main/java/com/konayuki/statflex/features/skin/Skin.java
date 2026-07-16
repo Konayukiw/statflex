@@ -1,14 +1,14 @@
 package com.konayuki.statflex.features.skin;
 
-import com.konayuki.statflex.utils.Chat;
-import com.konayuki.statflex.utils.HttpSecurityUtil;
+import com.konayuki.statflex.utils.chat.Chat;
+import com.konayuki.statflex.utils.HttpSecureConnection;
 import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.utils.Settings;
 import com.konayuki.statflex.utils.Toggles;
 
 import com.google.gson.*;
 
-import com.konayuki.statflex.utils.ProfileUtil;
+import com.konayuki.statflex.utils.api.ProfileUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.client.network.NetworkPlayerInfo;
@@ -136,7 +136,7 @@ public class Skin {
             conn.setRequestProperty("User-Agent", "Mozilla/5.0");
 
             if (Toggles.ignoreCertificates && conn instanceof HttpsURLConnection) {
-                HttpSecurityUtil.trustAllCertificates((HttpsURLConnection) conn);
+                HttpSecureConnection.trustAllCertificates((HttpsURLConnection) conn);
             }
 
             if (conn.getResponseCode() != 200) {
@@ -175,7 +175,7 @@ public class Skin {
             conn.setRequestProperty("User-Agent", "Mozilla/5.0");
 
             if (Toggles.ignoreCertificates && conn instanceof HttpsURLConnection) {
-                HttpSecurityUtil.trustAllCertificates((HttpsURLConnection) conn);
+                HttpSecureConnection.trustAllCertificates((HttpsURLConnection) conn);
             }
 
             BufferedImage image;

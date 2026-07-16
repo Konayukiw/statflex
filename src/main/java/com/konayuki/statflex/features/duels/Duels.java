@@ -1,11 +1,11 @@
 package com.konayuki.statflex.features.duels;
 
-import com.konayuki.statflex.utils.Chat;
-import com.konayuki.statflex.utils.HypixelApiUtil;
-import com.konayuki.statflex.utils.ProfileUtil;
+import com.konayuki.statflex.utils.chat.Chat;
+import com.konayuki.statflex.utils.api.HypixelApiUtil;
+import com.konayuki.statflex.utils.api.ProfileUtil;
 import com.konayuki.statflex.utils.Debug;
 import com.konayuki.statflex.utils.Messages;
-import com.konayuki.statflex.utils.Format;
+import com.konayuki.statflex.utils.Colors;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -97,7 +97,7 @@ public class Duels {
                 }
                 wlr = losses == 0 ? wins : (double) wins / losses;
 
-                String coloredPlayerName = Format.getColoredPlayerName(player, properName);
+                String coloredPlayerName = Colors.getColoredPlayerName(player, properName);
                 String formattedWins = getFormattedWins(wins);
                 String coloredWLR = getColoredWLR(wlr);
                 String modeDisplay = mode != null ? getModeDisplayName(mode.toLowerCase()) : "";

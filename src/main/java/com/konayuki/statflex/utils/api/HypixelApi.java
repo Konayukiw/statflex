@@ -1,9 +1,9 @@
-package com.konayuki.statflex.utils;
+package com.konayuki.statflex.utils.api;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.konayuki.statflex.utils.ProfileUtil.PlayerInfo;
+import com.konayuki.statflex.utils.api.ProfileUtil.PlayerInfo;
 
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;

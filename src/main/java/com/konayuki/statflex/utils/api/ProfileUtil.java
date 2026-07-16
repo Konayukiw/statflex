@@ -1,7 +1,8 @@
-package com.konayuki.statflex.utils;
+package com.konayuki.statflex.utils.api;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.konayuki.statflex.utils.HttpSecureConnection;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -16,7 +17,7 @@ public final class ProfileUtil {
         try {
             URL url = new URL("https://crafthead.net/profile/" + name);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            HttpSecurityUtil.applyIfIgnoringCertificates(connection);
+            HttpSecureConnection.applyIfIgnoringCertificates(connection);
 
             connection.setRequestMethod("GET");
             connection.setRequestProperty(

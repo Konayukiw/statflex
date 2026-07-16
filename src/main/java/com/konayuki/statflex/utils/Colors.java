@@ -2,8 +2,8 @@ package com.konayuki.statflex.utils;
 
 import com.google.gson.JsonObject;
 
-public final class Format {
-    private Format() {
+public final class Colors {
+    private Colors() {
     }
 
     public static String stripColor(String input) {

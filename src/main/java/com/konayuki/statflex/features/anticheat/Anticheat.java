@@ -1,7 +1,8 @@
 package com.konayuki.statflex.features.anticheat;
 
 import com.konayuki.statflex.utils.*;
-import com.konayuki.statflex.utils.event.ReceivedPacketDetector;
+import com.konayuki.statflex.utils.chat.Chat;
+import com.konayuki.statflex.utils.packet.ReceivedPacketDetector;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;

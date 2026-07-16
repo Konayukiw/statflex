@@ -8,8 +8,8 @@ import java.net.HttpURLConnection;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 
-public final class HttpSecurityUtil {
-    private HttpSecurityUtil() {
+public final class HttpSecureConnection {
+    private HttpSecureConnection() {
     }
 
     public static void applyIfIgnoringCertificates(HttpURLConnection connection) throws Exception {

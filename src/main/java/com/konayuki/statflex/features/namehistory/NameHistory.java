@@ -1,14 +1,14 @@
 package com.konayuki.statflex.features.namehistory;
 
-import com.konayuki.statflex.utils.Chat;
-import com.konayuki.statflex.utils.Format;
-import com.konayuki.statflex.utils.HttpSecurityUtil;
+import com.konayuki.statflex.utils.chat.Chat;
+import com.konayuki.statflex.utils.Colors;
+import com.konayuki.statflex.utils.HttpSecureConnection;
 import com.konayuki.statflex.utils.Messages;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.konayuki.statflex.utils.ProfileUtil;
+import com.konayuki.statflex.utils.api.ProfileUtil;
 
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -41,7 +41,7 @@ public class NameHistory {
                 // connection.setRequestProperty("Accept-Language", "en-US,en;q=0.9");
                 // connection.setRequestProperty("Referer", "https://crafty.gg/");
 
-                HttpSecurityUtil.applyIfIgnoringCertificates(connection);
+                HttpSecureConnection.applyIfIgnoringCertificates(connection);
 
                 InputStreamReader reader = new InputStreamReader(connection.getInputStream());
                 JsonParser parser = new JsonParser();
@@ -64,7 +64,7 @@ public class NameHistory {
                     return;
                 }
 
-                Chat.send("§8[§cS§8] §b§lName History §7for " + Format.getColoredPlayerName(data, inputName) + " §7|");
+                Chat.send("§8[§cS§8] §b§lName History §7for " + Colors.getColoredPlayerName(data, inputName) + " §7|");
 
                 DateTimeFormatter inputFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
                 DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");

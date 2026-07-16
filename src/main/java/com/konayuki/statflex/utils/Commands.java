@@ -9,6 +9,9 @@ import com.konayuki.statflex.features.duels.DuelsUpdated;
 import com.konayuki.statflex.features.skywars.Skywars;
 import com.konayuki.statflex.gui.ConfigGui;
 
+import com.konayuki.statflex.utils.api.HypixelApiUtil;
+import com.konayuki.statflex.utils.chat.Chat;
+import com.konayuki.statflex.utils.chat.ChatUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
@@ -36,14 +39,6 @@ public class Commands implements ICommand {
     private static final AutoGG AUTO_GG_HANDLER = new AutoGG();
     public static final Minecraft mc = Minecraft.getMinecraft();
     private static boolean registered;
-
-    /**
-     * Client commands run inside GuiChat.keyTyped on the client thread.
-     * Minecraft.addScheduledTask() executes immediately when already on the client
-     * thread, so any displayGuiScreen there is still overwritten by GuiChat's
-     * subsequent displayGuiScreen(null). Open on ClientTickEvent.END instead.
-     * Countdown: 1 = open at the next END phase (after chat has closed).
-     */
     private static int openConfigGuiTicks = -1;
     private static String openConfigGuiTab;
 

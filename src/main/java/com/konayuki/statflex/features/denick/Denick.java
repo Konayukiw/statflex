@@ -1,11 +1,11 @@
 package com.konayuki.statflex.features.denick;
 
-import com.konayuki.statflex.utils.Chat;
+import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.Debug;
-import com.konayuki.statflex.utils.Format;
+import com.konayuki.statflex.utils.Colors;
 import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.utils.Toggles;
-import com.konayuki.statflex.utils.Locraw;
+import com.konayuki.statflex.utils.chat.Locraw;
 import com.konayuki.statflex.features.bedwars.BedwarsList;
 import com.konayuki.statflex.features.duels.Duels;
 import com.konayuki.statflex.features.skywars.Skywars;
@@ -234,7 +234,7 @@ public class Denick {
     private static String sbU(String s) {
         if (s == null)
             return "";
-        s = Format.stripColor(s);
+        s = Colors.stripColor(s);
         s = Normalizer.normalize(s, Normalizer.Form.NFKC);
         s = s.replace('\u00A0', ' ').replace('\u2007', ' ').replace('\u202F', ' ');
         s = s.replaceAll("[\\p{Cf}\\p{Mn}\\p{Me}]", "");

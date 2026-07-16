@@ -1,5 +1,7 @@
 package com.konayuki.statflex.utils;
 
+import com.konayuki.statflex.utils.chat.Chat;
+
 public final class Toggles {
     public static boolean listStatsEnabled;
     public static boolean autoStatsEnabled;

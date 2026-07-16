@@ -1,7 +1,7 @@
 package com.konayuki.statflex.features.duels;
 
 import com.konayuki.statflex.utils.Debug;
-import com.konayuki.statflex.utils.Locraw;
+import com.konayuki.statflex.utils.chat.Locraw;
 import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.utils.Toggles;
 

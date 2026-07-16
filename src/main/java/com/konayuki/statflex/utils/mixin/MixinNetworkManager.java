@@ -1,6 +1,6 @@
 package com.konayuki.statflex.utils.mixin;
 
-import com.konayuki.statflex.utils.event.ReceivedPacketDetector;
+import com.konayuki.statflex.utils.packet.ReceivedPacketDetector;
 
 import io.netty.channel.ChannelHandlerContext;
 

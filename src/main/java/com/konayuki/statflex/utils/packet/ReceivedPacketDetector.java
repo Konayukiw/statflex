@@ -1,14 +1,13 @@
-package com.konayuki.statflex.utils.event;
+package com.konayuki.statflex.utils.packet;
 
 import net.minecraft.network.Packet;
 
 import net.minecraftforge.fml.common.eventhandler.Event;
 
-public final class SentPacketDetector extends Event {
-
+public final class ReceivedPacketDetector extends Event {
     private final Packet<?> packet;
 
-    public SentPacketDetector(Packet<?> packet) {
+    public ReceivedPacketDetector(Packet<?> packet) {
         this.packet = packet;
     }
 

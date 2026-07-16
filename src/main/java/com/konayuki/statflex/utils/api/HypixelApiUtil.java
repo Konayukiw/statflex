@@ -1,4 +1,6 @@
-package com.konayuki.statflex.utils;
+package com.konayuki.statflex.utils.api;
+
+import com.konayuki.statflex.utils.Settings;
 
 public final class HypixelApiUtil {
     private static String apiKey = null;

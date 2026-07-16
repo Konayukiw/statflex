@@ -1,7 +1,7 @@
 package com.konayuki.statflex.features.autogg;
 
 import com.konayuki.statflex.utils.Debug;
-import com.konayuki.statflex.utils.Chat;
+import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.Settings;
 import com.konayuki.statflex.utils.Messages;
 
