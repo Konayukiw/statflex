@@ -3,7 +3,7 @@ package com.konayuki.statflex.utils.api;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.konayuki.statflex.utils.api.ProfileUtil.PlayerInfo;
+import com.konayuki.statflex.utils.api.Profile.PlayerInfo;
 
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -22,7 +22,7 @@ public final class HypixelApi {
             return FetchResult.failure(INVALID_API, null, null);
         }
 
-        PlayerInfo info = ProfileUtil.getPlayerInfo(inputName);
+        PlayerInfo info = Profile.getPlayerInfo(inputName);
         if (info == null) {
             return FetchResult.failure(PLAYER_NOT_FOUND, null, inputName);
         }

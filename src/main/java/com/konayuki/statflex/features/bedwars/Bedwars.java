@@ -2,9 +2,9 @@ package com.konayuki.statflex.features.bedwars;
 
 import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.api.HypixelApiUtil;
-import com.konayuki.statflex.utils.api.ProfileUtil;
+import com.konayuki.statflex.utils.api.Profile;
 import com.konayuki.statflex.utils.Messages;
-import com.konayuki.statflex.utils.Colors;
+import com.konayuki.statflex.utils.Ranks;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -26,7 +26,7 @@ public class Bedwars {
                     return;
                 }
 
-                ProfileUtil.PlayerInfo info = ProfileUtil.getPlayerInfo(inputName.toLowerCase());
+                Profile.PlayerInfo info = Profile.getPlayerInfo(inputName.toLowerCase());
                 if (info == null) {
                     Chat.send(Messages.PLAYER_NOT_FOUND);
                     return;
@@ -102,7 +102,7 @@ public class Bedwars {
                 }
 
                 String coloredLevel = getColoredLevel(level);
-                String coloredPlayerName = Colors.getColoredPlayerName(player, properName);
+                String coloredPlayerName = Ranks.getColoredPlayerName(player, properName);
                 String formattedFinals = getFormattedFinals(finals);
                 String coloredFKDR = getColoredFKDR(fkdr);
 

@@ -2,7 +2,7 @@ package com.konayuki.statflex.features.denick;
 
 import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.Debug;
-import com.konayuki.statflex.utils.Colors;
+import com.konayuki.statflex.utils.Ranks;
 import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.utils.Toggles;
 import com.konayuki.statflex.utils.chat.Locraw;
@@ -43,7 +43,8 @@ public class Denick {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
-        if (Minecraft.getMinecraft().thePlayer == null || Minecraft.getMinecraft().theWorld == null) {
+        Minecraft mc = Minecraft.getMinecraft();
+        if (mc.thePlayer == null || mc.theWorld == null) {
             return;
         }
         if (!Toggles.denickEnabled)
@@ -234,7 +235,7 @@ public class Denick {
     private static String sbU(String s) {
         if (s == null)
             return "";
-        s = Colors.stripColor(s);
+        s = Ranks.stripColor(s);
         s = Normalizer.normalize(s, Normalizer.Form.NFKC);
         s = s.replace('\u00A0', ' ').replace('\u2007', ' ').replace('\u202F', ' ');
         s = s.replaceAll("[\\p{Cf}\\p{Mn}\\p{Me}]", "");

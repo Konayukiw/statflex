@@ -1,14 +1,14 @@
 package com.konayuki.statflex.features.namehistory;
 
 import com.konayuki.statflex.utils.chat.Chat;
-import com.konayuki.statflex.utils.Colors;
+import com.konayuki.statflex.utils.Ranks;
 import com.konayuki.statflex.utils.HttpSecureConnection;
 import com.konayuki.statflex.utils.Messages;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.konayuki.statflex.utils.api.ProfileUtil;
+import com.konayuki.statflex.utils.api.Profile;
 
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -21,7 +21,7 @@ public class NameHistory {
     public static void fetchNameHistory(String inputName) {
         new Thread(() -> {
             try {
-                ProfileUtil.PlayerInfo info = ProfileUtil.getPlayerInfo(inputName);
+                Profile.PlayerInfo info = Profile.getPlayerInfo(inputName);
                 if (info == null) {
                     Chat.send(Messages.PLAYER_NOT_FOUND + inputName);
                     return;
@@ -64,7 +64,7 @@ public class NameHistory {
                     return;
                 }
 
-                Chat.send("§8[§cS§8] §b§lName History §7for " + Colors.getColoredPlayerName(data, inputName) + " §7|");
+                Chat.send("§8[§cS§8] §b§lName History §7for " + Ranks.getColoredPlayerName(data, inputName) + " §7|");
 
                 DateTimeFormatter inputFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
                 DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");

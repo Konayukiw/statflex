@@ -7,7 +7,7 @@ import com.konayuki.statflex.features.bedwars.Bedwars;
 import com.konayuki.statflex.features.duels.Duels;
 import com.konayuki.statflex.features.duels.DuelsUpdated;
 import com.konayuki.statflex.features.skywars.Skywars;
-import com.konayuki.statflex.gui.ConfigGui;
+import com.konayuki.statflex.gui.Gui;
 
 import com.konayuki.statflex.utils.api.HypixelApiUtil;
 import com.konayuki.statflex.utils.chat.Chat;
@@ -39,8 +39,8 @@ public class Commands implements ICommand {
     private static final AutoGG AUTO_GG_HANDLER = new AutoGG();
     public static final Minecraft mc = Minecraft.getMinecraft();
     private static boolean registered;
-    private static int openConfigGuiTicks = -1;
-    private static String openConfigGuiTab;
+    private static int openGuiTicks = -1;
+    private static String openGuiTab;
 
     public static void syncFromSettings(Settings settings) {
         Toggles.syncFromSettings(settings);
@@ -62,21 +62,21 @@ public class Commands implements ICommand {
         if (event.phase != TickEvent.Phase.END) {
             return;
         }
-        if (openConfigGuiTicks < 0) {
+        if (openGuiTicks < 0) {
             return;
         }
-        openConfigGuiTicks--;
-        if (openConfigGuiTicks != 0) {
+        openGuiTicks--;
+        if (openGuiTicks != 0) {
             return;
         }
-        String tab = openConfigGuiTab;
-        openConfigGuiTab = null;
-        mc.displayGuiScreen(new ConfigGui(tab));
+        String tab = openGuiTab;
+        openGuiTab = null;
+        mc.displayGuiScreen(new Gui(tab));
     }
 
-    private static void openConfigGui(String tabId) {
-        openConfigGuiTab = tabId;
-        openConfigGuiTicks = 1;
+    private static void openGui(String tabId) {
+        openGuiTab = tabId;
+        openGuiTicks = 1;
     }
 
     @Override
@@ -97,7 +97,7 @@ public class Commands implements ICommand {
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
         if (args.length < 1) {
-            openConfigGui(null);
+            openGui(null);
             return;
         }
 
@@ -245,7 +245,7 @@ public class Commands implements ICommand {
                 break;
 
             case "update":
-                openConfigGui("Update");
+                openGui("Update");
                 break;
 
             case "dir":

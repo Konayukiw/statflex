@@ -1,10 +1,10 @@
 package com.konayuki.statflex.features.skywars;
 
 import com.konayuki.statflex.utils.chat.Chat;
-import com.konayuki.statflex.utils.Colors;
+import com.konayuki.statflex.utils.Ranks;
 import com.konayuki.statflex.utils.api.HypixelApiUtil;
 import com.konayuki.statflex.utils.Messages;
-import com.konayuki.statflex.utils.api.ProfileUtil;
+import com.konayuki.statflex.utils.api.Profile;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -26,7 +26,7 @@ public class Skywars {
                     return;
                 }
 
-                ProfileUtil.PlayerInfo info = ProfileUtil.getPlayerInfo(playerName);
+                Profile.PlayerInfo info = Profile.getPlayerInfo(playerName);
                 if (info == null) {
                     Chat.send(Messages.PLAYER_NOT_FOUND);
                     return;
@@ -74,7 +74,7 @@ public class Skywars {
                 String levelFormatted = sanitizeFormattedLevel(rawFormatted);
 
                 String modeKey = getModeKey(mode);
-                String coloredPlayerName = Colors.getColoredPlayerName(player, properName);
+                String coloredPlayerName = Ranks.getColoredPlayerName(player, properName);
 
                 String killsKey = "kills" + (modeKey != null ? "_" + modeKey : "");
                 String winsKey = "wins" + (modeKey != null ? "_" + modeKey : "");

@@ -2,11 +2,11 @@ package com.konayuki.statflex.features.bedwars;
 
 import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.api.HypixelApiUtil;
-import com.konayuki.statflex.utils.api.ProfileUtil;
+import com.konayuki.statflex.utils.api.Profile;
 import com.konayuki.statflex.utils.Toggles;
 import com.konayuki.statflex.utils.Settings;
 import com.konayuki.statflex.utils.Messages;
-import com.konayuki.statflex.utils.Colors;
+import com.konayuki.statflex.utils.Ranks;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -115,7 +115,7 @@ public class BedwarsList {
             new Thread(() -> {
                 try {
                     String apiKey = HypixelApiUtil.getApiKey();
-                    ProfileUtil.PlayerInfo info = ProfileUtil.getPlayerInfo(name);
+                    Profile.PlayerInfo info = Profile.getPlayerInfo(name);
 
                     if (info == null) {
                         latch.countDown();
@@ -151,7 +151,7 @@ public class BedwarsList {
 
                     PlayerData data = new PlayerData(
                             Bedwars.getColoredLevel(level),
-                            Colors.getColoredPlayerName(player, properName),
+                            Ranks.getColoredPlayerName(player, properName),
                             Bedwars.getFormattedFinals(finals),
                             Bedwars.getColoredFKDR(fkdr),
                             level * fkdr,

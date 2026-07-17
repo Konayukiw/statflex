@@ -10,6 +10,7 @@ import java.util.Map;
 public final class ChatUtil {
     private static int nextId = 0;
     private static final Map<Integer, IChatComponent> messages = new HashMap<Integer, IChatComponent>();
+    private static final Minecraft mc = Minecraft.getMinecraft();
 
     private ChatUtil() {
     }
@@ -21,8 +22,8 @@ public final class ChatUtil {
     public static void registerMessage(int id, IChatComponent message) {
         messages.put(Integer.valueOf(id), message);
         Chat.runOnClientThread(() -> {
-            if (Minecraft.getMinecraft().thePlayer != null) {
-                Minecraft.getMinecraft().ingameGUI.getChatGUI()
+            if (mc.thePlayer != null) {
+                mc.ingameGUI.getChatGUI()
                         .printChatMessageWithOptionalDeletion(message, id);
             }
         });
@@ -33,7 +34,7 @@ public final class ChatUtil {
             ChatComponentText empty = new ChatComponentText("");
             int messageId = id;
             Chat.runOnClientThread(() -> {
-                Minecraft.getMinecraft().ingameGUI.getChatGUI()
+                mc.ingameGUI.getChatGUI()
                         .printChatMessageWithOptionalDeletion(empty, messageId);
             });
             messages.remove(Integer.valueOf(id));
@@ -43,7 +44,7 @@ public final class ChatUtil {
     public static void updateMessage(int id, IChatComponent message) {
         messages.put(Integer.valueOf(id), message);
         Chat.runOnClientThread(() -> {
-            Minecraft.getMinecraft().ingameGUI.getChatGUI()
+            mc.ingameGUI.getChatGUI()
                     .printChatMessageWithOptionalDeletion(message, id);
         });
     }

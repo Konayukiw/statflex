@@ -14,7 +14,6 @@ import com.konayuki.statflex.utils.api.HypixelApiUtil;
 import com.konayuki.statflex.utils.Settings;
 import com.konayuki.statflex.utils.Toggles;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
@@ -30,15 +29,15 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public class ConfigGui extends GuiScreen {
+public class Gui extends GuiScreen {
 
     private final String initialTabId;
 
-    public ConfigGui() {
+    public Gui() {
         this(null);
     }
 
-    public ConfigGui(String initialTabId) {
+    public Gui(String initialTabId) {
         this.initialTabId = initialTabId;
     }
 
@@ -707,7 +706,7 @@ public class ConfigGui extends GuiScreen {
         int tabBarYOffset = panelY + topBarHeight;
         int tabBarInternalHeight = tabBarButtonHeight + 8;
         drawRect(panelX, tabBarYOffset, panelX + panelWidth, tabBarYOffset + tabBarInternalHeight, GuiColors.TAB_BAR_BACKGROUND);
-        Gui.drawRect(panelX, tabBarYOffset, panelX + panelWidth, tabBarYOffset + 1, GuiColors.TITLE_BAR_SEPARATOR);
+        net.minecraft.client.gui.Gui.drawRect(panelX, tabBarYOffset, panelX + panelWidth, tabBarYOffset + 1, GuiColors.TITLE_BAR_SEPARATOR);
 
         int tabsAreaX = panelX + panelPadding;
         int tabsAreaWidth = panelWidth - panelPadding * 2;
@@ -769,7 +768,7 @@ public class ConfigGui extends GuiScreen {
             drawRoundedRectWithBorderUsingGL(currentTabButtonVisualX, tabButtonVisualY,
                     tabButtonWidth, tabBarButtonHeight, 3f, tabBgColor, GuiColors.TAB_BAR_BORDER, 1f);
             if (isSelected) {
-                Gui.drawRect((int) currentTabButtonVisualX + 3, tabButtonVisualY + tabBarButtonHeight - 2,
+                net.minecraft.client.gui.Gui.drawRect((int) currentTabButtonVisualX + 3, tabButtonVisualY + tabBarButtonHeight - 2,
                         (int) currentTabButtonVisualX + tabButtonWidth - 3,
                         tabButtonVisualY + tabBarButtonHeight - 1, GuiColors.PRIMARY_BLUE_BRIGHT);
             }
@@ -784,7 +783,7 @@ public class ConfigGui extends GuiScreen {
         int contentAreaVisualBottom = panelY + panelHeight - panelPadding;
         int contentAreaDrawableHeight = contentAreaVisualBottom - contentAreaVisualTop;
 
-        Gui.drawRect(panelX, contentAreaVisualTop, panelX + panelWidth, contentAreaVisualTop + 1, GuiColors.TITLE_BAR_SEPARATOR);
+        net.minecraft.client.gui.Gui.drawRect(panelX, contentAreaVisualTop, panelX + panelWidth, contentAreaVisualTop + 1, GuiColors.TITLE_BAR_SEPARATOR);
         drawRoundedRectWithBorderUsingGL(
                 panelX + panelPadding, contentAreaVisualTop + panelPadding,
                 panelWidth - panelPadding * 2, contentAreaDrawableHeight - panelPadding * 2,

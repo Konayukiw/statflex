@@ -9,8 +9,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public final class ProfileUtil {
-    private ProfileUtil() {
+public final class Profile {
+    private Profile() {
     }
 
     public static PlayerInfo getPlayerInfo(String name) {

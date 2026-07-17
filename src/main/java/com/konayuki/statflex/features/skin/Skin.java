@@ -8,7 +8,7 @@ import com.konayuki.statflex.utils.Toggles;
 
 import com.google.gson.*;
 
-import com.konayuki.statflex.utils.api.ProfileUtil;
+import com.konayuki.statflex.utils.api.Profile;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.client.network.NetworkPlayerInfo;
@@ -42,7 +42,7 @@ public class Skin {
                 }
             }
 
-            ProfileUtil.PlayerInfo info = ProfileUtil.getPlayerInfo(playerName);
+            Profile.PlayerInfo info = Profile.getPlayerInfo(playerName);
             if (info == null) {
                 Chat.send("§8[§cS§8]§7 Player not found: " + playerName);
                 return;

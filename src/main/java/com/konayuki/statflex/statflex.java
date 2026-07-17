@@ -1,6 +1,6 @@
 package com.konayuki.statflex;
 
-import com.konayuki.statflex.launch.JVMBootstrap;
+import com.konayuki.statflex.launch.Bootstrap;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 
@@ -13,10 +13,10 @@ public class statflex {
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
-        JVMBootstrap.startFromForge();
+        Bootstrap.startFromForge();
     }
 
     public static void init() {
-        JVMBootstrap.startFromInjection();
+        Bootstrap.startFromInjection();
     }
 }

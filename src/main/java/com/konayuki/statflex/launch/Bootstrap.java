@@ -19,7 +19,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
-public final class JVMBootstrap {
+public final class Bootstrap {
     private static final Object LOCK = new Object();
     private static final LifecycleHandler LIFECYCLE_HANDLER = new LifecycleHandler();
 
@@ -35,7 +35,7 @@ public final class JVMBootstrap {
     private static DuelsList duelsList;
     private static Locraw locraw;
 
-    private JVMBootstrap() {
+    private Bootstrap() {
     }
 
     public static boolean startFromForge() {
