@@ -3,43 +3,49 @@ package com.konayuki.statflex.utils;
 import com.konayuki.statflex.utils.chat.Chat;
 
 public final class Toggles {
-    public static boolean listStatsEnabled;
-    public static boolean autoStatsEnabled;
+    public static boolean listStats;
+    public static boolean skywarsListStats;
+    public static boolean autoStats;
     public static boolean ignoreCertificates;
-    public static boolean denickEnabled;
-    public static boolean duelsUpdate;
-    public static boolean keepWhoEnabled;
+    public static boolean denick;
+    public static boolean duelsUpdated;
+    public static boolean keepWho;
 
     private Toggles() {
     }
 
     public static void syncFromSettings(Settings settings) {
-        listStatsEnabled = settings.listStatsEnabled;
-        autoStatsEnabled = settings.autoStatsEnabled;
+        listStats = settings.listStatsEnabled;
+        skywarsListStats = settings.skywarsListStatsEnabled;
+        autoStats = settings.autoStatsEnabled;
         ignoreCertificates = settings.ignoreCertificates;
-        denickEnabled = settings.denickEnabled;
-        duelsUpdate = settings.duelsUpdate;
-        keepWhoEnabled = settings.keepWhoEnabled;
+        denick = settings.denickEnabled;
+        duelsUpdated = settings.duelsUpdated;
+        keepWho = settings.keepWhoEnabled;
     }
 
-    public static boolean isListStatsEnabled() {
-        return listStatsEnabled;
+    public static boolean isListStats() {
+        return listStats;
     }
 
-    public static boolean isAutoStatsEnabled() {
-        return autoStatsEnabled;
+    public static boolean isSkywarsListStats() {
+        return skywarsListStats;
+    }
+
+    public static boolean isAutoStats() {
+        return autoStats;
     }
 
     public static boolean isIgnoreCertificatesEnabled() {
         return ignoreCertificates;
     }
 
-    public static boolean isKeepWhoEnabled() {
-        return keepWhoEnabled;
+    public static boolean isKeepWho() {
+        return keepWho;
     }
 
     public static boolean isDuelsUpdateEnabled() {
-        return duelsUpdate;
+        return duelsUpdated;
     }
 
     public static void setIgnoreCertificates(boolean ignore) {
@@ -47,44 +53,55 @@ public final class Toggles {
     }
 
     public static void toggleListStats(boolean silent) {
-        listStatsEnabled = !listStatsEnabled;
-        Settings.getInstance().listStatsEnabled = listStatsEnabled;
+        listStats = !listStats;
+        Settings.getInstance().listStatsEnabled = listStats;
         Settings.save();
         if (!silent) {
-            Chat.send(listStatsEnabled
+            Chat.send(listStats
                     ? "§8[§cS§8]§7 Stats list has been §b§lEnabled"
                     : "§8[§cS§8]§7 Stats list has been §c§lDisabled");
         }
     }
 
-    public static void toggleAutoStats(boolean silent) {
-        autoStatsEnabled = !autoStatsEnabled;
-        Settings.getInstance().autoStatsEnabled = autoStatsEnabled;
+    public static void toggleSkywarsListStats(boolean silent) {
+        skywarsListStats = !skywarsListStats;
+        Settings.getInstance().skywarsListStatsEnabled = skywarsListStats;
         Settings.save();
         if (!silent) {
-            Chat.send(autoStatsEnabled
+            Chat.send(skywarsListStats
+                    ? "§8[§cS§8]§7 Skywars stats list has been §b§lEnabled"
+                    : "§8[§cS§8]§7 Skywars stats list has been §c§lDisabled");
+        }
+    }
+
+    public static void toggleAutoStats(boolean silent) {
+        autoStats = !autoStats;
+        Settings.getInstance().autoStatsEnabled = autoStats;
+        Settings.save();
+        if (!silent) {
+            Chat.send(autoStats
                     ? "§8[§cS§8]§7 Duels Auto-Stats has been §b§lEnabled"
                     : "§8[§cS§8]§7 Duels Auto-Stats has been §c§lDisabled");
         }
     }
 
     public static void toggleDenick(boolean silent) {
-        denickEnabled = !denickEnabled;
-        Settings.getInstance().denickEnabled = denickEnabled;
+        denick = !denick;
+        Settings.getInstance().denickEnabled = denick;
         Settings.save();
         if (!silent) {
-            Chat.send(denickEnabled
-                    ? "§8[§cS§8]§7 Denick detection has been §b§lEnabled"
-                    : "§8[§cS§8]§7 Denick detection has been §c§lDisabled");
+            Chat.send(denick
+                    ? "§8[§cS§8]§7 Denick has been §b§lEnabled"
+                    : "§8[§cS§8]§7 Denick has been §c§lDisabled");
         }
     }
 
     public static void toggleDuelsUpdate(boolean silent) {
-        duelsUpdate = !duelsUpdate;
-        Settings.getInstance().duelsUpdate = duelsUpdate;
+        duelsUpdated = !duelsUpdated;
+        Settings.getInstance().duelsUpdated = duelsUpdated;
         Settings.save();
         if (!silent) {
-            Chat.send(duelsUpdate
+            Chat.send(duelsUpdated
                     ? "§8[§cS§8]§7 Updated Duels Titles has been §b§lEnabled"
                     : "§8[§cS§8]§7 Updated Duels Titles has been §c§lDisabled");
         }
@@ -102,11 +119,11 @@ public final class Toggles {
     }
 
     public static void toggleKeepWho(boolean silent) {
-        keepWhoEnabled = !keepWhoEnabled;
-        Settings.getInstance().keepWhoEnabled = keepWhoEnabled;
+        keepWho = !keepWho;
+        Settings.getInstance().keepWhoEnabled = keepWho;
         Settings.save();
         if (!silent) {
-            Chat.send(keepWhoEnabled
+            Chat.send(keepWho
                     ? "§8[§cS§8]§7 Original /who keeper has been §b§lEnabled"
                     : "§8[§cS§8]§7 Original /who keeper has been §c§lDisabled");
         }

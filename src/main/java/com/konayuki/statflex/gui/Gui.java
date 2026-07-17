@@ -3,6 +3,7 @@ package com.konayuki.statflex.gui;
 import com.konayuki.statflex.features.skin.Skin;
 import com.konayuki.statflex.gui.elements.Button;
 import com.konayuki.statflex.gui.elements.Checkbox;
+import com.konayuki.statflex.gui.elements.Color;
 import com.konayuki.statflex.gui.elements.Dropdown;
 import com.konayuki.statflex.gui.elements.GuiComponentBase;
 import com.konayuki.statflex.gui.elements.Label;
@@ -21,7 +22,6 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
-import java.awt.Color;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -110,7 +110,6 @@ public class Gui extends GuiScreen {
 
     private int nextComponentId = 1;
 
-    /** Draft AutoGG messages while editing (null = use Settings). */
     private List<String> draftAutoGGMessages;
     private final List<Text> autoGGTextFields = new ArrayList<Text>();
 
@@ -174,19 +173,20 @@ public class Gui extends GuiScreen {
 
     private void defineAllPossibleTabs() {
         allPossibleTabsMap.clear();
-        allPossibleTabsMap.put("Utility", new Tab("Utility", "Utility"));
+        allPossibleTabsMap.put("General", new Tab("General", "General"));
         allPossibleTabsMap.put("Bedwars", new Tab("Bedwars", "Bedwars"));
         allPossibleTabsMap.put("Skywars", new Tab("Skywars", "Skywars"));
         allPossibleTabsMap.put("Duels", new Tab("Duels", "Duels"));
         allPossibleTabsMap.put("Hypixel API", new Tab("Hypixel API", "Hypixel API"));
         allPossibleTabsMap.put("Skin", new Tab("Skin", "Skin"));
+        allPossibleTabsMap.put("System", new Tab("System", "System"));
         allPossibleTabsMap.put("Update", new Tab("Update", "Update"));
     }
 
     private void orderAndPopulateTabs() {
         tabs.clear();
         String[] order = {
-                "Utility", "Bedwars", "Skywars", "Duels", "Hypixel API", "Skin", "Update"
+                "General", "Bedwars", "Skywars", "Duels", "Hypixel API", "Skin", "System", "Update"
         };
         for (String tabId : order) {
             Tab tab = allPossibleTabsMap.get(tabId);
@@ -229,8 +229,8 @@ public class Gui extends GuiScreen {
         logicalCurrentY = 0;
         logicalCurrentY += contentPaddingTopForComponents;
 
-        if ("Utility".equals(tab.id)) {
-            populateUtilityTab(tab, startX, actualComponentWidth, settings);
+        if ("General".equals(tab.id)) {
+            populateGeneralTab(tab, startX, actualComponentWidth, settings);
         } else if ("Bedwars".equals(tab.id)) {
             populateBedwarsTab(tab, startX, actualComponentWidth, settings);
         } else if ("Skywars".equals(tab.id)) {
@@ -241,6 +241,8 @@ public class Gui extends GuiScreen {
             populateHypixelApiTab(tab, startX, actualComponentWidth, settings);
         } else if ("Skin".equals(tab.id)) {
             populateSkinTab(tab, startX, actualComponentWidth, settings);
+        } else if ("System".equals(tab.id)) {
+            populateSystemTab(tab, startX, actualComponentWidth);
         } else if ("Update".equals(tab.id)) {
             populateUpdateTab(tab, startX, actualComponentWidth);
         }
@@ -249,13 +251,17 @@ public class Gui extends GuiScreen {
         calculateContentScrollingForTab(tab);
     }
 
-    private void populateUtilityTab(Tab tab, int startX, int actualComponentWidth, Settings settings) {
-        addCheckbox(tab, startX, "Denick Detection", Toggles.denickEnabled, v -> {
-            Toggles.denickEnabled = v;
+    private void populateGeneralTab(Tab tab, int startX, int actualComponentWidth, Settings settings) {
+        addCheckbox(tab, startX, "Denick Detection",
+                "Detect and reveal nicked players when they join or chat.",
+                Toggles.denick, v -> {
+            Toggles.denick = v;
             Settings.getInstance().denickEnabled = v;
             Settings.save();
         });
-        addCheckbox(tab, startX, "Secure Connection", !Toggles.ignoreCertificates, v -> {
+        addCheckbox(tab, startX, "Secure Connection",
+                "Validate SSL certificates for API and update requests.",
+                !Toggles.ignoreCertificates, v -> {
             Toggles.ignoreCertificates = !v;
             Settings.getInstance().ignoreCertificates = !v;
             Settings.save();
@@ -288,7 +294,7 @@ public class Gui extends GuiScreen {
                     List<String> current = collectAutoGGMessages(true);
                     current.add("");
                     draftAutoGGMessages = current;
-                    rebuildTab("Utility");
+                    rebuildTab("General");
                 }
         );
         tab.components.add(addMessageButton);
@@ -314,20 +320,24 @@ public class Gui extends GuiScreen {
     }
 
     private void populateBedwarsTab(Tab tab, int startX, int actualComponentWidth, Settings settings) {
-        addCheckbox(tab, startX, "Auto Stats (/who list)", Toggles.listStatsEnabled, v -> {
-            Toggles.listStatsEnabled = v;
+        addCheckbox(tab, startX, "Auto Stats",
+                "Fetch Bedwars stats for players listed by /who.",
+                Toggles.listStats, v -> {
+            Toggles.listStats = v;
             Settings.getInstance().listStatsEnabled = v;
             Settings.save();
         });
-        addCheckbox(tab, startX, "Keep Original /who", Toggles.keepWhoEnabled, v -> {
-            Toggles.keepWhoEnabled = v;
+        addCheckbox(tab, startX, "Keep Original /who",
+                "Keep the vanilla /who output in chat alongside the stats list.",
+                Toggles.keepWho, v -> {
+            Toggles.keepWho = v;
             Settings.getInstance().keepWhoEnabled = v;
             Settings.save();
         });
 
         Slider warnLevelSlider = new Slider(
                 getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
-                actualComponentWidth, "Warn Level (Bedwars stars, 0 = off)",
+                actualComponentWidth, "Warn by Level",
                 (float) settings.warnLevel, 0f, 3000f, 1f,
                 v -> v == 0f ? "Disabled" : String.format(Locale.US, "\u272B%.0f", v),
                 v -> {
@@ -340,7 +350,7 @@ public class Gui extends GuiScreen {
 
         Slider warnFkdrSlider = new Slider(
                 getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
-                actualComponentWidth, "Warn FKDR (0 = off)",
+                actualComponentWidth, "Warn by FKDR",
                 (float) settings.warnFKDR, 0f, 50f, 0.1f,
                 v -> v == 0f ? "Disabled" : String.format(Locale.US, "%.1f FKDR", v),
                 v -> {
@@ -353,28 +363,76 @@ public class Gui extends GuiScreen {
     }
 
     private void populateSkywarsTab(Tab tab, int startX, int actualComponentWidth) {
+        addCheckbox(tab, startX, "Auto Stats",
+                "Fetch Skywars stats for players listed by /who.",
+                Toggles.skywarsListStats, v -> {
+            Toggles.skywarsListStats = v;
+            Settings.getInstance().skywarsListStatsEnabled = v;
+            Settings.save();
+        });
         Label note = new Label(
                 getNextId(), startX, logicalCurrentY, actualComponentWidth,
-                "No configurable options yet. Use /s sw [Player]."
+                "Manual lookup: /s sw [Player] -[Mode]"
         );
         tab.components.add(note);
         logicalCurrentY += note.height;
     }
 
     private void populateDuelsTab(Tab tab, int startX, int actualComponentWidth) {
-        addCheckbox(tab, startX, "Auto Stats", Toggles.autoStatsEnabled, v -> {
-            Toggles.autoStatsEnabled = v;
+        addCheckbox(tab, startX, "Auto Stats",
+                "Automatically fetch opponent Duels stats when a match starts.",
+                Toggles.autoStats, v -> {
+            Toggles.autoStats = v;
             Settings.getInstance().autoStatsEnabled = v;
             Settings.save();
         });
-        addCheckbox(tab, startX, "Updated Titles", Toggles.duelsUpdate, v -> {
-            Toggles.duelsUpdate = v;
-            Settings.getInstance().duelsUpdate = v;
+        addCheckbox(tab, startX, "Updated Titles",
+                "Use updated title formatting when displaying Duels stats.",
+                Toggles.duelsUpdated, v -> {
+            Toggles.duelsUpdated = v;
+            Settings.getInstance().duelsUpdated = v;
             Settings.save();
         });
         if (!tab.components.isEmpty()) {
             logicalCurrentY -= interComponentSpacing;
         }
+    }
+
+    private void populateSystemTab(Tab tab, int startX, int actualComponentWidth) {
+        Label intro = new Label(
+                getNextId(), startX, logicalCurrentY, actualComponentWidth,
+                "Edit system GUI colors (hex #RRGGBB)."
+        );
+        tab.components.add(intro);
+        logicalCurrentY += intro.height + interComponentSpacing;
+
+        for (int i = 0; i < GuiColors.SYSTEM_COLOR_KEYS.length; i++) {
+            final String key = GuiColors.SYSTEM_COLOR_KEYS[i];
+            String displayName = GuiColors.SYSTEM_COLOR_LABELS[i];
+            int color = GuiColors.getSystemColor(key);
+            Color setting = new Color(
+                    getNextId(), startX, logicalCurrentY, actualComponentWidth,
+                    key, displayName, color,
+                    rgb -> {
+                        GuiColors.setSystemColor(key, rgb);
+                        Settings.save();
+                    }
+            );
+            tab.components.add(setting);
+            logicalCurrentY += setting.height + interComponentSpacing;
+        }
+
+        Button resetButton = new Button(
+                getNextId(), startX, logicalCurrentY, actualComponentWidth,
+                "Reset Colors",
+                () -> {
+                    GuiColors.applyDefaults();
+                    Settings.save();
+                    rebuildTab("System");
+                }
+        );
+        tab.components.add(resetButton);
+        logicalCurrentY += resetButton.height;
     }
 
     private void populateHypixelApiTab(Tab tab, int startX, int actualComponentWidth, Settings settings) {
@@ -551,7 +609,7 @@ public class Gui extends GuiScreen {
                 break;
             case ERROR:
                 updateStatusLabel.setText("Failed to check for updates.");
-                updateStatusLabel.setColor(new Color(220, 80, 80).getRGB());
+                updateStatusLabel.setColor(new java.awt.Color(220, 80, 80).getRGB());
                 updateInstallButton.enabled = false;
                 break;
             default:
@@ -563,7 +621,7 @@ public class Gui extends GuiScreen {
         if (draftAutoGGMessages != null) {
             return new ArrayList<String>(draftAutoGGMessages);
         }
-        String[] saved = Settings.getInstance().autoGGMessages;
+        String[] saved = Settings.getInstance().gg;
         List<String> list = new ArrayList<String>();
         if (saved != null) {
             for (String m : saved) {
@@ -596,13 +654,18 @@ public class Gui extends GuiScreen {
 
     private void saveAutoGGFromFields() {
         List<String> list = collectAutoGGMessages(false);
-        Settings.getInstance().autoGGMessages = list.toArray(new String[0]);
+        Settings.getInstance().gg = list.toArray(new String[0]);
         Settings.save();
         draftAutoGGMessages = null;
     }
 
     private void addCheckbox(Tab tab, int startX, String label, boolean initial, Checkbox.OnValueChanged onChange) {
-        Checkbox cb = new Checkbox(getNextId(), startX, logicalCurrentY, label, initial, onChange);
+        addCheckbox(tab, startX, label, null, initial, onChange);
+    }
+
+    private void addCheckbox(Tab tab, int startX, String label, String description,
+                             boolean initial, Checkbox.OnValueChanged onChange) {
+        Checkbox cb = new Checkbox(getNextId(), startX, logicalCurrentY, label, description, initial, onChange);
         tab.components.add(cb);
         logicalCurrentY += cb.height + interComponentSpacing;
     }
@@ -677,7 +740,7 @@ public class Gui extends GuiScreen {
             }
         }
 
-        drawRect(0, 0, this.width, this.height, new Color(0, 0, 0, 170).getRGB());
+        drawRect(0, 0, this.width, this.height, new java.awt.Color(0, 0, 0, 170).getRGB());
 
         drawRoundedRectUsingGL(panelX, panelY, panelWidth, panelHeight, panelCornerRadius, GuiColors.SCREEN_BACKGROUND);
         drawRoundedRectUsingGL(panelX, panelY, panelWidth, topBarHeight, panelCornerRadius, GuiColors.TITLE_BAR_BACKGROUND);
@@ -697,11 +760,11 @@ public class Gui extends GuiScreen {
         isCloseButtonHovered = mouseX >= closeX && mouseX <= closeX + closeButtonSize
                 && mouseY >= closeY && mouseY <= closeY + closeButtonSize;
         int closeColor = isCloseButtonHovered
-                ? new Color(200, 50, 50, 220).getRGB()
-                : new Color(80, 80, 80, 180).getRGB();
+                ? new java.awt.Color(200, 50, 50, 220).getRGB()
+                : new java.awt.Color(80, 80, 80, 180).getRGB();
         drawRoundedRectUsingGL(closeX, closeY, closeButtonSize, closeButtonSize, 3f, closeColor);
         drawCenteredString(fontRendererObj, "\u2715", closeX + closeButtonSize / 2,
-                closeY + (closeButtonSize - fontRendererObj.FONT_HEIGHT) / 2 + 1, Color.WHITE.getRGB());
+                closeY + (closeButtonSize - fontRendererObj.FONT_HEIGHT) / 2 + 1, java.awt.Color.WHITE.getRGB());
 
         int tabBarYOffset = panelY + topBarHeight;
         int tabBarInternalHeight = tabBarButtonHeight + 8;
@@ -900,6 +963,9 @@ public class Gui extends GuiScreen {
                         if (c instanceof Text) {
                             ((Text) c).setFocused(false);
                         }
+                        if (c instanceof Color) {
+                            ((Color) c).setFocused(false);
+                        }
                     }
                     openDropdown = null;
                     isDraggingContentScrollbar = false;
@@ -963,6 +1029,18 @@ public class Gui extends GuiScreen {
                             if (other instanceof Text && other != component) {
                                 ((Text) other).setFocused(false);
                             }
+                            if (other instanceof Color) {
+                                ((Color) other).setFocused(false);
+                            }
+                        }
+                    } else if (component instanceof Color) {
+                        for (GuiComponentBase other : activeTab.components) {
+                            if (other instanceof Text) {
+                                ((Text) other).setFocused(false);
+                            }
+                            if (other instanceof Color && other != component) {
+                                ((Color) other).setFocused(false);
+                            }
                         }
                     }
                     clickedComponent = true;
@@ -984,6 +1062,9 @@ public class Gui extends GuiScreen {
             for (GuiComponentBase c : activeTab.components) {
                 if (c instanceof Text) {
                     ((Text) c).setFocused(false);
+                }
+                if (c instanceof Color) {
+                    ((Color) c).setFocused(false);
                 }
             }
         }
@@ -1067,20 +1148,21 @@ public class Gui extends GuiScreen {
 
     @Override
     protected void keyTyped(char typedChar, int keyCode) {
-        if (keyCode == Keyboard.KEY_ESCAPE
-                || keyCode == mc.gameSettings.keyBindInventory.getKeyCode()) {
+        // Let text fields and color hex inputs handle keys first (including inventory bind 'E').
+        for (GuiComponentBase c : currentTab().components) {
+            if (c.keyTyped(typedChar, keyCode)) {
+                return;
+            }
+        }
+
+        // Only Escape closes the GUI via keyboard (inventory key must not close while typing).
+        if (keyCode == Keyboard.KEY_ESCAPE) {
             if (openDropdown != null) {
                 openDropdown.close();
                 openDropdown = null;
                 return;
             }
             this.mc.displayGuiScreen(null);
-            return;
-        }
-        for (GuiComponentBase c : currentTab().components) {
-            if (c.keyTyped(typedChar, keyCode)) {
-                return;
-            }
         }
     }
 
@@ -1092,6 +1174,9 @@ public class Gui extends GuiScreen {
             for (GuiComponentBase c : tab.components) {
                 if (c instanceof Text) {
                     ((Text) c).unfocusIfNeeded();
+                }
+                if (c instanceof Color) {
+                    ((Color) c).unfocusIfNeeded();
                 }
             }
         }
@@ -1125,7 +1210,7 @@ public class Gui extends GuiScreen {
         GlStateManager.disableTexture2D();
         GlStateManager.disableCull();
         GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
-        Color awtColor = new Color(colorInt, true);
+        java.awt.Color awtColor = new java.awt.Color(colorInt, true);
         GlStateManager.color(
                 awtColor.getRed() / 255.0f,
                 awtColor.getGreen() / 255.0f,

@@ -109,7 +109,7 @@ public class Skywars {
         }).start();
     }
 
-    private static String sanitizeFormattedLevel(String raw) {
+    public static String sanitizeFormattedLevel(String raw) {
         StringBuilder result = new StringBuilder();
         int i = 0;
         while (i < raw.length()) {
@@ -178,7 +178,7 @@ public class Skywars {
         }
     }
 
-    private static String getFormattedWins(int wins) {
+    public static String getFormattedWins(int wins) {
         DecimalFormat formatter = new DecimalFormat("#,###");
 
         String color;
@@ -200,7 +200,7 @@ public class Skywars {
         return color + formatter.format(wins);
     }
 
-    private static String getColoredKDR(double kdr) {
+    public static String getColoredKDR(double kdr) {
         DecimalFormat df = new DecimalFormat("#.##");
 
         String color;

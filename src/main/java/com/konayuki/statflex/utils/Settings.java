@@ -2,6 +2,7 @@ package com.konayuki.statflex.utils;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.konayuki.statflex.gui.GuiColors;
 
 import java.io.File;
 import java.io.FileReader;
@@ -14,8 +15,9 @@ public class Settings {
 
     public boolean denickEnabled = false;
     public boolean listStatsEnabled = true;
+    public boolean skywarsListStatsEnabled = true;
     public boolean autoStatsEnabled = true;
-    public boolean duelsUpdate = false;
+    public boolean duelsUpdated = false;
     public boolean ignoreCertificates = false;
     public boolean keepWhoEnabled = false;
     public String apiKey = "";
@@ -23,7 +25,9 @@ public class Settings {
     public int warnLevel = 0;
     public double warnFKDR = 0.0;
     public double flagInterval = 5.0;
-    public String[] autoGGMessages = new String[0];
+    public String[] gg = new String[0];
+    /** ARGB ints for the 16 GuiColors system palette entries; null = defaults. */
+    public int[] guiSystemColors = null;
 
     private static Settings instance;
 
@@ -50,6 +54,7 @@ public class Settings {
             e.printStackTrace();
             instance = new Settings();
         }
+        GuiColors.loadFromSettings(instance);
     }
 
     public static void save() {
@@ -57,6 +62,7 @@ public class Settings {
             if (!configFile.getParentFile().exists()) {
                 configFile.getParentFile().mkdirs();
             }
+            GuiColors.saveToSettings(getInstance());
             try (FileWriter writer = new FileWriter(configFile)) {
                 gson.toJson(getInstance(), writer);
             }

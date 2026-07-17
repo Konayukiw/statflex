@@ -24,16 +24,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class BedwarsList {
-    private static final List<String> collectedPlayers = new ArrayList<>();
-
-    private static final List<String> partyMembers = Collections.synchronizedList(new ArrayList<>());
+    private static final List<String> Queue = new ArrayList<>();
+    private static final List<String> Party = Collections.synchronizedList(new ArrayList<>());
     private static volatile boolean inParty = false;
-    private static volatile boolean waitingForParty = false;
-    private static final Pattern playerNamePattern = Pattern.compile("\\b[a-zA-Z0-9_]{3,16}\\b");
+    private static volatile boolean waitingParty = false;
+    private static final Pattern namePattern = Pattern.compile("\\b[a-zA-Z0-9_]{3,16}\\b");
 
     @SubscribeEvent
     public void onChat(ClientChatReceivedEvent event) {
-        if (!Toggles.isListStatsEnabled())
+        if (!Toggles.isListStats())
             return;
 
         String raw = event.message.getUnformattedText();
@@ -42,16 +41,16 @@ public class BedwarsList {
         Minecraft mc = Minecraft.getMinecraft();
 
         if (lower.startsWith("online:")) {
-            if (!Toggles.isKeepWhoEnabled()) {
+            if (!Toggles.isKeepWho()) {
                 event.setCanceled(true);
             }
 
-            collectedPlayers.clear();
-            partyMembers.clear();
+            Queue.clear();
+            Party.clear();
 
-            extractPlayerNames(stripped, collectedPlayers);
+            extractPlayerNames(stripped, Queue);
 
-            waitingForParty = true;
+            waitingParty = true;
             mc.addScheduledTask(() -> {
                 if (mc.thePlayer != null) {
                     mc.thePlayer.sendChatMessage("/pl");
@@ -60,27 +59,27 @@ public class BedwarsList {
             return;
         }
 
-        if (waitingForParty) {
+        if (waitingParty) {
 
             if (lower.contains("not currently in a party")) {
-                waitingForParty = false;
+                waitingParty = false;
                 inParty = false;
-                listBedwarsStats(new ArrayList<>(collectedPlayers));
+                listBedwarsStats(new ArrayList<>(Queue));
                 return;
             }
 
             if (lower.startsWith("party leader") ||
                     lower.startsWith("party moderators")) {
                 inParty = true;
-                extractPlayerNames(stripped, partyMembers);
+                extractPlayerNames(stripped, Party);
                 return;
             }
 
             if (lower.startsWith("party members (")) {
                 inParty = true;
-                extractPlayerNames(stripped, partyMembers);
-                waitingForParty = false;
-                listBedwarsStats(new ArrayList<>(collectedPlayers));
+                extractPlayerNames(stripped, Party);
+                waitingParty = false;
+                listBedwarsStats(new ArrayList<>(Queue));
             }
         }
     }
@@ -96,7 +95,7 @@ public class BedwarsList {
 
         stripped = stripped.replaceAll("[^a-z0-9_ ]", " ");
 
-        Matcher matcher = playerNamePattern.matcher(stripped);
+        Matcher matcher = namePattern.matcher(stripped);
         while (matcher.find()) {
             String name = matcher.group();
             if (!targetList.contains(name)) {
@@ -188,7 +187,7 @@ public class BedwarsList {
                 boolean useFKDR = warnFKDR > 0;
 
                 if (inParty && (useLevel || useFKDR)) {
-                    Set<String> partySet = new HashSet<>(partyMembers);
+                    Set<String> partySet = new HashSet<>(Party);
 
                     for (PlayerData data : playerDatas) {
                         if (!partySet.contains(data.plainName.toLowerCase())) {

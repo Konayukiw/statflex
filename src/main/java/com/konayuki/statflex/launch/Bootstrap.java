@@ -8,6 +8,7 @@ import com.konayuki.statflex.features.denick.Denick;
 import com.konayuki.statflex.features.autogg.AutoGG;
 import com.konayuki.statflex.features.bedwars.BedwarsList;
 import com.konayuki.statflex.features.duels.DuelsList;
+import com.konayuki.statflex.features.skywars.SkywarsList;
 
 import com.konayuki.statflex.utils.api.HypixelApiUtil;
 import com.konayuki.statflex.utils.chat.Chat;
@@ -30,6 +31,7 @@ public final class Bootstrap {
     private static String initializedBy = "unknown";
 
     private static BedwarsList bwList;
+    private static SkywarsList swList;
     private static Denick denick;
     private static AutoGG autoGG;
     private static DuelsList duelsList;
@@ -84,6 +86,7 @@ public final class Bootstrap {
             }
 
             bwList = new BedwarsList();
+            swList = new SkywarsList();
             denick = new Denick();
             autoGG = new AutoGG();
             duelsList = new DuelsList();
@@ -92,6 +95,7 @@ public final class Bootstrap {
             MinecraftForge.EVENT_BUS.register(LIFECYCLE_HANDLER);
             MinecraftForge.EVENT_BUS.register(locraw);
             MinecraftForge.EVENT_BUS.register(bwList);
+            MinecraftForge.EVENT_BUS.register(swList);
             MinecraftForge.EVENT_BUS.register(denick);
             MinecraftForge.EVENT_BUS.register(autoGG);
             MinecraftForge.EVENT_BUS.register(duelsList);

@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 public class AutoGG {
     private final Minecraft mc = Minecraft.getMinecraft();
     private final List<Pattern> triggers = Collections.synchronizedList(new ArrayList<>());
-    private final List<String> autoMessages = Collections.synchronizedList(new ArrayList<>());
+    private final List<String> gg = Collections.synchronizedList(new ArrayList<>());
 
     private volatile int tickDelay = 0;
     private volatile boolean sending = false;
@@ -39,11 +39,11 @@ public class AutoGG {
     }
 
     private void reloadMessages() {
-        synchronized (autoMessages) {
-            autoMessages.clear();
-            String[] saved = Settings.getInstance().autoGGMessages;
+        synchronized (gg) {
+            gg.clear();
+            String[] saved = Settings.getInstance().gg;
             if (saved != null) {
-                Collections.addAll(autoMessages, saved);
+                Collections.addAll(gg, saved);
             } else {
                 Chat.send("§7[§cS§7] Failed to load AutoGG messages.");
             }
@@ -98,8 +98,8 @@ public class AutoGG {
                     Debug.log("[S] Trigger matched: " + msg);
                     Settings.load();
                     reloadMessages();
-                    synchronized (autoMessages) {
-                        if (!autoMessages.isEmpty()) {
+                    synchronized (gg) {
+                        if (!gg.isEmpty()) {
                             sending = true;
                             sendIndex = 0;
                         }
@@ -123,9 +123,9 @@ public class AutoGG {
         if (!sending)
             return;
 
-        synchronized (autoMessages) {
-            if (sendIndex < autoMessages.size()) {
-                String message = autoMessages.get(sendIndex);
+        synchronized (gg) {
+            if (sendIndex < gg.size()) {
+                String message = gg.get(sendIndex);
                 mc.thePlayer.sendChatMessage("/ac " + message);
                 sendIndex++;
                 tickDelay = 2;
@@ -136,15 +136,15 @@ public class AutoGG {
     }
 
     public void handleCommand(String[] args) {
-        synchronized (autoMessages) {
+        synchronized (gg) {
             if (args.length == 0) {
                 showMessages();
             } else if (args[0].equalsIgnoreCase("remove") && args.length == 2) {
                 try {
                     int idx = Integer.parseInt(args[1]);
-                    if (idx >= 0 && idx < autoMessages.size()) {
-                        autoMessages.remove(idx);
-                        Settings.getInstance().autoGGMessages = autoMessages.toArray(new String[0]);
+                    if (idx >= 0 && idx < gg.size()) {
+                        gg.remove(idx);
+                        Settings.getInstance().gg = gg.toArray(new String[0]);
                         Settings.save();
                         Chat.send("§7[§cS§7] Removed message.");
                     } else {
@@ -155,8 +155,8 @@ public class AutoGG {
                 }
             } else {
                 String msg = String.join(" ", args);
-                autoMessages.add(msg);
-                Settings.getInstance().autoGGMessages = autoMessages.toArray(new String[0]);
+                gg.add(msg);
+                Settings.getInstance().gg = gg.toArray(new String[0]);
                 Settings.save();
                 Chat.send("§7[§cS§7] Added message: §e" + msg);
             }
@@ -165,14 +165,14 @@ public class AutoGG {
 
     public void showMessages() {
         Chat.send("§7[§cS§7] Current AutoGG messages:");
-        synchronized (autoMessages) {
-            if (autoMessages.isEmpty()) {
+        synchronized (gg) {
+            if (gg.isEmpty()) {
                 ChatComponentText empty = new ChatComponentText(
                         "§7There's no messages for now. Click the button below to add!");
                 mc.thePlayer.addChatMessage(empty);
             } else {
-                for (int i = 0; i < autoMessages.size(); i++) {
-                    String text = " §c||§7 " + (i + 1) + ".§e " + autoMessages.get(i) + " ";
+                for (int i = 0; i < gg.size(); i++) {
+                    String text = " §c||§7 " + (i + 1) + ".§e " + gg.get(i) + " ";
                     ChatComponentText line = new ChatComponentText(text);
 
                     ChatComponentText remove = new ChatComponentText("§7[§c§lRemove§7]");

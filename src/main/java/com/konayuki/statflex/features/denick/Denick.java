@@ -47,7 +47,7 @@ public class Denick {
         if (mc.thePlayer == null || mc.theWorld == null) {
             return;
         }
-        if (!Toggles.denickEnabled)
+        if (!Toggles.denick)
             return;
 
 

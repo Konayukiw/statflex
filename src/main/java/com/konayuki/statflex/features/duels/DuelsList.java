@@ -18,7 +18,7 @@ public class DuelsList {
 
     @SubscribeEvent
     public void onChatReceived(ClientChatReceivedEvent event) {
-        if (!Toggles.isAutoStatsEnabled()) {
+        if (!Toggles.isAutoStats()) {
             return;
         }
 
@@ -29,13 +29,13 @@ public class DuelsList {
                 pendingChatLine = chatLine;
             }
         } catch (Exception e) {
-            Debug.log("[S] Failed to handle chat: " + e.getClass().getSimpleName());
+            Debug.log("[S] Failed to read chat: " + e.getClass().getSimpleName());
         }
     }
 
     @SubscribeEvent
     public void onClientTick(net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent event) {
-        if (!Toggles.isAutoStatsEnabled() || pendingChatLine == null) {
+        if (!Toggles.isAutoStats() || pendingChatLine == null) {
             return;
         }
 

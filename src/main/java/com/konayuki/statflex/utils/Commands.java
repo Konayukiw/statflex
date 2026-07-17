@@ -149,7 +149,7 @@ public class Commands implements ICommand {
                 }
                 String duelsName = args[1];
                 String duelsMode = (args.length >= 3 && args[2].startsWith("-")) ? args[2].substring(1) : null;
-                if (Toggles.duelsUpdate) {
+                if (Toggles.duelsUpdated) {
                     DuelsUpdated.fetchStats(duelsName, duelsMode);
                 } else {
                     Duels.fetchStats(duelsName, duelsMode);
@@ -206,7 +206,7 @@ public class Commands implements ICommand {
                 Toggles.toggleIgnoreCertificates(false);
                 break;
 
-            case "denick":
+            case "denickEnabled":
                 Toggles.toggleDenick(false);
                 break;
 
@@ -300,7 +300,7 @@ public class Commands implements ICommand {
                         case "duelsupdate":
                             Toggles.toggleDuelsUpdate(true);
                             break;
-                        case "denick":
+                        case "denickEnabled":
                             Toggles.toggleDenick(true);
                         case "autogg":
                             ;
@@ -339,7 +339,7 @@ public class Commands implements ICommand {
                 Chat.send("§c || §7- Keep it under 9 messages or get blocked for spamming.");
                 Chat.send("§c || §7/s list §8: §7Toggles whether the stats list is displayed with /who.");
                 Chat.send("§c || §7/s auto §8: §7Toggles auto stats viewer for Duels.");
-                Chat.send("§c || §7/s denick §8: §7Toggles Denicker which can denick original skin users.");
+                Chat.send("§c || §7/s denickEnabled §8: §7Toggles Denicker which can denickEnabled original skin users.");
                 Chat.send("§c || §7- It's possibly bannable, use at your own risk.");
                 Chat.send("§c || §7/s keepwho §8: §7Toggles whether the original /who message remains visible.");
                 Chat.send("§c || §7/s skin §e[Player] §8: §7Download their skin locally.");
@@ -389,17 +389,17 @@ public class Commands implements ICommand {
             IChatComponent root = new ChatComponentText("§8[§cS§8] §7Settings:\n");
 
             String[][] settings = {
-                    { "Denick", Toggles.denickEnabled ? "§b§lEnabled" : "§c§lDisabled", "denick",
-                            "Toggle Denick §b§lEnabled / §c§lDisabled. \n§eDo not use denick if you want to be fully legit. This may cause of a Hypixel Ban." },
-                    { "Bedwars Stats List", Toggles.listStatsEnabled ? "§b§lEnabled" : "§c§lDisabled", "listStats",
+                    { "Denick", Toggles.denick ? "§b§lEnabled" : "§c§lDisabled", "denickEnabled",
+                            "Toggle Denick §b§lEnabled / §c§lDisabled. \n§eDo not use denickEnabled if you want to be fully legit. This may cause of a Hypixel Ban." },
+                    { "Bedwars Stats List", Toggles.listStats ? "§b§lEnabled" : "§c§lDisabled", "listStats",
                             "Toggle Auto-Stats List with /who. \n§eWith this disabled, you can see original /who list." },
-                    { "Auto Duels Stats", Toggles.autoStatsEnabled ? "§b§lEnabled" : "§c§lDisabled", "autoDuels",
+                    { "Auto Duels Stats", Toggles.autoStats ? "§b§lEnabled" : "§c§lDisabled", "autoDuels",
                             "Toggle Auto Duels Stats. \n§eYou can get enemy stats automatically" },
-                    { "Updated Duels Titles", Toggles.duelsUpdate ? "§b§lEnabled" : "§c§lDisabled", "duelsUpdate",
+                    { "Updated Duels Titles", Toggles.duelsUpdated ? "§b§lEnabled" : "§c§lDisabled", "duelsUpdated",
                             "Toggle New Duels Titles. \n§eWith this enabled, Duels Title can be shown with updated schemes." },
                     { "Secure Connection", !Toggles.ignoreCertificates ? "§b§lEnabled" : "§c§lDisabled", "secure",
                             "§c§lDo NOT Enable this! §eOnly use this to avoid fetching errors. \n§eThis lets you allow all certificates." },
-                    { "Keep Original /who", Toggles.keepWhoEnabled ? "§b§lEnabled" : "§c§lDisabled", "keepwho",
+                    { "Keep Original /who", Toggles.keepWho ? "§b§lEnabled" : "§c§lDisabled", "keepwho",
                             "Keep original /who output visible while Bedwars Stats List Enabled." }
             };
 
