@@ -68,13 +68,13 @@ public class DuelsList {
                         }
                     }
                 } else {
-                    Debug.log("[S] Not in Duels game type: " + gameType);
+                    Debug.log("[S] You are not in Duels: " + gameType);
                 }
             }
 
             @Override
             public void onLocrawTimeout() {
-                Debug.log("[S] Locraw timeout when trying to get game mode for auto stats");
+                Debug.log("[S] Locraw timeout while trying to get game mode");
             }
         });
     }

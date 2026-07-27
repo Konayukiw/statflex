@@ -9,6 +9,7 @@ import com.konayuki.statflex.features.autogg.AutoGG;
 import com.konayuki.statflex.features.bedwars.BedwarsList;
 import com.konayuki.statflex.features.duels.DuelsList;
 import com.konayuki.statflex.features.skywars.SkywarsList;
+import com.konayuki.statflex.features.rpc.DiscordRPC;
 
 import com.konayuki.statflex.utils.api.HypixelApiUtil;
 import com.konayuki.statflex.utils.chat.Chat;
@@ -36,6 +37,7 @@ public final class Bootstrap {
     private static AutoGG autoGG;
     private static DuelsList duelsList;
     private static Locraw locraw;
+    private static DiscordRPC discordRPC;
 
     private Bootstrap() {
     }
@@ -91,6 +93,7 @@ public final class Bootstrap {
             autoGG = new AutoGG();
             duelsList = new DuelsList();
             locraw = Locraw.getInstance();
+            discordRPC = DiscordRPC.getInstance();
 
             MinecraftForge.EVENT_BUS.register(LIFECYCLE_HANDLER);
             MinecraftForge.EVENT_BUS.register(locraw);
@@ -156,6 +159,7 @@ public final class Bootstrap {
 
             PacketUtil.ensureInstalled();
             flushLoadedMessage();
+            DiscordRPC.getInstance().onTick();
         }
     }
 }

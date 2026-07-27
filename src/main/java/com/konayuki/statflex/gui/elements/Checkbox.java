@@ -49,7 +49,6 @@ public class Checkbox extends GuiComponentBase {
         int h = boxSize;
         if (description != null && !description.isEmpty()) {
             int descLineH = Math.max(1, Math.round(fontRenderer.FONT_HEIGHT * DESCRIPTION_SCALE));
-            // Label row uses boxSize; description sits below the label baseline area
             int labelBottom = Math.max(boxSize, (boxSize - fontRenderer.FONT_HEIGHT) / 2 + 1 + fontRenderer.FONT_HEIGHT);
             h = Math.max(h, labelBottom + DESCRIPTION_GAP + descLineH);
         }

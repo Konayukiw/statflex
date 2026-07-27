@@ -12,18 +12,33 @@ import com.google.gson.JsonParser;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class SkywarsList {
-    private static final List<String> Queue = new ArrayList<>();
+    private static final int COLLECT_TIMEOUT_TICKS = 5;
+    private static final Pattern TEAM_LINE = Pattern.compile("(?i)^Team\\s*#(\\d+)\\s*:\\s*(.*)$");
     private static final Pattern namePattern = Pattern.compile("\\b[a-zA-Z0-9_]{3,16}\\b");
+
+    private final List<String> queue = Collections.synchronizedList(new ArrayList<>());
+    private final Map<String, PlayerData> fetched = new ConcurrentHashMap<>();
+    private final Set<String> fetchStarted = ConcurrentHashMap.newKeySet();
+    private final AtomicInteger pendingFetches = new AtomicInteger(0);
+    private final AtomicBoolean collecting = new AtomicBoolean(false);
+    private final AtomicBoolean collectionDone = new AtomicBoolean(false);
+    private final AtomicBoolean listDisplayed = new AtomicBoolean(false);
+
+    private volatile int lastTeamNumber = 0;
+    private volatile int ticksSinceLastTeam = 0;
 
     @SubscribeEvent
     public void onChat(ClientChatReceivedEvent event) {
@@ -33,26 +48,247 @@ public class SkywarsList {
 
         String raw = event.message.getUnformattedText();
         String stripped = EnumChatFormatting.getTextWithoutFormattingCodes(raw);
-        String lower = stripped.toLowerCase();
+        if (stripped == null) {
+            return;
+        }
+        String trimmed = stripped.trim();
+        String lower = trimmed.toLowerCase();
 
         if (lower.startsWith("online:")) {
-            if (!Toggles.isKeepWho() && !Toggles.isListStats()) {
+            if (!Toggles.isKeepWho()) {
+                event.setCanceled(true);
+            }
+            resetSession();
+            List<String> names = new ArrayList<>();
+            extractPlayerNames(stripped, names);
+            for (String name : names) {
+                enqueuePlayer(name);
+            }
+            collectionDone.set(true);
+            collecting.set(false);
+            tryDisplayList();
+            return;
+        }
+
+        if (lower.startsWith("mode:")) {
+            if (!Toggles.isKeepWho()) {
+                event.setCanceled(true);
+            }
+            beginCollection();
+            return;
+        }
+
+        if (!collecting.get()) {
+            return;
+        }
+
+        Matcher teamMatcher = TEAM_LINE.matcher(trimmed);
+        if (teamMatcher.matches()) {
+            int teamNum;
+            try {
+                teamNum = Integer.parseInt(teamMatcher.group(1));
+            } catch (NumberFormatException e) {
+                return;
+            }
+
+            if (!Toggles.isKeepWho()) {
                 event.setCanceled(true);
             }
 
-            Queue.clear();
-            extractPlayerNames(stripped, Queue);
-            listSkywarsStats(new ArrayList<>(Queue));
+            lastTeamNumber = Math.max(lastTeamNumber, teamNum);
+            ticksSinceLastTeam = 0;
+
+            String playersPart = teamMatcher.group(2);
+            List<String> names = new ArrayList<>();
+            extractPlayerNames(playersPart, names);
+            for (String name : names) {
+                enqueuePlayer(name);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) {
+            return;
+        }
+        if (!Toggles.isSkywarsListStats() || !collecting.get() || collectionDone.get()) {
+            return;
+        }
+
+        if (lastTeamNumber <= 0) {
+            return;
+        }
+        ticksSinceLastTeam++;
+        if (ticksSinceLastTeam >= COLLECT_TIMEOUT_TICKS) {
+            collectionDone.set(true);
+            collecting.set(false);
+            tryDisplayList();
+        }
+    }
+
+    private void beginCollection() {
+        resetSession();
+        collecting.set(true);
+        collectionDone.set(false);
+        lastTeamNumber = 0;
+        ticksSinceLastTeam = 0;
+    }
+
+    private void resetSession() {
+        queue.clear();
+        fetched.clear();
+        fetchStarted.clear();
+        pendingFetches.set(0);
+        collecting.set(false);
+        collectionDone.set(false);
+        listDisplayed.set(false);
+        lastTeamNumber = 0;
+        ticksSinceLastTeam = 0;
+    }
+
+    private void enqueuePlayer(String name) {
+        if (name == null || name.isEmpty()) {
+            return;
+        }
+        String key = name.toLowerCase();
+        synchronized (queue) {
+            if (!queue.contains(key)) {
+                queue.add(key);
+            }
+        }
+        startFetchIfNeeded(key);
+    }
+
+    private void startFetchIfNeeded(String nameKey) {
+        if (!fetchStarted.add(nameKey)) {
+            return;
+        }
+        pendingFetches.incrementAndGet();
+        new Thread(() -> {
+            try {
+                PlayerData data = fetchPlayerData(nameKey);
+                if (data != null) {
+                    fetched.put(nameKey, data);
+                }
+            } finally {
+                pendingFetches.decrementAndGet();
+                tryDisplayList();
+            }
+        }, "statflex-sw-fetch-" + nameKey).start();
+    }
+
+    private void tryDisplayList() {
+        if (!collectionDone.get()) {
+            return;
+        }
+        if (pendingFetches.get() > 0) {
+            return;
+        }
+        if (!listDisplayed.compareAndSet(false, true)) {
+            return;
+        }
+
+        List<PlayerData> playerDatas = new ArrayList<>();
+        synchronized (queue) {
+            for (String name : queue) {
+                PlayerData data = fetched.get(name);
+                if (data != null) {
+                    playerDatas.add(data);
+                }
+            }
+        }
+
+        if (playerDatas.isEmpty()) {
+            return;
+        }
+
+        playerDatas.sort(Comparator.comparingDouble(p -> -p.score));
+
+        Chat.send(Messages.SKYWARS_STATS);
+        for (PlayerData data : playerDatas) {
+            Chat.send(data.levelFormatted + " " + data.coloredPlayerName
+                    + " §7| Wins: " + data.formattedWins
+                    + " §7| KDR: " + data.coloredKDR);
+        }
+    }
+
+    private static PlayerData fetchPlayerData(String name) {
+        try {
+            String apiKey = HypixelApiUtil.getApiKey();
+            Profile.PlayerInfo info = Profile.getPlayerInfo(name);
+            if (info == null) {
+                return null;
+            }
+
+            String uuid = info.uuid;
+            String properName = info.name;
+
+            HttpURLConnection connection = (HttpURLConnection)
+                    new URL("https://api.hypixel.net/player?key=" + apiKey + "&uuid=" + uuid).openConnection();
+            connection.setRequestMethod("GET");
+
+            int status = connection.getResponseCode();
+            InputStreamReader reader = status >= 200 && status < 300
+                    ? new InputStreamReader(connection.getInputStream())
+                    : new InputStreamReader(connection.getErrorStream());
+
+            JsonObject response = new JsonParser().parse(reader).getAsJsonObject();
+            if (!response.get("success").getAsBoolean()) {
+                return null;
+            }
+
+            JsonObject player = response.getAsJsonObject("player");
+            if (player == null || !player.has("stats") || !player.get("stats").isJsonObject()) {
+                return null;
+            }
+
+            JsonObject statsRoot = player.getAsJsonObject("stats");
+            if (!statsRoot.has("SkyWars") || !statsRoot.get("SkyWars").isJsonObject()) {
+                return null;
+            }
+
+            JsonObject stats = statsRoot.getAsJsonObject("SkyWars");
+
+            String rawFormatted = stats.has("levelFormattedWithBrackets")
+                    ? stats.get("levelFormattedWithBrackets").getAsString()
+                    : "§7[N/A]";
+            String levelFormatted = Skywars.sanitizeFormattedLevel(rawFormatted);
+
+            int wins = stats.has("wins") ? stats.get("wins").getAsInt() : 0;
+            int kills = stats.has("kills") ? stats.get("kills").getAsInt() : 0;
+            int deaths = stats.has("deaths") ? stats.get("deaths").getAsInt() : 1;
+            double kdr = deaths == 0 ? kills : (double) kills / deaths;
+
+            String coloredPlayerName = Ranks.getColoredPlayerName(player, properName);
+            String formattedWins = Skywars.getFormattedWins(wins);
+            String coloredKDR = Skywars.getColoredKDR(kdr);
+            double score = parseLevelNumber(rawFormatted) * kdr;
+
+            return new PlayerData(
+                    levelFormatted,
+                    coloredPlayerName,
+                    formattedWins,
+                    coloredKDR,
+                    score,
+                    properName
+            );
+        } catch (Exception e) {
+            return null;
         }
     }
 
     private void extractPlayerNames(String text, List<String> targetList) {
-        String stripped = EnumChatFormatting.getTextWithoutFormattingCodes(text).toLowerCase();
+        String stripped = EnumChatFormatting.getTextWithoutFormattingCodes(text);
+        if (stripped == null) {
+            stripped = text;
+        }
+        stripped = stripped.toLowerCase();
 
         stripped = stripped
-                .replace("party leader", "")
-                .replace("party members", "")
-                .replace("party members:", "")
+                .replaceAll("(?i)team\\s*#\\d+\\s*:", "")
+                .replaceAll("(?i)online:", "")
+                .replaceAll("(?i)mode:", "")
                 .replaceAll("\\[vip\\+\\+\\]|\\[vip\\+\\]|\\[vip\\]|\\[mvp\\+\\+\\]|\\[mvp\\+\\]|\\[mvp\\]|\\[youtube\\]", "");
 
         stripped = stripped.replaceAll("[^a-z0-9_ ]", " ");
@@ -64,108 +300,6 @@ public class SkywarsList {
                 targetList.add(name);
             }
         }
-    }
-
-    public static void listSkywarsStats(List<String> playerNames) {
-        if (playerNames == null || playerNames.isEmpty()) {
-            return;
-        }
-
-        List<PlayerData> playerDatas = Collections.synchronizedList(new ArrayList<>());
-        CountDownLatch latch = new CountDownLatch(playerNames.size());
-
-        for (String name : playerNames) {
-            new Thread(() -> {
-                try {
-                    String apiKey = HypixelApiUtil.getApiKey();
-                    Profile.PlayerInfo info = Profile.getPlayerInfo(name);
-
-                    if (info == null) {
-                        latch.countDown();
-                        return;
-                    }
-
-                    String uuid = info.uuid;
-                    String properName = info.name;
-
-                    HttpURLConnection connection = (HttpURLConnection)
-                            new URL("https://api.hypixel.net/player?key=" + apiKey + "&uuid=" + uuid).openConnection();
-                    connection.setRequestMethod("GET");
-
-                    int status = connection.getResponseCode();
-                    InputStreamReader reader = status >= 200 && status < 300
-                            ? new InputStreamReader(connection.getInputStream())
-                            : new InputStreamReader(connection.getErrorStream());
-
-                    JsonObject response = new JsonParser().parse(reader).getAsJsonObject();
-                    if (!response.get("success").getAsBoolean()) {
-                        latch.countDown();
-                        return;
-                    }
-
-                    JsonObject player = response.getAsJsonObject("player");
-                    if (player == null || !player.has("stats") || !player.get("stats").isJsonObject()) {
-                        latch.countDown();
-                        return;
-                    }
-
-                    JsonObject statsRoot = player.getAsJsonObject("stats");
-                    if (!statsRoot.has("SkyWars") || !statsRoot.get("SkyWars").isJsonObject()) {
-                        latch.countDown();
-                        return;
-                    }
-
-                    JsonObject stats = statsRoot.getAsJsonObject("SkyWars");
-
-                    String rawFormatted = stats.has("levelFormattedWithBrackets")
-                            ? stats.get("levelFormattedWithBrackets").getAsString()
-                            : "§7[N/A]";
-                    String levelFormatted = Skywars.sanitizeFormattedLevel(rawFormatted);
-
-                    int wins = stats.has("wins") ? stats.get("wins").getAsInt() : 0;
-                    int kills = stats.has("kills") ? stats.get("kills").getAsInt() : 0;
-                    int deaths = stats.has("deaths") ? stats.get("deaths").getAsInt() : 1;
-                    double kdr = deaths == 0 ? kills : (double) kills / deaths;
-
-                    String coloredPlayerName = Ranks.getColoredPlayerName(player, properName);
-                    String formattedWins = Skywars.getFormattedWins(wins);
-                    String coloredKDR = Skywars.getColoredKDR(kdr);
-
-                    double score = parseLevelNumber(rawFormatted) * kdr;
-
-                    PlayerData data = new PlayerData(
-                            levelFormatted,
-                            coloredPlayerName,
-                            formattedWins,
-                            coloredKDR,
-                            score,
-                            properName
-                    );
-
-                    playerDatas.add(data);
-
-                } catch (Exception ignored) {
-                } finally {
-                    latch.countDown();
-                }
-            }).start();
-        }
-
-        new Thread(() -> {
-            try {
-                latch.await();
-                playerDatas.sort(Comparator.comparingDouble(p -> -p.score));
-
-                Chat.send(Messages.SKYWARS_STATS);
-
-                for (PlayerData data : playerDatas) {
-                    Chat.send(data.levelFormatted + " " + data.coloredPlayerName
-                            + " §7| Wins: " + data.formattedWins
-                            + " §7| KDR: " + data.coloredKDR);
-                }
-            } catch (InterruptedException ignored) {
-            }
-        }).start();
     }
 
     private static double parseLevelNumber(String rawFormatted) {

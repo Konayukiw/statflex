@@ -20,13 +20,15 @@ public class Settings {
     public boolean duelsUpdated = false;
     public boolean ignoreCertificates = false;
     public boolean keepWhoEnabled = false;
+    public boolean disableHypixelFeaturesOutsideHypixel = true;
+    public boolean discordRpcEnabled = false;
+    public String discordRpcApplicationId = "";
     public String apiKey = "";
     public String skinSaveDir = "";
     public int warnLevel = 0;
     public double warnFKDR = 0.0;
     public double flagInterval = 5.0;
     public String[] gg = new String[0];
-    /** ARGB ints for the 16 GuiColors system palette entries; null = defaults. */
     public int[] guiSystemColors = null;
 
     private static Settings instance;

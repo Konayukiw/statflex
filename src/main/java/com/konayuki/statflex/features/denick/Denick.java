@@ -47,7 +47,7 @@ public class Denick {
         if (mc.thePlayer == null || mc.theWorld == null) {
             return;
         }
-        if (!Toggles.denick)
+        if (!Toggles.isDenickEnabled())
             return;
 
 
@@ -135,6 +135,7 @@ public class Denick {
 
                 if (nicks.contains(hash)) {
                     Chat.send("§8[§cS§8]§7 Found a nicked player:§c " + displayName);
+                    new Thread(() -> BedwarsList.warnNickedPlayer(displayName)).start();
                     return;
                 }
 
@@ -154,6 +155,8 @@ public class Denick {
                         @Override
                         public void onLocrawTimeout() {
                             Debug.log("[S] Locraw timeout for nicked player stats");
+                            new Thread(() -> BedwarsList.warnNickedPlayer(
+                                    profileName + " (nicked as " + displayName + ")")).start();
                         }
                     });
                 }
@@ -174,17 +177,20 @@ public class Denick {
 
         switch (gameType) {
             case "BEDWARS":
-                BedwarsList.listBedwarsStats(Arrays.asList(profileName));
+                BedwarsList.listBedwarsStats(Arrays.asList(profileName), true);
                 break;
             case "DUELS":
                 String detectedMode = Duels.detectModeFromLocraw(processMode);
                 Duels.fetchStats(profileName, detectedMode, true);
+                BedwarsList.fetchAndWarn(profileName);
                 break;
             case "SKYWARS":
                 Skywars.fetchStats(profileName, null);
+                BedwarsList.fetchAndWarn(profileName);
                 break;
             default:
                 Chat.send(Messages.UNKNOWN_GAMEMODE);
+                BedwarsList.fetchAndWarn(profileName);
         }
     }
 

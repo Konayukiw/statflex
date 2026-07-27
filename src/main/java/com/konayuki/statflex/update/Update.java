@@ -2,7 +2,7 @@ package com.konayuki.statflex.update;
 
 import com.konayuki.statflex.statflex;
 import com.konayuki.statflex.utils.Debug;
-import com.konayuki.statflex.utils.HttpSecureConnection;
+import com.konayuki.statflex.utils.ConnectionUtil;
 import com.konayuki.statflex.utils.Toggles;
 
 import com.google.gson.JsonObject;
@@ -43,7 +43,7 @@ public class Update {
         URLConnection raw = new URL(API_LATEST).openConnection();
         if (raw instanceof HttpsURLConnection) {
             if (Toggles.ignoreCertificates) {
-                HttpSecureConnection.trustAllCertificates((HttpsURLConnection) raw);
+                ConnectionUtil.trustAllCertificates((HttpsURLConnection) raw);
             }
         }
         HttpURLConnection conn = (HttpURLConnection) raw;
@@ -62,7 +62,7 @@ public class Update {
 
         if (!isNewer(latestVersion, currentVersion)) return;
 
-        JsonObject asset = findStatflexJarAsset(root);
+        JsonObject asset = findstatflexJarAsset(root);
         if (asset == null) {
             Debug.error("statflex jar not found.");
             return;
@@ -81,7 +81,7 @@ public class Update {
         downloadedFile = outFile;
     }
 
-    private static JsonObject findStatflexJarAsset(JsonObject root) {
+    private static JsonObject findstatflexJarAsset(JsonObject root) {
         if (!root.has("assets") || !root.get("assets").isJsonArray()) {
             return null;
         }
@@ -248,7 +248,7 @@ public class Update {
         URLConnection raw = new URL(url).openConnection();
         if (raw instanceof HttpsURLConnection && Toggles.ignoreCertificates) {
             try {
-                HttpSecureConnection.trustAllCertificates((HttpsURLConnection) raw);
+                ConnectionUtil.trustAllCertificates((HttpsURLConnection) raw);
             } catch (Exception e) {
                 e.printStackTrace();
             }

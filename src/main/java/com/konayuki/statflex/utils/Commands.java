@@ -206,8 +206,14 @@ public class Commands implements ICommand {
                 Toggles.toggleIgnoreCertificates(false);
                 break;
 
+            case "denick":
             case "denickEnabled":
                 Toggles.toggleDenick(false);
+                break;
+
+            case "rpc":
+            case "rpc":
+                Toggles.toggleDiscordRpc(false);
                 break;
 
             case "keepwho":
@@ -300,10 +306,11 @@ public class Commands implements ICommand {
                         case "duelsupdate":
                             Toggles.toggleDuelsUpdate(true);
                             break;
+                        case "denick":
                         case "denickEnabled":
                             Toggles.toggleDenick(true);
+                            break;
                         case "autogg":
-                            ;
                             break;
                         case "secure":
                             Toggles.toggleIgnoreCertificates(true);
@@ -339,7 +346,7 @@ public class Commands implements ICommand {
                 Chat.send("§c || §7- Keep it under 9 messages or get blocked for spamming.");
                 Chat.send("§c || §7/s list §8: §7Toggles whether the stats list is displayed with /who.");
                 Chat.send("§c || §7/s auto §8: §7Toggles auto stats viewer for Duels.");
-                Chat.send("§c || §7/s denickEnabled §8: §7Toggles Denicker which can denickEnabled original skin users.");
+                Chat.send("§c || §7/s denick §8: §7Toggles Denicker which can denick original skin users.");
                 Chat.send("§c || §7- It's possibly bannable, use at your own risk.");
                 Chat.send("§c || §7/s keepwho §8: §7Toggles whether the original /who message remains visible.");
                 Chat.send("§c || §7/s skin §e[Player] §8: §7Download their skin locally.");

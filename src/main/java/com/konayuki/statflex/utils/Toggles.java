@@ -10,6 +10,8 @@ public final class Toggles {
     public static boolean denick;
     public static boolean duelsUpdated;
     public static boolean keepWho;
+    public static boolean disableHypixelFeaturesOutsideHypixel;
+    public static boolean discordRpc;
 
     private Toggles() {
     }
@@ -22,18 +24,20 @@ public final class Toggles {
         denick = settings.denickEnabled;
         duelsUpdated = settings.duelsUpdated;
         keepWho = settings.keepWhoEnabled;
+        disableHypixelFeaturesOutsideHypixel = settings.disableHypixelFeaturesOutsideHypixel;
+        discordRpc = settings.discordRpcEnabled;
     }
 
     public static boolean isListStats() {
-        return listStats;
+        return listStats && isHypixelFeatureAllowed();
     }
 
     public static boolean isSkywarsListStats() {
-        return skywarsListStats;
+        return skywarsListStats && isHypixelFeatureAllowed();
     }
 
     public static boolean isAutoStats() {
-        return autoStats;
+        return autoStats && isHypixelFeatureAllowed();
     }
 
     public static boolean isIgnoreCertificatesEnabled() {
@@ -46,6 +50,18 @@ public final class Toggles {
 
     public static boolean isDuelsUpdateEnabled() {
         return duelsUpdated;
+    }
+
+    public static boolean isDenickEnabled() {
+        return denick && isHypixelFeatureAllowed();
+    }
+
+    public static boolean isDiscordRpcEnabled() {
+        return discordRpc;
+    }
+
+    public static boolean isHypixelFeatureAllowed() {
+        return !disableHypixelFeaturesOutsideHypixel || ServerUtil.isHypixelServer();
     }
 
     public static void setIgnoreCertificates(boolean ignore) {
@@ -126,6 +142,28 @@ public final class Toggles {
             Chat.send(keepWho
                     ? "§8[§cS§8]§7 Original /who keeper has been §b§lEnabled"
                     : "§8[§cS§8]§7 Original /who keeper has been §c§lDisabled");
+        }
+    }
+
+    public static void toggleDiscordRpc(boolean silent) {
+        discordRpc = !discordRpc;
+        Settings.getInstance().discordRpcEnabled = discordRpc;
+        Settings.save();
+        if (!silent) {
+            Chat.send(discordRpc
+                    ? "§8[§cS§8]§7 Discord RPC has been §b§lEnabled"
+                    : "§8[§cS§8]§7 Discord RPC has been §c§lDisabled");
+        }
+    }
+
+    public static void toggleDisableHypixelFeatures(boolean silent) {
+        disableHypixelFeaturesOutsideHypixel = !disableHypixelFeaturesOutsideHypixel;
+        Settings.getInstance().disableHypixelFeaturesOutsideHypixel = disableHypixelFeaturesOutsideHypixel;
+        Settings.save();
+        if (!silent) {
+            Chat.send(disableHypixelFeaturesOutsideHypixel
+                    ? "§8[§cS§8]§7 Auto-off outside Hypixel has been §b§lEnabled"
+                    : "§8[§cS§8]§7 Auto-off outside Hypixel has been §c§lDisabled");
         }
     }
 }
