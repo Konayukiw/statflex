@@ -96,7 +96,7 @@ Open the settings GUI with `/s`. The GUI provides tabbed configuration:
 | Skywars | Auto Stats, Keep /who |
 | Duels | Auto Stats, Updated Titles |
 | Hypixel API | API Key input |
-| Skin | Player skin download, save path |
+| Skin | Download skins, Set download path |
 | System | GUI color customization |
 | Update | Check and install updates |
 
@@ -107,7 +107,7 @@ Open the settings GUI with `/s`. The GUI provides tabbed configuration:
 | Command | Description |
 |---------|-------------|
 | `/s` | Open the settings GUI |
-| `/s api [Key]` | Set your Hypixel API key |
+| `/s api [Key]` | Set Hypixel API key |
 | `/s bw [Player] -[Mode]` | Bedwars stats lookup |
 | `/s sw [Player] -[Mode]` | Skywars stats lookup |
 | `/s duels [Player] -[Mode]` | Duels stats lookup |
@@ -119,7 +119,7 @@ Open the settings GUI with `/s`. The GUI provides tabbed configuration:
 | `/s warn [Level] [FKDR]` | Set warn thresholds |
 | `/s list` | Toggle Bedwars stats list |
 | `/s auto` | Toggle Duels auto stats |
-| `/s denick` | Toggle denick |
+| `/s denick` | Toggle Denick |
 | `/s rpc` | Toggle Discord RPC |
 | `/s keepwho` | Toggle original /who visibility |
 | `/s secure` | Toggle SSL certificate validation |
@@ -160,9 +160,9 @@ Open the settings GUI with `/s`. The GUI provides tabbed configuration:
 gradlew build
 ```
 
-The output JAR will be in `build/libs/`.
+The output Jar will be in `build/libs/`.
 
-To produce a fat JAR with all dependencies bundled:
+To produce a fatJar with all dependencies bundled:
 
 ```bash
 gradlew fatJar
@@ -177,7 +177,7 @@ gradlew fatJar
 - SpongePowered Mixin 0.7.11
 - Gson 2.8.9
 - Hypixel API v2
-- Crafty.gg API
+- Crafty API
 - Discord IPC
 
 ---
