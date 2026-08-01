@@ -1,4 +1,4 @@
-﻿package com.konayuki.statflex.gui.elements;
+package com.konayuki.statflex.gui.elements;
 
 import com.konayuki.statflex.gui.GuiColors;
 import net.minecraft.client.Minecraft;
