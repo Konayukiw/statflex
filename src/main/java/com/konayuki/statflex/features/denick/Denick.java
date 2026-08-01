@@ -109,7 +109,7 @@ public class Denick {
             return;
         }
 
-        Debug.log("[S]" + displayNameText + ", UUID=" + profile.getId() + ", UUID version" + profile.getId().version() + " confirmed not to be an NPC");
+        Debug.log(displayNameText + ", UUID=" + profile.getId() + ", UUID version" + profile.getId().version() + " confirmed not to be an NPC");
 
         for (Property prop : profile.getProperties().get("textures")) {
             try {
@@ -154,7 +154,7 @@ public class Denick {
 
                         @Override
                         public void onLocrawTimeout() {
-                            Debug.log("[S] Locraw timeout for nicked player stats");
+                            Debug.log("Locraw timeout for nicked player stats");
                             new Thread(() -> BedwarsList.warnNickedPlayer(
                                     profileName + " (nicked as " + displayName + ")")).start();
                         }

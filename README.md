@@ -1,51 +1,187 @@
-### **statflex**
+# statflex
 
-Hypixel stats viewer, and overall utility mod for Forge 1.8.9.
+**Hypixel stats viewer mod for Minecraft Forge 1.8.9**
 
-**Features**
+Minecraft mod that displays Hypixel player stats in-game. It supports Bedwars, Skywars, and Duels, along with a suite of utility features including a denicker, anticheat detector, AutoGG, Discord RPC, and more.
 
-> Anticheat - Detects cheaters and warns on chat.
+> This mod is **NOT** officially allowed by Hypixel. Use at your own risk.
 
-> /s api [API Key] - Sets Hypixel API Key to enable stats viewer.
+---
 
-> /s bw [Player] - Shows their Bedwars stats in-game.  
-> | Type -[Mode] at the end to view their stats for each mode.
+## Features
 
-> /s sw [Player] - Shows their Skywars stats in-game.  
-> | Type -[Mode] at the end to view their stats for each mode.
+### Stats Viewer
 
-> /s duels [Player] - Shows their Duels stats in-game.  
-> | Type -[Mode] at the end to view their stats for each mode.
+| Game | Command | Description |
+|------|---------|-------------|
+| Bedwars | `/s bw [Player] -[Mode]` | Displays stars, finals, and FKDR |
+| Skywars | `/s sw [Player] -[Mode]` | Displays stars, wins, and KDR |
+| Duels | `/s duels [Player] -[Mode]` | Displays title, wins, and WLR |
 
-> /s autogg - Shows current AutoGG messages.
+- Supports mode-specific lookups (e.g., `-solo`, `-duos`, `-bridge`, `-uhc`)
 
-> /s autogg [Message] - Add new AutoGG message. It's recommended to keep under 9 messages.
+### Auto Stats List
 
-> /s nh [Player] - Shows their Name History (Not working if they have hidden their name history.)
+- **Bedwars** — Automatically lists all players' stats when you run `/who` in a Bedwars game
+- **Skywars** — Automatically lists stats when teams are announced in a Skywars game
+- **Duels** — Automatically fetches opponent stats when a Duels match starts
 
-> /s skin [Player] - Download their skin locally. Add -npcSkin to force saving NPC or Nick Skin if they have existing username.
+- Optional: `/s keepwho` to keep original `/who` output visible alongside the stats list
 
-> /s dir [PATH] - Sets a folder which skins will be saved into. .minecraft/downloads is the default directory.
+### Denick
 
-> /s secure - Toggles secure connections.  
-> | This should be disabled if you have errors while getting stats. Usually, disabling this is not recommended as it may endanger your connection security by trusting all certifications.
+Detects and reveals nicked players. When a nicked player is found, their real name and stats are shown in chat.
 
-> /s auto - Toggles auto stats viewer for Duels.
+> Denick may not be legitimate in Hypixel.
 
-> /s list - Toggles whether the stats list is displayed with /who in Bedwars.
+### Anticheat
 
-> /s keepwho - Toggles whether the original /who message remains visible when the stats list is enabled in Bedwars.
+A client-side anticheat detector that flags nearby players for:
 
-> /s add [Player] [Reason] - Reports cheaters to share and notify when you queued them.
-> | Only working while I'm starting server for this.
+- Auto Block
+- NoFall
+- NoSlow
+- Scaffold / Legit Scaffold
 
-> /s denick - Toggles Denicker like Lilith. This can denick nicks using their original skins.  
-> | It's possibly bannable, use at your own risk.
+Configurable flag interval (0–20 seconds) to control alert frequency.
 
-> /s update - Checks update.
+### AutoGG
 
-> /s settings - Opens clickable settings.
+Automatically sends customizable GG messages when a game ends.
 
-> /s help - Shows help message similar to this readme.
+- Add/remove messages via `/s autogg [Message]` or the GUI
+- Supports multiple messages sent sequentially
 
-**_This mod is NOT officially allowed by Hypixel! Never use if you care about ban._**
+### Name History
+
+Look up a player's username history via the Crafty.gg API:
+
+```
+/s nh [Player]
+```
+
+### Skin Downloader
+
+Download any player's skin as a PNG file:
+
+```
+/s skin [Player]
+/s skin [Player] -npcskin
+```
+
+- `-npcskin` forces saving the skin even if the player is nicked/NPC-skinned
+- Configurable save directory via `/s dir [Path]` or the GUI
+
+### Discord Rich Presence
+
+Displays your Minecraft activity as a Discord Rich Presence status via IPC.
+
+- Configurable Application ID
+- Auto-connects and updates periodically
+
+### In-Game Update System
+
+Checks GitHub Releases for new versions and provides a one-click update flow that replaces the mod automatically after Minecraft closes.
+
+---
+
+## GUI
+
+Open the settings GUI with `/s`. The GUI provides tabbed configuration:
+
+| Tab | Contents |
+|-----|----------|
+| General | Denick, Secure Connection, AutoGG messages, Anticheat interval, Discord RPC |
+| Bedwars | Auto Stats, Keep /who, Warn thresholds (Level / FKDR) |
+| Skywars | Auto Stats, Keep /who |
+| Duels | Auto Stats, Updated Titles |
+| Hypixel API | API Key input |
+| Skin | Player skin download, save path |
+| System | GUI color customization |
+| Update | Check and install updates |
+
+---
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `/s` | Open the settings GUI |
+| `/s api [Key]` | Set your Hypixel API key |
+| `/s bw [Player] -[Mode]` | Bedwars stats lookup |
+| `/s sw [Player] -[Mode]` | Skywars stats lookup |
+| `/s duels [Player] -[Mode]` | Duels stats lookup |
+| `/s nh [Player]` | Name history lookup |
+| `/s skin [Player] [-npcskin]` | Download player skin |
+| `/s dir [Path]` | Set skin save directory |
+| `/s autogg [Message]` | Manage AutoGG messages |
+| `/s flag [Seconds]` | Set anticheat flag interval |
+| `/s warn [Level] [FKDR]` | Set warn thresholds |
+| `/s list` | Toggle Bedwars stats list |
+| `/s auto` | Toggle Duels auto stats |
+| `/s denick` | Toggle denick |
+| `/s rpc` | Toggle Discord RPC |
+| `/s keepwho` | Toggle original /who visibility |
+| `/s secure` | Toggle SSL certificate validation |
+| `/s settings` | Show clickable settings in chat |
+| `/s update` | Open Update tab in GUI |
+| `/s help` | Show help in chat |
+
+---
+
+## Requirements
+
+- Minecraft **1.8.9**
+- Forge **11.15.1.2318**
+- Java 8+ (To build by yourself)
+- A Hypixel API key (Generate at [Hypixel Developer Dashboard](https://developer.hypixel.net))
+---
+
+## Installation
+
+### Automatic installation
+
+1. Launch Minecraft 1.8.9 (Badlion Client is not supported).
+2. Get statflex injector at [Latest statflex release](https://github.com/Konayukiw/statflex/releases/latest).
+3. Just run injector.
+
+### Manual installation
+
+1. Install Minecraft Forge 1.8.9.
+2. Get statflex jar at [Latest statflex release](https://github.com/Konayukiw/statflex/releases/latest).
+3. Place the jar in your `.minecraft/mods/` folder.
+4. Launch Minecraft and run `/s api [Key]` to enable stats viewer.
+
+---
+
+## Building from Source
+
+```bash
+gradlew build
+```
+
+The output JAR will be in `build/libs/`.
+
+To produce a fat JAR with all dependencies bundled:
+
+```bash
+gradlew fatJar
+```
+
+---
+
+## Tech Stack
+
+- Java 8
+- MinecraftForge 1.8.9 (ForgeGradle 2.1)
+- SpongePowered Mixin 0.7.11
+- Gson 2.8.9
+- Hypixel API v2
+- Crafty.gg API
+- Discord IPC
+
+---
+
+## Disclaimer
+
+This mod is a personal project and is **not endorsed or approved by Hypixel**. Features such as Denick and Auto Stats may be considered unfair advantages. Use responsibly and at your own risk.

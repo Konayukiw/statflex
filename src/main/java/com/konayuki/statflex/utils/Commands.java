@@ -212,7 +212,7 @@ public class Commands implements ICommand {
                 break;
 
             case "rpc":
-            case "rpc":
+            case "discordrpc":
                 Toggles.toggleDiscordRpc(false);
                 break;
 

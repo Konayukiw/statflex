@@ -42,7 +42,7 @@ public class Locraw {
                     pendingCallback.onLocrawTimeout();
                     pendingCallback = null;
                 }
-                Debug.log("[S] Locraw timeout");
+                Debug.log("Locraw timeout");
             }
         }
     }
@@ -56,7 +56,7 @@ public class Locraw {
                     JsonObject json = new JsonParser().parse(message).getAsJsonObject();
                     gameType = json.has("gametype") ? json.get("gametype").getAsString() : null;
                     mode = json.has("mode") ? json.get("mode").getAsString() : null;
-                    Debug.log("[S] Game=" + gameType + ", Mode=" + mode);
+                    Debug.log("Game=" + gameType + ", Mode=" + mode);
                     event.setCanceled(true);
                     awaitingLocraw = false;
                     locrawTimeout = 0;
@@ -66,7 +66,7 @@ public class Locraw {
                         pendingCallback = null;
                     }
                 } catch (Exception e) {
-                    Debug.log("[S] Failed to parse locraw response: " + e.getMessage());
+                    Debug.log("Failed to parse locraw response: " + e.getMessage());
                     awaitingLocraw = false;
                     locrawTimeout = 0;
                     if (pendingCallback != null) {

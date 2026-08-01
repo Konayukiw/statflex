@@ -1,5 +1,7 @@
 package com.konayuki.statflex.features.rpc;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.konayuki.statflex.utils.Debug;
 import com.konayuki.statflex.utils.Settings;
 import com.konayuki.statflex.utils.Toggles;
@@ -8,14 +10,21 @@ import net.minecraft.client.Minecraft;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.UUID;
 
 public class DiscordRPC {
 
     private static DiscordRPC instance;
 
     private static final int VERSION = 1;
-    private static final int HANDSHAKE = 0;
-    private static final int FRAME = 1;
+    private static final int OP_HANDSHAKE = 0;
+    private static final int OP_FRAME = 1;
+    private static final int OP_CLOSE = 2;
+    private static final int OP_PING = 3;
+    private static final int OP_PONG = 4;
+    private static final int FORCE_REFRESH_TICKS = 20 * 60 * 5;
+    private static final int MAX_DRAIN_FRAMES = 16;
 
     private static final String[] PIPE_NAMES = {
             "\\\\.\\pipe\\discord-ipc-0",
@@ -30,9 +39,12 @@ public class DiscordRPC {
             "\\\\.\\pipe\\discord-ipc-9",
     };
 
+    private final JsonParser jsonParser = new JsonParser();
+
     private RandomAccessFile pipe;
     private boolean connected = false;
     private int updateTickCounter = 0;
+    private int forceRefreshCounter = 0;
     private String lastServerIP = "";
     private String lastPlayerName = "";
     private long sessionStartSeconds = 0;
@@ -65,6 +77,7 @@ public class DiscordRPC {
             return;
         }
         updateTickCounter = 0;
+        forceRefreshCounter += 100;
 
         String playerName = mc.thePlayer.getName();
         String serverIP;
@@ -79,12 +92,16 @@ public class DiscordRPC {
 
         boolean needUpdate = !connected
                 || !playerName.equals(lastPlayerName)
-                || !serverIP.equals(lastServerIP);
+                || !serverIP.equals(lastServerIP)
+                || forceRefreshCounter >= FORCE_REFRESH_TICKS;
 
         if (needUpdate) {
-            lastPlayerName = playerName;
-            lastServerIP = serverIP;
-            updatePresence(playerName, serverIP);
+            Debug.log("Discord RPC updating presence: player=" + playerName + ", server=" + serverIP);
+            if (updatePresence(playerName, serverIP)) {
+                lastPlayerName = playerName;
+                lastServerIP = serverIP;
+                forceRefreshCounter = 0;
+            }
         }
     }
 
@@ -95,105 +112,317 @@ public class DiscordRPC {
 
         String appId = Settings.getInstance().discordRpcApplicationId;
         if (appId == null || appId.isEmpty()) {
-            Debug.log("[S] Discord RPC: no Application ID configured");
+            Debug.log("Discord RPC: no Application ID configured");
+            return;
+        }
+        appId = appId.trim();
+        if (!appId.matches("\\d{17,20}")) {
+            Debug.log("Discord RPC: Application ID looks invalid (expected 17-20 digit snowflake): " + appId);
             return;
         }
 
         for (String pipeName : PIPE_NAMES) {
             try {
                 pipe = new RandomAccessFile(pipeName, "rw");
-                sendHandshake(appId);
-                connected = true;
-                Debug.log("[S] Discord RPC connected via " + pipeName);
-                return;
+                if (performHandshake(appId)) {
+                    connected = true;
+                    Debug.log("Discord RPC connected via " + pipeName);
+                    return;
+                }
+                closePipeQuietly();
             } catch (Exception e) {
+                closePipeQuietly();
+                Debug.log("Discord RPC: failed on " + pipeName + ": " + e.getMessage());
             }
         }
 
-        Debug.log("[S] Discord RPC: could not connect to any pipe");
+        Debug.log("Discord RPC: could not connect to any pipe");
     }
 
     public void disconnect() {
-        if (!connected) {
+        if (!connected && pipe == null) {
             return;
         }
         try {
-            if (pipe != null) {
-                pipe.close();
+            if (pipe != null && connected) {
+                try {
+                    send(OP_FRAME, buildSetActivityJson(null));
+                } catch (Exception ignored) {
+                }
             }
-        } catch (Exception ignored) {
+        } finally {
+            closePipeQuietly();
+            connected = false;
+            lastServerIP = "";
+            lastPlayerName = "";
+            sessionStartSeconds = 0;
+            forceRefreshCounter = 0;
+            Debug.log("Discord RPC disconnected.");
         }
-        pipe = null;
-        connected = false;
-        lastServerIP = "";
-        lastPlayerName = "";
-        sessionStartSeconds = 0;
-        Debug.log("[S] Discord RPC disconnected.");
     }
 
-    private void sendHandshake(String appId) throws IOException {
-        String json = "{\"v\":" + VERSION + ",\"client_id\":\"" + appId + "\"}";
-        send(HANDSHAKE, json);
-    }
-
-    public void updatePresence(String playerName, String serverIP) {
+    public boolean updatePresence(String playerName, String serverIP) {
         if (!Toggles.discordRpc) {
-            return;
+            Debug.log("Discord RPC: updatePresence skipped, RPC disabled");
+            return false;
         }
 
         if (!connected) {
+            Debug.log("Discord RPC: not connected, attempting auto-connect");
             connect();
             if (!connected) {
-                return;
+                Debug.log("Discord RPC: auto-connect failed, cannot update presence");
+                return false;
             }
         }
 
         String details = "Playing " + serverIP;
         String state = playerName;
-        String largeImageKey = "minecraft";
+        String largeImageKey = "statflex";
         String largeImageText = "Minecraft 1.8.9";
 
         if (sessionStartSeconds <= 0) {
             sessionStartSeconds = System.currentTimeMillis() / 1000L;
         }
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("{\"cmd\":\"SET_ACTIVITY\",\"args\":{\"pid\":")
-                .append(getPid())
-                .append(",\"activity\":{");
-        sb.append("\"details\":").append(quote(details)).append(",");
-        sb.append("\"state\":").append(quote(state)).append(",");
-        sb.append("\"assets\":{");
-        sb.append("\"large_image\":").append(quote(largeImageKey)).append(",");
-        sb.append("\"large_text\":").append(quote(largeImageText));
-        sb.append("},");
-        sb.append("\"timestamps\":{\"start\":").append(sessionStartSeconds).append("}");
-        sb.append("}},\"nonce\":\"").append(System.nanoTime()).append("\"}");
+        JsonObject activity = new JsonObject();
+        activity.addProperty("details", details);
+        activity.addProperty("state", state);
+        activity.addProperty("instance", false);
+
+        JsonObject assets = new JsonObject();
+        assets.addProperty("large_image", largeImageKey);
+        assets.addProperty("large_text", largeImageText);
+        activity.add("assets", assets);
+
+        JsonObject timestamps = new JsonObject();
+        timestamps.addProperty("start", sessionStartSeconds);
+        activity.add("timestamps", timestamps);
+
+        String nonce = UUID.randomUUID().toString();
+        String payload = buildSetActivityJson(activity, nonce);
 
         try {
-            send(FRAME, sb.toString());
+            send(OP_FRAME, payload);
+            if (!awaitCommandResult(nonce)) {
+                Debug.log("Discord RPC: SET_ACTIVITY was rejected or lost");
+                markBroken();
+                return false;
+            }
+            Debug.log("Discord RPC presence updated: " + playerName + " @ " + serverIP);
+            return true;
         } catch (IOException e) {
-            Debug.log("[S] Discord RPC failed to send: " + e.getMessage());
-            connected = false;
-            try {
-                if (pipe != null) {
-                    pipe.close();
+            Debug.log("Discord RPC failed to send: " + e.getMessage());
+            markBroken();
+            return false;
+        }
+    }
+
+    private boolean performHandshake(String appId) throws IOException {
+        JsonObject handshake = new JsonObject();
+        handshake.addProperty("v", VERSION);
+        handshake.addProperty("client_id", appId);
+        send(OP_HANDSHAKE, handshake.toString());
+
+        for (int i = 0; i < MAX_DRAIN_FRAMES; i++) {
+            Frame frame = readFrame();
+            if (frame == null) {
+                Debug.log("Discord RPC handshake: no response from Discord");
+                return false;
+            }
+
+            if (frame.opcode == OP_CLOSE) {
+                Debug.log("Discord RPC handshake closed: " + frame.json);
+                return false;
+            }
+
+            if (frame.opcode == OP_PING) {
+                send(OP_PONG, frame.json);
+                continue;
+            }
+
+            if (frame.opcode != OP_FRAME) {
+                Debug.log("Discord RPC handshake: unexpected opcode " + frame.opcode);
+                continue;
+            }
+
+            JsonObject body = parseJson(frame.json);
+            if (body == null) {
+                continue;
+            }
+
+            String evt = body.has("evt") && !body.get("evt").isJsonNull()
+                    ? body.get("evt").getAsString()
+                    : null;
+            String cmd = body.has("cmd") && !body.get("cmd").isJsonNull()
+                    ? body.get("cmd").getAsString()
+                    : null;
+
+            if ("ERROR".equals(evt)) {
+                Debug.log("Discord RPC handshake ERROR: " + frame.json);
+                return false;
+            }
+
+            if ("READY".equals(evt) || ("DISPATCH".equals(cmd) && "READY".equals(evt))) {
+                Debug.log("Discord RPC handshake READY received");
+                return true;
+            }
+
+            Debug.log("Discord RPC handshake: waiting for READY, got cmd=" + cmd + " evt=" + evt);
+        }
+
+        Debug.log("Discord RPC handshake: READY not received");
+        return false;
+    }
+
+    private boolean awaitCommandResult(String nonce) throws IOException {
+        for (int i = 0; i < MAX_DRAIN_FRAMES; i++) {
+            Frame frame = readFrame();
+            if (frame == null) {
+                return false;
+            }
+
+            if (frame.opcode == OP_CLOSE) {
+                Debug.log("Discord RPC connection closed by Discord: " + frame.json);
+                return false;
+            }
+
+            if (frame.opcode == OP_PING) {
+                send(OP_PONG, frame.json);
+                continue;
+            }
+
+            if (frame.opcode != OP_FRAME) {
+                continue;
+            }
+
+            JsonObject body = parseJson(frame.json);
+            if (body == null) {
+                continue;
+            }
+
+            String frameNonce = body.has("nonce") && !body.get("nonce").isJsonNull()
+                    ? body.get("nonce").getAsString()
+                    : null;
+            String evt = body.has("evt") && !body.get("evt").isJsonNull()
+                    ? body.get("evt").getAsString()
+                    : null;
+            String cmd = body.has("cmd") && !body.get("cmd").isJsonNull()
+                    ? body.get("cmd").getAsString()
+                    : null;
+
+            if ("DISPATCH".equals(cmd) && frameNonce == null) {
+                continue;
+            }
+
+            if (nonce != null && frameNonce != null && !nonce.equals(frameNonce)) {
+                if ("ERROR".equals(evt)) {
+                    Debug.log("Discord RPC unrelated ERROR frame: " + frame.json);
                 }
+                continue;
+            }
+
+            if ("ERROR".equals(evt)) {
+                Debug.log("Discord RPC command ERROR: " + frame.json);
+                return false;
+            }
+
+            if ("SET_ACTIVITY".equals(cmd) || frameNonce != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String buildSetActivityJson(JsonObject activity) {
+        return buildSetActivityJson(activity, UUID.randomUUID().toString());
+    }
+
+    private String buildSetActivityJson(JsonObject activity, String nonce) {
+        JsonObject root = new JsonObject();
+        root.addProperty("cmd", "SET_ACTIVITY");
+        root.addProperty("nonce", nonce);
+
+        JsonObject args = new JsonObject();
+        args.addProperty("pid", getPid());
+        if (activity == null) {
+            args.add("activity", com.google.gson.JsonNull.INSTANCE);
+        } else {
+            args.add("activity", activity);
+        }
+        root.add("args", args);
+        return root.toString();
+    }
+
+    private void send(int opcode, String json) throws IOException {
+        if (pipe == null) {
+            throw new IOException("pipe is null");
+        }
+        byte[] jsonBytes = json.getBytes("UTF-8");
+        ByteBuffer header = ByteBuffer.allocate(8);
+        header.order(ByteOrder.LITTLE_ENDIAN);
+        header.putInt(opcode);
+        header.putInt(jsonBytes.length);
+
+        Debug.log("Discord RPC send: opcode=" + opcode + ", length=" + jsonBytes.length);
+        pipe.write(header.array());
+        pipe.write(jsonBytes);
+    }
+
+    private Frame readFrame() throws IOException {
+        if (pipe == null) {
+            return null;
+        }
+
+        byte[] headerBytes = new byte[8];
+        try {
+            pipe.readFully(headerBytes);
+        } catch (IOException e) {
+            Debug.log("Discord RPC read header failed: " + e.getMessage());
+            return null;
+        }
+
+        ByteBuffer header = ByteBuffer.wrap(headerBytes).order(ByteOrder.LITTLE_ENDIAN);
+        int opcode = header.getInt();
+        int length = header.getInt();
+
+        if (length < 0 || length > 1_000_000) {
+            Debug.log("Discord RPC invalid frame length: " + length);
+            return null;
+        }
+
+        byte[] body = new byte[length];
+        if (length > 0) {
+            pipe.readFully(body);
+        }
+        String json = new String(body, "UTF-8");
+        Debug.log("Discord RPC recv: opcode=" + opcode + ", length=" + length
+                + (length > 0 ? ", body=" + truncate(json, 300) : ""));
+        return new Frame(opcode, json);
+    }
+
+    private JsonObject parseJson(String json) {
+        try {
+            return jsonParser.parse(json).getAsJsonObject();
+        } catch (Exception e) {
+            Debug.log("Discord RPC: failed to parse JSON: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private void markBroken() {
+        connected = false;
+        closePipeQuietly();
+    }
+
+    private void closePipeQuietly() {
+        if (pipe != null) {
+            try {
+                pipe.close();
             } catch (Exception ignored) {
             }
             pipe = null;
         }
-    }
-
-    private void send(int opcode, String json) throws IOException {
-        byte[] jsonBytes = json.getBytes("UTF-8");
-        ByteBuffer header = ByteBuffer.allocate(8);
-        header.order(java.nio.ByteOrder.LITTLE_ENDIAN);
-        header.putInt(opcode);
-        header.putInt(jsonBytes.length);
-
-        pipe.write(header.array());
-        pipe.write(jsonBytes);
     }
 
     private static int getPid() {
@@ -208,38 +437,23 @@ public class DiscordRPC {
         return 0;
     }
 
-    private static String quote(String s) {
+    private static String truncate(String s, int max) {
         if (s == null) {
-            return "\"\"";
+            return "";
         }
-        StringBuilder sb = new StringBuilder("\"");
-        for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
-            switch (c) {
-                case '"':
-                    sb.append("\\\"");
-                    break;
-                case '\\':
-                    sb.append("\\\\");
-                    break;
-                case '\n':
-                    sb.append("\\n");
-                    break;
-                case '\r':
-                    sb.append("\\r");
-                    break;
-                case '\t':
-                    sb.append("\\t");
-                    break;
-                default:
-                    if (c < 0x20) {
-                        sb.append(String.format("\\u%04x", (int) c));
-                    } else {
-                        sb.append(c);
-                    }
-            }
+        if (s.length() <= max) {
+            return s;
         }
-        sb.append("\"");
-        return sb.toString();
+        return s.substring(0, max) + "...";
+    }
+
+    private static final class Frame {
+        final int opcode;
+        final String json;
+
+        Frame(int opcode, String json) {
+            this.opcode = opcode;
+            this.json = json;
+        }
     }
 }

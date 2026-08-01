@@ -29,7 +29,7 @@ public class DuelsList {
                 pendingChatLine = chatLine;
             }
         } catch (Exception e) {
-            Debug.log("[S] Failed to read chat: " + e.getClass().getSimpleName());
+            Debug.log("Failed to read chat: " + e.getClass().getSimpleName());
         }
     }
 
@@ -68,13 +68,13 @@ public class DuelsList {
                         }
                     }
                 } else {
-                    Debug.log("[S] You are not in Duels: " + gameType);
+                    Debug.log("You are not in Duels: " + gameType);
                 }
             }
 
             @Override
             public void onLocrawTimeout() {
-                Debug.log("[S] Locraw timeout while trying to get game mode");
+                Debug.log("Locraw timeout while trying to get game mode");
             }
         });
     }
@@ -97,7 +97,7 @@ public class DuelsList {
                 }
             }
         } catch (Exception e) {
-            Debug.log("[S] Failed to parse opponents: " + e.getMessage());
+            Debug.log("Failed to parse opponents: " + e.getMessage());
         }
         return opponents;
     }

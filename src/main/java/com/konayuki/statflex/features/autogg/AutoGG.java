@@ -78,7 +78,7 @@ public class AutoGG {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            Debug.log("[S] Failed to load Hypixel triggers.");
+            Debug.log("Failed to load Hypixel triggers.");
         }
     }
 
@@ -95,7 +95,7 @@ public class AutoGG {
         synchronized (triggers) {
             for (Pattern pattern : triggers) {
                 if (pattern.matcher(msg).find()) {
-                    Debug.log("[S] Trigger matched: " + msg);
+                    Debug.log("Trigger matched: " + msg);
                     Settings.load();
                     reloadMessages();
                     synchronized (gg) {
