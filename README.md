@@ -150,7 +150,7 @@ Open the settings GUI with `/s`. The GUI provides tabbed configuration:
 1. Install Minecraft Forge 1.8.9.
 2. Get statflex jar at [Latest statflex release](https://github.com/Konayukiw/statflex/releases/latest).
 3. Place the jar in your `.minecraft/mods/` folder.
-4. Launch Minecraft and run `/s api [Key]` to enable stats viewer.
+4. Launch Minecraft and register API key via `/s api [Key]` to enable stats viewer.
 
 ---
 
