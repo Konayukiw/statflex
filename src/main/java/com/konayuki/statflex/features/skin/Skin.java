@@ -37,7 +37,7 @@ public class Skin {
             Minecraft mc = Minecraft.getMinecraft();
 
             if (useNpcSkin) {
-                if (tryLocalSkinSave(playerName, mc)) {
+                if (saveSkin(playerName, mc)) {
                     return;
                 }
             }
@@ -49,7 +49,7 @@ public class Skin {
             }
 
             UUID uuid = parseUuid(info.uuid);
-            String textureJson = fetchTextureJson(uuid);
+            String textureJson = getTextureJson(uuid);
 
             if (textureJson == null) {
                 Chat.send("§8[§cS§8]§7 Failed to fetch skin data");
@@ -69,7 +69,7 @@ public class Skin {
                     textures.getAsJsonObject("SKIN")
                             .get("url").getAsString();
 
-            downloadAndSaveSkin(skinUrl, playerName, uuid);
+            downloadSkin(skinUrl, playerName, uuid);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -77,54 +77,7 @@ public class Skin {
         }
     }
 
-    private static boolean tryLocalSkinSave(String playerName, Minecraft mc) {
-        try {
-            NetworkPlayerInfo localInfo = null;
-
-            for (NetworkPlayerInfo npi : mc.getNetHandler().getPlayerInfoMap()) {
-                if (npi.getGameProfile().getName().equalsIgnoreCase(playerName)) {
-                    localInfo = npi;
-                    break;
-                }
-            }
-
-            if (localInfo != null) {
-                GameProfile profile = localInfo.getGameProfile();
-                Collection<Property> props = profile.getProperties().get("textures");
-
-                if (props != null && !props.isEmpty()) {
-                    Property texturesProp = props.iterator().next();
-
-                    String decoded = new String(
-                            Base64.getDecoder().decode(texturesProp.getValue()),
-                            StandardCharsets.UTF_8
-                    );
-
-                    JsonObject root =
-                            new JsonParser().parse(decoded).getAsJsonObject();
-                    JsonObject textures = root.getAsJsonObject("textures");
-
-                    if (textures != null && textures.has("SKIN")) {
-                        String skinUrl =
-                                textures.getAsJsonObject("SKIN")
-                                        .get("url").getAsString();
-
-                        UUID uuid = profile.getId();
-                        downloadAndSaveSkin(skinUrl, playerName, uuid);
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    private static String fetchTextureJson(UUID uuid) {
+    private static String getTextureJson(UUID uuid) {
         try {
             String urlStr =
                     "https://sessionserver.mojang.com/session/minecraft/profile/"
@@ -168,11 +121,61 @@ public class Skin {
         }
     }
 
-    private static void downloadAndSaveSkin(String urlStr, String name, UUID uuid) {
+    private static boolean saveSkin(String playerName, Minecraft mc) {
+        try {
+            NetworkPlayerInfo localInfo = null;
+
+            for (NetworkPlayerInfo npi : mc.getNetHandler().getPlayerInfoMap()) {
+                if (npi.getGameProfile().getName().equalsIgnoreCase(playerName)) {
+                    localInfo = npi;
+                    break;
+                }
+            }
+
+            if (localInfo != null) {
+                GameProfile profile = localInfo.getGameProfile();
+                Collection<Property> props = profile.getProperties().get("textures");
+
+                if (props != null && !props.isEmpty()) {
+                    Property texturesProp = props.iterator().next();
+
+                    String decoded = new String(
+                            Base64.getDecoder().decode(texturesProp.getValue()),
+                            StandardCharsets.UTF_8
+                    );
+
+                    JsonObject root =
+                            new JsonParser().parse(decoded).getAsJsonObject();
+                    JsonObject textures = root.getAsJsonObject("textures");
+
+                    if (textures != null && textures.has("SKIN")) {
+                        String skinUrl =
+                                textures.getAsJsonObject("SKIN")
+                                        .get("url").getAsString();
+
+                        UUID uuid = profile.getId();
+                        downloadSkin(skinUrl, playerName, uuid);
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private static void downloadSkin(String urlStr, String name, UUID uuid) {
         try {
             HttpURLConnection conn =
                     (HttpURLConnection) new URL(urlStr).openConnection();
-            conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+            conn.setRequestProperty(
+                    "User-Agent",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                            + "(KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36");
 
             if (Toggles.ignoreCertificates && conn instanceof HttpsURLConnection) {
                 ConnectionUtil.trustAllCertificates((HttpsURLConnection) conn);
@@ -190,7 +193,7 @@ public class Skin {
                     new File(downloadDir, name + "_" + uuid + ".png");
             ImageIO.write(image, "png", out);
 
-            sendClickablePath(out);
+            showPath(out);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -216,7 +219,7 @@ public class Skin {
         return null;
     }
 
-    private static void sendClickablePath(File file) {
+    private static void showPath(File file) {
         Minecraft mc = Minecraft.getMinecraft();
 
         mc.addScheduledTask(() -> {

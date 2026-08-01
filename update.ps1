@@ -20,7 +20,6 @@ function Write-TextFile {
 
 function Increment-Version {
     param([string]$versionStr)
-    # decimal avoids floating-point drift (e.g. 2.29 + 0.01)
     $ver = [decimal]::Parse($versionStr, [System.Globalization.CultureInfo]::InvariantCulture)
     $newVer = $ver + [decimal]"0.01"
     return $newVer.ToString("0.00", [System.Globalization.CultureInfo]::InvariantCulture)
@@ -163,7 +162,6 @@ Write-Host "New version: $newVersion"
 
 [void](Update-AllVersions -Version $newVersion)
 
-# Always load main.md (used for changelog + release notes)
 $mainMdContent = Read-TextFile -Path $mainMdFile
 $changelogLine = ($mainMdContent -split "`r?`n" | Where-Object { $_ -match '^# changelog:' } | Select-Object -First 1)
 $changelog = if ($changelogLine) { Get-ContentBetweenQuotes -line $changelogLine } else { "" }
@@ -181,7 +179,6 @@ try {
         Exit-WithRevert -OldVersion $currentVersion -Reason "Repository is up-to-date!" -Restage
     }
 
-    # Compare with latest commit on origin/main
     $logOutput = git log origin/main -1 --pretty=full 2>&1
     if ($LASTEXITCODE -ne 0) {
         Write-Warning "Could not fetch latest commit. Skipping checking duplicated commit."

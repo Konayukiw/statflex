@@ -1,22 +1,18 @@
 package com.konayuki.statflex.features.skywars;
 
 import com.konayuki.statflex.utils.chat.Chat;
-import com.konayuki.statflex.utils.api.HypixelApiUtil;
-import com.konayuki.statflex.utils.api.Profile;
+import com.konayuki.statflex.utils.api.HypixelApi;
+import com.konayuki.statflex.utils.Debug;
 import com.konayuki.statflex.utils.Toggles;
 import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.utils.Ranks;
 
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -36,6 +32,8 @@ public class SkywarsList {
     private final AtomicBoolean collecting = new AtomicBoolean(false);
     private final AtomicBoolean collectionDone = new AtomicBoolean(false);
     private final AtomicBoolean listDisplayed = new AtomicBoolean(false);
+    private final Set<String> failedNames = ConcurrentHashMap.newKeySet();
+    private final AtomicBoolean apiErrorReported = new AtomicBoolean(false);
 
     private volatile int lastTeamNumber = 0;
     private volatile int ticksSinceLastTeam = 0;
@@ -139,6 +137,8 @@ public class SkywarsList {
         queue.clear();
         fetched.clear();
         fetchStarted.clear();
+        failedNames.clear();
+        apiErrorReported.set(false);
         pendingFetches.set(0);
         collecting.set(false);
         collectionDone.set(false);
@@ -167,9 +167,24 @@ public class SkywarsList {
         pendingFetches.incrementAndGet();
         new Thread(() -> {
             try {
-                PlayerData data = fetchPlayerData(nameKey);
+                HypixelApi.result result = HypixelApi.Fetch(nameKey);
+                if (!result.success) {
+                    if (HypixelApi.INVALID_API.equals(result.errorCode)) {
+                        if (apiErrorReported.compareAndSet(false, true)) {
+                            Chat.send(Messages.INVALID_API);
+                        }
+                    } else {
+                        Debug.log("Failed to fetch " + nameKey + ": " + result.errorCode);
+                        failedNames.add(nameKey);
+                    }
+                    return;
+                }
+
+                PlayerData data = buildPlayerData(result.player, result.properName);
                 if (data != null) {
                     fetched.put(nameKey, data);
+                } else {
+                    failedNames.add(nameKey);
                 }
             } finally {
                 pendingFetches.decrementAndGet();
@@ -211,71 +226,52 @@ public class SkywarsList {
                     + " §7| Wins: " + data.formattedWins
                     + " §7| KDR: " + data.coloredKDR);
         }
+
+        if (!failedNames.isEmpty()) {
+            int total;
+            synchronized (queue) {
+                total = queue.size();
+            }
+            Chat.send(Messages.PREFIX + "§c" + failedNames.size() + "§7/§c" + total
+                    + "§7 failed: §c" + String.join("§7, §c", failedNames));
+        }
     }
 
-    private static PlayerData fetchPlayerData(String name) {
-        try {
-            String apiKey = HypixelApiUtil.getApiKey();
-            Profile.PlayerInfo info = Profile.getPlayerInfo(name);
-            if (info == null) {
-                return null;
-            }
-
-            String uuid = info.uuid;
-            String properName = info.name;
-
-            HttpURLConnection connection = (HttpURLConnection)
-                    new URL("https://api.hypixel.net/player?key=" + apiKey + "&uuid=" + uuid).openConnection();
-            connection.setRequestMethod("GET");
-
-            int status = connection.getResponseCode();
-            InputStreamReader reader = status >= 200 && status < 300
-                    ? new InputStreamReader(connection.getInputStream())
-                    : new InputStreamReader(connection.getErrorStream());
-
-            JsonObject response = new JsonParser().parse(reader).getAsJsonObject();
-            if (!response.get("success").getAsBoolean()) {
-                return null;
-            }
-
-            JsonObject player = response.getAsJsonObject("player");
-            if (player == null || !player.has("stats") || !player.get("stats").isJsonObject()) {
-                return null;
-            }
-
-            JsonObject statsRoot = player.getAsJsonObject("stats");
-            if (!statsRoot.has("SkyWars") || !statsRoot.get("SkyWars").isJsonObject()) {
-                return null;
-            }
-
-            JsonObject stats = statsRoot.getAsJsonObject("SkyWars");
-
-            String rawFormatted = stats.has("levelFormattedWithBrackets")
-                    ? stats.get("levelFormattedWithBrackets").getAsString()
-                    : "§7[N/A]";
-            String levelFormatted = Skywars.sanitizeFormattedLevel(rawFormatted);
-
-            int wins = stats.has("wins") ? stats.get("wins").getAsInt() : 0;
-            int kills = stats.has("kills") ? stats.get("kills").getAsInt() : 0;
-            int deaths = stats.has("deaths") ? stats.get("deaths").getAsInt() : 1;
-            double kdr = deaths == 0 ? kills : (double) kills / deaths;
-
-            String coloredPlayerName = Ranks.getColoredPlayerName(player, properName);
-            String formattedWins = Skywars.getFormattedWins(wins);
-            String coloredKDR = Skywars.getColoredKDR(kdr);
-            double score = parseLevelNumber(rawFormatted) * kdr;
-
-            return new PlayerData(
-                    levelFormatted,
-                    coloredPlayerName,
-                    formattedWins,
-                    coloredKDR,
-                    score,
-                    properName
-            );
-        } catch (Exception e) {
+    private static PlayerData buildPlayerData(JsonObject player, String properName) {
+        if (!player.has("stats") || !player.get("stats").isJsonObject()) {
             return null;
         }
+
+        JsonObject statsRoot = player.getAsJsonObject("stats");
+        if (!statsRoot.has("SkyWars") || !statsRoot.get("SkyWars").isJsonObject()) {
+            return null;
+        }
+
+        JsonObject stats = statsRoot.getAsJsonObject("SkyWars");
+
+        String rawFormatted = stats.has("levelFormattedWithBrackets")
+                ? stats.get("levelFormattedWithBrackets").getAsString()
+                : "§7[N/A]";
+        String levelFormatted = Skywars.sanitizeFormattedLevel(rawFormatted);
+
+        int wins = stats.has("wins") ? stats.get("wins").getAsInt() : 0;
+        int kills = stats.has("kills") ? stats.get("kills").getAsInt() : 0;
+        int deaths = stats.has("deaths") ? stats.get("deaths").getAsInt() : 1;
+        double kdr = deaths == 0 ? kills : (double) kills / deaths;
+
+        String coloredPlayerName = Ranks.getColoredPlayerName(player, properName);
+        String formattedWins = Skywars.getFormattedWins(wins);
+        String coloredKDR = Skywars.getColoredKDR(kdr);
+        double score = parseLevelNumber(rawFormatted) * kdr;
+
+        return new PlayerData(
+                levelFormatted,
+                coloredPlayerName,
+                formattedWins,
+                coloredKDR,
+                score,
+                properName
+        );
     }
 
     private void extractPlayerNames(String text, List<String> targetList) {

@@ -14,7 +14,7 @@ if "%1"=="release" (
 
 if %ERRORLEVEL% NEQ 0 (
     echo.
-    echo Script failed with error code %ERRORLEVEL%.
+    echo Script failed with error: %ERRORLEVEL%.
     pause
 )
 exit /b %ERRORLEVEL%

@@ -2,6 +2,7 @@ package com.konayuki.statflex.features.denick;
 
 import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.Debug;
+import com.konayuki.statflex.utils.chat.Warn;
 import com.konayuki.statflex.utils.Ranks;
 import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.utils.Toggles;
@@ -109,8 +110,6 @@ public class Denick {
             return;
         }
 
-        Debug.log(displayNameText + ", UUID=" + profile.getId() + ", UUID version" + profile.getId().version() + " confirmed not to be an NPC");
-
         for (Property prop : profile.getProperties().get("textures")) {
             try {
                 String value = prop.getValue();
@@ -135,7 +134,6 @@ public class Denick {
 
                 if (nicks.contains(hash)) {
                     Chat.send("§8[§cS§8]§7 Found a nicked player:§c " + displayName);
-                    new Thread(() -> BedwarsList.warnNickedPlayer(displayName)).start();
                     return;
                 }
 
@@ -146,7 +144,7 @@ public class Denick {
                 if (!profileName.contains(displayName)) {
                     Chat.send("§8[§cS§8]§c " + profileName + " §7is nicked as §c" + displayName + "§7!");
 
-                    Locraw.getInstance().requestLocraw(new Locraw.LocrawCallback() {
+                    Locraw.getInstance().sendLocraw(new Locraw.LocrawCallback() {
                         @Override
                         public void onLocrawReceived(String gameType, String mode) {
                             processStats(profileName, gameType, mode);
@@ -154,8 +152,7 @@ public class Denick {
 
                         @Override
                         public void onLocrawTimeout() {
-                            Debug.log("Locraw timeout for nicked player stats");
-                            new Thread(() -> BedwarsList.warnNickedPlayer(
+                            new Thread(() -> Warn.sendWarning(
                                     profileName + " (nicked as " + displayName + ")")).start();
                         }
                     });
@@ -180,17 +177,14 @@ public class Denick {
                 BedwarsList.listBedwarsStats(Arrays.asList(profileName), true);
                 break;
             case "DUELS":
-                String detectedMode = Duels.detectModeFromLocraw(processMode);
+                String detectedMode = Duels.detectMode(processMode);
                 Duels.fetchStats(profileName, detectedMode, true);
-                BedwarsList.fetchAndWarn(profileName);
                 break;
             case "SKYWARS":
                 Skywars.fetchStats(profileName, null);
-                BedwarsList.fetchAndWarn(profileName);
                 break;
             default:
                 Chat.send(Messages.UNKNOWN_GAMEMODE);
-                BedwarsList.fetchAndWarn(profileName);
         }
     }
 

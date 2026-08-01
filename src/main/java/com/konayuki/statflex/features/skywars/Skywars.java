@@ -2,17 +2,11 @@ package com.konayuki.statflex.features.skywars;
 
 import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.Ranks;
-import com.konayuki.statflex.utils.api.HypixelApiUtil;
+import com.konayuki.statflex.utils.api.HypixelApi;
 import com.konayuki.statflex.utils.Messages;
-import com.konayuki.statflex.utils.api.Profile;
 
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 
 public class Skywars {
@@ -20,42 +14,14 @@ public class Skywars {
     public static void fetchStats(String playerName, String mode) {
         new Thread(() -> {
             try {
-                String apiKey = HypixelApiUtil.getApiKey();
-                if (apiKey.equals("N/A")) {
-                    Chat.send(Messages.INVALID_API);
+                HypixelApi.result result = HypixelApi.Fetch(playerName);
+                if (!result.success) {
+                    HypixelApi.sendError(result);
                     return;
                 }
 
-                Profile.PlayerInfo info = Profile.getPlayerInfo(playerName);
-                if (info == null) {
-                    Chat.send(Messages.PLAYER_NOT_FOUND);
-                    return;
-                }
-
-                String uuid = info.uuid;
-                String properName = info.name;
-
-                String urlStr = "https://api.hypixel.net/player?key=" + apiKey + "&uuid=" + uuid;
-                HttpURLConnection connection = (HttpURLConnection) new URL(urlStr).openConnection();
-                connection.setRequestMethod("GET");
-
-                JsonObject response = new JsonParser()
-                        .parse(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))
-                        .getAsJsonObject();
-
-                if (!response.has("success") || !response.get("success").getAsBoolean()) {
-                    String cause = response.has("cause") && !response.get("cause").isJsonNull()
-                            ? response.get("cause").getAsString()
-                            : "Unknown error";
-                    Chat.send(Messages.FETCH_ERROR + cause);
-                    return;
-                }
-
-                JsonObject player = response.getAsJsonObject("player");
-                if (player == null || player.isJsonNull()) {
-                    Chat.send(Messages.PLAYER_NOT_FOUND);
-                    return;
-                }
+                JsonObject player = result.player;
+                String properName = result.properName;
 
                 JsonObject statsRoot = player.has("stats") && player.get("stats").isJsonObject()
                         ? player.getAsJsonObject("stats")
@@ -70,8 +36,6 @@ public class Skywars {
                 String rawFormatted = stats.has("levelFormattedWithBrackets")
                         ? stats.get("levelFormattedWithBrackets").getAsString()
                         : "§7[N/A]";
-
-                String levelFormatted = sanitizeFormattedLevel(rawFormatted);
 
                 String modeKey = getModeKey(mode);
                 String coloredPlayerName = Ranks.getColoredPlayerName(player, properName);
@@ -95,11 +59,11 @@ public class Skywars {
 
                     Chat.send(String.format(Messages.SKYWARS_STATS + "§7[§e%s§7]", displayMode));
                     Chat.send(String.format("§c || %s %s §7| Wins: %s §7| KDR: %s",
-                            levelFormatted, coloredPlayerName, formattedWins, formattedKDR));
+                            rawFormatted, coloredPlayerName, formattedWins, formattedKDR));
                 } else {
                     Chat.send(String.format(Messages.SKYWARS_STATS));
                     Chat.send(String.format("§c || %s %s §7| Wins: %s §7| KDR: %s",
-                            levelFormatted, coloredPlayerName, formattedWins, formattedKDR));
+                            rawFormatted, coloredPlayerName, formattedWins, formattedKDR));
                 }
 
             } catch (Exception e) {

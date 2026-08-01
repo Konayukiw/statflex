@@ -1,8 +1,6 @@
 package com.konayuki.statflex.features.duels;
 
-import com.konayuki.statflex.utils.Debug;
 import com.konayuki.statflex.utils.chat.Locraw;
-import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.utils.Toggles;
 
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
@@ -29,7 +27,6 @@ public class DuelsList {
                 pendingChatLine = chatLine;
             }
         } catch (Exception e) {
-            Debug.log("Failed to read chat: " + e.getClass().getSimpleName());
         }
     }
 
@@ -55,26 +52,23 @@ public class DuelsList {
             return;
         }
 
-        Locraw.getInstance().requestLocraw(new Locraw.LocrawCallback() {
+        Locraw.getInstance().sendLocraw(new Locraw.LocrawCallback() {
             @Override
             public void onLocrawReceived(String gameType, String mode) {
                 if ("DUELS".equals(gameType)) {
-                    String detectedMode = Duels.detectModeFromLocraw(mode);
+                    String detectedMode = Duels.detectMode(mode);
                     for (String playerName : opponents) {
                         try {
                             Duels.fetchStats(playerName, detectedMode, true);
                         } catch (Exception e) {
-                            Debug.log(Messages.FETCH_ERROR + playerName + ": " + e.getMessage());
                         }
                     }
                 } else {
-                    Debug.log("You are not in Duels: " + gameType);
                 }
             }
 
             @Override
             public void onLocrawTimeout() {
-                Debug.log("Locraw timeout while trying to get game mode");
             }
         });
     }
@@ -97,7 +91,6 @@ public class DuelsList {
                 }
             }
         } catch (Exception e) {
-            Debug.log("Failed to parse opponents: " + e.getMessage());
         }
         return opponents;
     }

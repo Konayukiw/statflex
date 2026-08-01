@@ -78,7 +78,6 @@ public class AutoGG {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            Debug.log("Failed to load Hypixel triggers.");
         }
     }
 

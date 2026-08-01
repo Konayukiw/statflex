@@ -12,13 +12,13 @@ public final class ConnectionUtil {
     private ConnectionUtil() {
     }
 
-    public static void applyIfIgnoringCertificates(HttpURLConnection connection) throws Exception {
-        if (Toggles.ignoreCertificates && connection instanceof HttpsURLConnection) {
-            trustAllCertificates((HttpsURLConnection) connection);
+    public static void applyIfIgnoringCertificates(HttpURLConnection conn) throws Exception {
+        if (Toggles.ignoreCertificates && conn instanceof HttpsURLConnection) {
+            trustAllCertificates((HttpsURLConnection) conn);
         }
     }
 
-    public static void trustAllCertificates(HttpsURLConnection connection) throws Exception {
+    public static void trustAllCertificates(HttpsURLConnection conn) throws Exception {
         TrustManager[] trustAllCerts = new TrustManager[] {
                 new X509TrustManager() {
                     public void checkClientTrusted(X509Certificate[] chain, String authType) {
@@ -35,7 +35,7 @@ public final class ConnectionUtil {
 
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(null, trustAllCerts, new SecureRandom());
-        connection.setSSLSocketFactory(sslContext.getSocketFactory());
-        connection.setHostnameVerifier((hostname, session) -> true);
+        conn.setSSLSocketFactory(sslContext.getSocketFactory());
+        conn.setHostnameVerifier((hostname, session) -> true);
     }
 }

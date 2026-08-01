@@ -70,30 +70,24 @@ public final class GuiColors {
     public static int PRIMARY_BLUE_BRIGHT = DEFAULT_PRIMARY_BLUE_BRIGHT;
     public static int PRIMARY_BLUE_DARK = DEFAULT_PRIMARY_BLUE_DARK;
     public static int LIGHT_BLUE = DEFAULT_LIGHT_BLUE;
-
     public static int SCREEN_BACKGROUND = DEFAULT_SCREEN_BACKGROUND;
     public static int COMPONENT_BACKGROUND = DEFAULT_COMPONENT_BACKGROUND;
     public static int COMPONENT_BACKGROUND_HOVER = DEFAULT_COMPONENT_BACKGROUND_HOVER;
     public static int COMPONENT_BACKGROUND_DISABLED = DEFAULT_COMPONENT_BACKGROUND_DISABLED;
-
     public static int COMPONENT_BORDER = DEFAULT_COMPONENT_BORDER;
     public static int COMPONENT_BORDER_BLUE = DEFAULT_COMPONENT_BORDER_BLUE;
     public static int COMPONENT_BORDER_FOCUSED_BLUE = DEFAULT_COMPONENT_BORDER_FOCUSED_BLUE;
-
     public static int TEXT_PRIMARY = DEFAULT_TEXT_PRIMARY;
     public static int TEXT_SECONDARY = DEFAULT_TEXT_SECONDARY;
     public static int TEXT_ACCENT = DEFAULT_TEXT_ACCENT;
     public static int TEXT_DISABLED = DEFAULT_TEXT_DISABLED;
     public static int TEXT_ON_BLUE_BACKGROUND = DEFAULT_TEXT_ON_BLUE_BACKGROUND;
-
     public static int TRANSPARENT_BLACK_VERY_LIGHT = new Color(0, 0, 0, 20).getRGB();
     public static int TRANSPARENT_BLACK_LIGHT = new Color(0, 0, 0, 45).getRGB();
     public static int TRANSPARENT_BLACK_MEDIUM = new Color(0, 0, 0, 75).getRGB();
-
     public static int TRANSPARENT_TEXT_PRIMARY_VERY_LIGHT;
     public static int TRANSPARENT_TEXT_PRIMARY_LIGHT;
     public static int TRANSPARENT_BLUE_VERY_LIGHT_HIGHLIGHT;
-
     public static int TAB_BAR_BACKGROUND = new Color(20, 20, 22).getRGB();
     public static int TAB_BUTTON_BACKGROUND_INACTIVE;
     public static int TAB_BUTTON_BACKGROUND_HOVER;
@@ -105,38 +99,31 @@ public final class GuiColors {
     public static int TAB_SCROLL_BUTTON_BG = new Color(35, 35, 40).getRGB();
     public static int TAB_SCROLL_BUTTON_HOVER_BG = new Color(45, 45, 50).getRGB();
     public static int TAB_SCROLL_BUTTON_ARROW;
-
     public static int CATEGORY_TITLE_TEXT;
     public static int CATEGORY_TITLE_BACKGROUND;
     public static int CATEGORY_TITLE_BORDER;
     public static int CATEGORY_SEPARATOR_LINE;
-
     public static int SCROLLBAR_BG = new Color(20, 20, 22).getRGB();
     public static int SCROLLBAR_THUMB;
     public static int MODERN_SCROLLBAR_THUMB_HOVER;
-
     public static int CHECKBOX_BOX;
     public static int CHECKBOX_BOX_HOVER;
     public static int CHECKBOX_CHECK;
-
     public static int DROPDOWN_ARROW;
     public static int DROPDOWN_BACKGROUND_OPEN = new Color(20, 20, 22, 250).getRGB();
     public static int DROPDOWN_ITEM_TEXT;
     public static int DROPDOWN_ITEM_HOVER_BG;
     public static int DROPDOWN_ITEM_SELECTED_BG;
-
     public static int SLIDER_TRACK = new Color(35, 35, 40).getRGB();
     public static int SLIDER_TRACK_FILLED;
     public static int SLIDER_KNOB_BLUE_THEME;
     public static int SLIDER_KNOB_HOVER_BLUE_THEME;
     public static int SLIDER_KNOB;
     public static int SLIDER_KNOB_HOVER;
-
     public static int TEXTFIELD_BACKGROUND = new Color(20, 20, 22).getRGB();
     public static int TEXTFIELD_BORDER;
     public static int TEXTFIELD_BORDER_FOCUSED;
     public static int TEXTFIELD_TEXT;
-
     public static int MODERN_PRIMARY_BACKGROUND;
     public static int MODERN_SECONDARY_BACKGROUND;
     public static int MODERN_ACCENT_PRIMARY;
@@ -146,15 +133,12 @@ public final class GuiColors {
     public static int MODERN_COMPONENT_HOVER;
     public static int MODERN_COMPONENT_ACTIVE;
     public static int MODERN_COMPONENT_DISABLED_BG;
-
     public static int BUTTON_MODERN_BACKGROUND;
     public static int BUTTON_MODERN_BACKGROUND_HOVER;
     public static int BUTTON_MODERN_TEXT;
-
     public static int TITLE_BAR_BACKGROUND = new Color(18, 18, 20).getRGB();
     public static int TITLE_BAR_TEXT;
     public static int TITLE_BAR_SEPARATOR;
-
     public static int PRIMARY_BLUE_BRIGHT_GLOW_EFFECT;
     public static int SUBTLE_SHADOW_COLOR;
 

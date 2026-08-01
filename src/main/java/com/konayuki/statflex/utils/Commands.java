@@ -132,6 +132,7 @@ public class Commands implements ICommand {
                 break;
 
             case "sw":
+            case "sky":
             case "skywars":
                 if (args.length < 2) {
                     Chat.send(Messages.USAGE);
@@ -173,7 +174,7 @@ public class Commands implements ICommand {
                 if (args.length >= 2) {
                     if (args[0].equalsIgnoreCase("nh") || args[0].equalsIgnoreCase("namehistory")) {
                         String targetName = args[1];
-                        NameHistory.fetchNameHistory(targetName);
+                        NameHistory.getNameHistory(targetName);
                         return;
                     }
                 }
@@ -203,6 +204,7 @@ public class Commands implements ICommand {
                 break;
 
             case "secure":
+            case "secureconnection":
                 Toggles.toggleIgnoreCertificates(false);
                 break;
 

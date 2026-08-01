@@ -1,19 +1,12 @@
 package com.konayuki.statflex.features.duels;
 
 import com.konayuki.statflex.utils.chat.Chat;
-import com.konayuki.statflex.utils.api.HypixelApiUtil;
-import com.konayuki.statflex.utils.api.Profile;
-import com.konayuki.statflex.utils.Debug;
+import com.konayuki.statflex.utils.api.HypixelApi;
 import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.utils.Ranks;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.text.DecimalFormat;
 
 public class Duels {
@@ -25,57 +18,14 @@ public class Duels {
     public static void fetchStats(String inputName, String mode, boolean auto) {
         new Thread(() -> {
             try {
-                String apiKey = HypixelApiUtil.getApiKey();
-                if (apiKey.equals("N/A")) {
-                    Chat.send(Messages.INVALID_API);
+                HypixelApi.result result = HypixelApi.Fetch(inputName);
+                if (!result.success) {
+                    HypixelApi.sendError(result);
                     return;
                 }
 
-                Profile.PlayerInfo info = Profile.getPlayerInfo(inputName);
-                if (info == null) {
-                    Debug.log(Messages.FETCH_ERROR + inputName);
-                    return;
-                }
-
-                String uuid = info.uuid;
-                String properName = info.name;
-
-                String urlStr = "https://api.hypixel.net/player?key=" + apiKey + "&uuid=" + uuid;
-                HttpURLConnection connection = (HttpURLConnection) new URL(urlStr).openConnection();
-                connection.setRequestMethod("GET");
-
-                int status = connection.getResponseCode();
-                InputStreamReader reader;
-                if (status >= 200 && status < 300) {
-                    reader = new InputStreamReader(connection.getInputStream());
-                } else {
-                    reader = new InputStreamReader(connection.getErrorStream());
-                }
-                JsonParser parser = new JsonParser();
-                JsonObject response = parser.parse(reader).getAsJsonObject();
-
-                if (!response.has("success") || !response.get("success").getAsBoolean()) {
-                    String cause = response.has("cause") && !response.get("cause").isJsonNull()
-                            ? response.get("cause").getAsString()
-                            : "Unknown error";
-
-                    String lower = cause.toLowerCase();
-
-                    if (lower.contains("invalid") || lower.contains("api key")) {
-                        Chat.send(Messages.INVALID_API);
-                    } else {
-                        Chat.send(Messages.FETCH_ERROR + cause);
-                    }
-                    return;
-                }
-
-                JsonElement playerElement = response.get("player");
-                if (playerElement == null || playerElement.isJsonNull()) {
-                    Debug.log(Messages.FETCH_ERROR + inputName);
-                    return;
-                }
-
-                JsonObject player = playerElement.getAsJsonObject();
+                JsonObject player = result.player;
+                String properName = result.properName;
                 JsonObject stats = player.has("stats") && player.getAsJsonObject("stats").has("Duels")
                         ? player.getAsJsonObject("stats").getAsJsonObject("Duels")
                         : new JsonObject();
@@ -129,7 +79,7 @@ public class Duels {
         }).start();
     }
 
-    public static String detectModeFromLocraw(String mode) {
+    public static String detectMode(String mode) {
         if (mode == null) {
             return null;
         }

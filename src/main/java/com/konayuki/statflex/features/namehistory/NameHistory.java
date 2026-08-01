@@ -18,7 +18,7 @@ import java.time.format.DateTimeFormatter;
 
 public class NameHistory {
 
-    public static void fetchNameHistory(String inputName) {
+    public static void getNameHistory(String inputName) {
         new Thread(() -> {
             try {
                 Profile.PlayerInfo info = Profile.getPlayerInfo(inputName);
@@ -30,20 +30,20 @@ public class NameHistory {
                 String properName = info.name;
 
                 String urlStr = "https://api.crafty.gg/api/v2/players/" + inputName;
-                HttpURLConnection connection = (HttpURLConnection) new URL(urlStr).openConnection();
-                connection.setRequestMethod("GET");
-                connection.setRequestProperty(
+                HttpURLConnection conn = (HttpURLConnection) new URL(urlStr).openConnection();
+                conn.setRequestMethod("GET");
+                conn.setRequestProperty(
                         "User-Agent",
                         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
                                 "(KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36");
 
-                // connection.setRequestProperty("Accept", "application/json, text/plain, */*");
-                // connection.setRequestProperty("Accept-Language", "en-US,en;q=0.9");
-                // connection.setRequestProperty("Referer", "https://crafty.gg/");
+                // conn.setRequestProperty("Accept", "application/json, text/plain, */*");
+                // conn.setRequestProperty("Accept-Language", "en-US,en;q=0.9");
+                // conn.setRequestProperty("Referer", "https://crafty.gg/");
 
-                ConnectionUtil.applyIfIgnoringCertificates(connection);
+                ConnectionUtil.applyIfIgnoringCertificates(conn);
 
-                InputStreamReader reader = new InputStreamReader(connection.getInputStream());
+                InputStreamReader reader = new InputStreamReader(conn.getInputStream());
                 JsonParser parser = new JsonParser();
                 JsonObject response = parser.parse(reader).getAsJsonObject();
 

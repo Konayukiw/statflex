@@ -96,7 +96,6 @@ public class DiscordRPC {
                 || forceRefreshCounter >= FORCE_REFRESH_TICKS;
 
         if (needUpdate) {
-            Debug.log("Discord RPC updating presence: player=" + playerName + ", server=" + serverIP);
             if (updatePresence(playerName, serverIP)) {
                 lastPlayerName = playerName;
                 lastServerIP = serverIP;
@@ -112,12 +111,10 @@ public class DiscordRPC {
 
         String appId = Settings.getInstance().discordRpcApplicationId;
         if (appId == null || appId.isEmpty()) {
-            Debug.log("Discord RPC: no Application ID configured");
             return;
         }
         appId = appId.trim();
         if (!appId.matches("\\d{17,20}")) {
-            Debug.log("Discord RPC: Application ID looks invalid (expected 17-20 digit snowflake): " + appId);
             return;
         }
 
@@ -126,17 +123,13 @@ public class DiscordRPC {
                 pipe = new RandomAccessFile(pipeName, "rw");
                 if (performHandshake(appId)) {
                     connected = true;
-                    Debug.log("Discord RPC connected via " + pipeName);
                     return;
                 }
                 closePipeQuietly();
             } catch (Exception e) {
                 closePipeQuietly();
-                Debug.log("Discord RPC: failed on " + pipeName + ": " + e.getMessage());
             }
         }
-
-        Debug.log("Discord RPC: could not connect to any pipe");
     }
 
     public void disconnect() {
@@ -157,21 +150,17 @@ public class DiscordRPC {
             lastPlayerName = "";
             sessionStartSeconds = 0;
             forceRefreshCounter = 0;
-            Debug.log("Discord RPC disconnected.");
         }
     }
 
     public boolean updatePresence(String playerName, String serverIP) {
         if (!Toggles.discordRpc) {
-            Debug.log("Discord RPC: updatePresence skipped, RPC disabled");
             return false;
         }
 
         if (!connected) {
-            Debug.log("Discord RPC: not connected, attempting auto-connect");
             connect();
             if (!connected) {
-                Debug.log("Discord RPC: auto-connect failed, cannot update presence");
                 return false;
             }
         }
@@ -205,14 +194,11 @@ public class DiscordRPC {
         try {
             send(OP_FRAME, payload);
             if (!awaitCommandResult(nonce)) {
-                Debug.log("Discord RPC: SET_ACTIVITY was rejected or lost");
                 markBroken();
                 return false;
             }
-            Debug.log("Discord RPC presence updated: " + playerName + " @ " + serverIP);
             return true;
         } catch (IOException e) {
-            Debug.log("Discord RPC failed to send: " + e.getMessage());
             markBroken();
             return false;
         }
@@ -227,12 +213,10 @@ public class DiscordRPC {
         for (int i = 0; i < MAX_DRAIN_FRAMES; i++) {
             Frame frame = readFrame();
             if (frame == null) {
-                Debug.log("Discord RPC handshake: no response from Discord");
                 return false;
             }
 
             if (frame.opcode == OP_CLOSE) {
-                Debug.log("Discord RPC handshake closed: " + frame.json);
                 return false;
             }
 
@@ -242,7 +226,6 @@ public class DiscordRPC {
             }
 
             if (frame.opcode != OP_FRAME) {
-                Debug.log("Discord RPC handshake: unexpected opcode " + frame.opcode);
                 continue;
             }
 
@@ -259,19 +242,13 @@ public class DiscordRPC {
                     : null;
 
             if ("ERROR".equals(evt)) {
-                Debug.log("Discord RPC handshake ERROR: " + frame.json);
                 return false;
             }
 
             if ("READY".equals(evt) || ("DISPATCH".equals(cmd) && "READY".equals(evt))) {
-                Debug.log("Discord RPC handshake READY received");
                 return true;
             }
-
-            Debug.log("Discord RPC handshake: waiting for READY, got cmd=" + cmd + " evt=" + evt);
         }
-
-        Debug.log("Discord RPC handshake: READY not received");
         return false;
     }
 
@@ -283,7 +260,6 @@ public class DiscordRPC {
             }
 
             if (frame.opcode == OP_CLOSE) {
-                Debug.log("Discord RPC connection closed by Discord: " + frame.json);
                 return false;
             }
 
@@ -317,13 +293,11 @@ public class DiscordRPC {
 
             if (nonce != null && frameNonce != null && !nonce.equals(frameNonce)) {
                 if ("ERROR".equals(evt)) {
-                    Debug.log("Discord RPC unrelated ERROR frame: " + frame.json);
                 }
                 continue;
             }
 
             if ("ERROR".equals(evt)) {
-                Debug.log("Discord RPC command ERROR: " + frame.json);
                 return false;
             }
 
@@ -364,7 +338,6 @@ public class DiscordRPC {
         header.putInt(opcode);
         header.putInt(jsonBytes.length);
 
-        Debug.log("Discord RPC send: opcode=" + opcode + ", length=" + jsonBytes.length);
         pipe.write(header.array());
         pipe.write(jsonBytes);
     }
@@ -378,7 +351,6 @@ public class DiscordRPC {
         try {
             pipe.readFully(headerBytes);
         } catch (IOException e) {
-            Debug.log("Discord RPC read header failed: " + e.getMessage());
             return null;
         }
 
@@ -387,7 +359,6 @@ public class DiscordRPC {
         int length = header.getInt();
 
         if (length < 0 || length > 1_000_000) {
-            Debug.log("Discord RPC invalid frame length: " + length);
             return null;
         }
 
@@ -396,8 +367,6 @@ public class DiscordRPC {
             pipe.readFully(body);
         }
         String json = new String(body, "UTF-8");
-        Debug.log("Discord RPC recv: opcode=" + opcode + ", length=" + length
-                + (length > 0 ? ", body=" + truncate(json, 300) : ""));
         return new Frame(opcode, json);
     }
 
@@ -405,7 +374,6 @@ public class DiscordRPC {
         try {
             return jsonParser.parse(json).getAsJsonObject();
         } catch (Exception e) {
-            Debug.log("Discord RPC: failed to parse JSON: " + e.getMessage());
             return null;
         }
     }

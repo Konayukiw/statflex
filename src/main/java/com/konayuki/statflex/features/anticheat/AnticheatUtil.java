@@ -31,10 +31,8 @@ public final class AnticheatUtil {
     public int sneakTicks;
     public int noSlowTicks;
     public int aboveVoidTicks;
-
     public int speedHistoryIndex;
     public int speedHistoryFilled;
-
     public double speed;
     public double posX, posY, posZ;
     public double serverPosX = Double.NaN;

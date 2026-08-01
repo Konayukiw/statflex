@@ -2,7 +2,6 @@ package com.konayuki.statflex.utils.chat;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.konayuki.statflex.utils.Debug;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -42,7 +41,6 @@ public class Locraw {
                     pendingCallback.onLocrawTimeout();
                     pendingCallback = null;
                 }
-                Debug.log("Locraw timeout");
             }
         }
     }
@@ -56,7 +54,6 @@ public class Locraw {
                     JsonObject json = new JsonParser().parse(message).getAsJsonObject();
                     gameType = json.has("gametype") ? json.get("gametype").getAsString() : null;
                     mode = json.has("mode") ? json.get("mode").getAsString() : null;
-                    Debug.log("Game=" + gameType + ", Mode=" + mode);
                     event.setCanceled(true);
                     awaitingLocraw = false;
                     locrawTimeout = 0;
@@ -66,7 +63,6 @@ public class Locraw {
                         pendingCallback = null;
                     }
                 } catch (Exception e) {
-                    Debug.log("Failed to parse locraw response: " + e.getMessage());
                     awaitingLocraw = false;
                     locrawTimeout = 0;
                     if (pendingCallback != null) {
@@ -78,7 +74,7 @@ public class Locraw {
         }
     }
 
-    public void requestLocraw(LocrawCallback callback) {
+    public void sendLocraw(LocrawCallback callback) {
         if (awaitingLocraw) {
             return;
         }
@@ -98,9 +94,7 @@ public class Locraw {
     public String getCurrentGameType() {
         return gameType;
     }
-
     public String getCurrentMode() {
         return mode;
     }
 }
-

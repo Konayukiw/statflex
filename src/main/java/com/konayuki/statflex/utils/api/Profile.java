@@ -16,16 +16,16 @@ public final class Profile {
     public static PlayerInfo getPlayerInfo(String name) {
         try {
             URL url = new URL("https://crafthead.net/profile/" + name);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            ConnectionUtil.applyIfIgnoringCertificates(connection);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            ConnectionUtil.applyIfIgnoringCertificates(conn);
 
-            connection.setRequestMethod("GET");
-            connection.setRequestProperty(
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty(
                     "User-Agent",
                     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                             + "(KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36");
 
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
                 StringBuilder response = new StringBuilder();
                 String line;
                 while ((line = reader.readLine()) != null) {
