@@ -113,14 +113,13 @@ public class GuiFonts extends FontRenderer {
         return drawString(text, (float) x, (float) y, color, false);
     }
 
-    // MC 1.8.9 FontRenderer uses float x/y for the shadow overload
     @Override
     public int drawString(String text, float x, float y, int color, boolean dropShadow) {
         if (text == null) {
             text = "";
         }
         if (dropShadow) {
-            renderText(text, x + 1f, y + 1f, color & 0x3F3F3F);
+            renderText(text, x + 1f, y + 1f, (color & 0x3F3F3F) | 0xFF000000);
         }
         return renderText(text, x, y, color);
     }
@@ -204,8 +203,10 @@ public class GuiFonts extends FontRenderer {
         GlStateManager.disableAlpha();
         GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
         GlStateManager.enableTexture2D();
+        GlStateManager.disableCull();
 
-        Color awtColor = new Color(color, true);
+        int alpha = (color >>> 24) == 0 ? 0xFF : (color >>> 24);
+        Color awtColor = new Color((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, alpha);
         GlStateManager.color(
                 awtColor.getRed() / 255.0f,
                 awtColor.getGreen() / 255.0f,
@@ -252,6 +253,7 @@ public class GuiFonts extends FontRenderer {
         }
 
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+        GlStateManager.enableCull();
         GlStateManager.enableAlpha();
         GlStateManager.disableBlend();
         GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
