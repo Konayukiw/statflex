@@ -1,19 +1,19 @@
 package com.konayuki.statflex.gui.elements;
 
 import com.konayuki.statflex.gui.GuiColors;
-import net.minecraft.client.Minecraft;
+import com.konayuki.statflex.gui.GuiFonts;
 
 public class Label extends GuiComponentBase {
 
     private int color;
 
     public Label(int id, int x, int y, int width, String text) {
-        super(id, x, y, width, Minecraft.getMinecraft().fontRendererObj.FONT_HEIGHT, text);
+        super(id, x, y, width, GuiFonts.getInstance().FONT_HEIGHT, text);
         this.color = GuiColors.TEXT_SECONDARY;
     }
 
     public Label(int id, int x, int y, int width, String text, int color) {
-        super(id, x, y, width, Minecraft.getMinecraft().fontRendererObj.FONT_HEIGHT, text);
+        super(id, x, y, width, GuiFonts.getInstance().FONT_HEIGHT, text);
         this.color = color;
     }
 

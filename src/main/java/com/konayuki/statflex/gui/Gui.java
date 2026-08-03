@@ -16,6 +16,7 @@ import com.konayuki.statflex.utils.api.HypixelApiUtil;
 import com.konayuki.statflex.utils.Settings;
 import com.konayuki.statflex.utils.Toggles;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
@@ -34,6 +35,8 @@ public class Gui extends GuiScreen {
 
     private final String initialTabId;
 
+    private final FontRenderer guiFont = GuiFonts.getInstance();
+
     public Gui() {
         this(null);
     }
@@ -47,8 +50,8 @@ public class Gui extends GuiScreen {
     private int panelWidth;
     private int panelHeight;
     private final float panelCornerRadius = 8f;
-    private final int topBarHeight = 35;
-    private final int tabBarButtonHeight = 28;
+    private final int topBarHeight = 38;
+    private final int tabBarButtonHeight = 30;
     private final int panelPadding = 15;
     private final int closeButtonSize = 18;
     private boolean isCloseButtonHovered;
@@ -130,7 +133,7 @@ public class Gui extends GuiScreen {
         panelX = (this.width - panelWidth) / 2;
         panelY = (this.height - panelHeight) / 2;
 
-        this.labelHeightAboveComponent = mc.fontRendererObj.FONT_HEIGHT + 3;
+        this.labelHeightAboveComponent = guiFont.FONT_HEIGHT + 3;
         nextComponentId = 1;
         Keyboard.enableRepeatEvents(true);
         openDropdown = null;
@@ -816,8 +819,8 @@ public class Gui extends GuiScreen {
                 GuiColors.TITLE_BAR_BACKGROUND
         );
 
-        drawCenteredString(fontRendererObj, guiTitle, this.width / 2,
-                panelY + (topBarHeight - fontRendererObj.FONT_HEIGHT) / 2, GuiColors.TITLE_BAR_TEXT);
+        drawCenteredString(guiFont, guiTitle, this.width / 2,
+                panelY + (topBarHeight - guiFont.FONT_HEIGHT) / 2, GuiColors.TITLE_BAR_TEXT);
 
         int closeX = panelX + panelWidth - closeButtonSize - 10;
         int closeY = panelY + (topBarHeight - closeButtonSize) / 2;
@@ -827,8 +830,8 @@ public class Gui extends GuiScreen {
                 ? new java.awt.Color(200, 50, 50, 220).getRGB()
                 : new java.awt.Color(80, 80, 80, 180).getRGB();
         drawRoundedRectUsingGL(closeX, closeY, closeButtonSize, closeButtonSize, 3f, closeColor);
-        drawCenteredString(fontRendererObj, "\u2715", closeX + closeButtonSize / 2,
-                closeY + (closeButtonSize - fontRendererObj.FONT_HEIGHT) / 2 + 1, java.awt.Color.WHITE.getRGB());
+        drawCenteredString(guiFont, "\u2715", closeX + closeButtonSize / 2,
+                closeY + (closeButtonSize - guiFont.FONT_HEIGHT) / 2 + 1, java.awt.Color.WHITE.getRGB());
 
         int tabBarYOffset = panelY + topBarHeight;
         int tabBarInternalHeight = tabBarButtonHeight + 8;
@@ -852,8 +855,8 @@ public class Gui extends GuiScreen {
             drawRoundedRectWithBorderUsingGL(scrollLeftX, buttonY, tabBarScrollButtonWidth, tabBarButtonHeight, 2f,
                     scrollLeftHover ? GuiColors.TAB_SCROLL_BUTTON_HOVER_BG : GuiColors.TAB_SCROLL_BUTTON_BG,
                     GuiColors.COMPONENT_BORDER, 1f);
-            drawCenteredString(fontRendererObj, "<", scrollLeftX + tabBarScrollButtonWidth / 2,
-                    buttonY + (tabBarButtonHeight - fontRendererObj.FONT_HEIGHT) / 2,
+            drawCenteredString(guiFont, "<", scrollLeftX + tabBarScrollButtonWidth / 2,
+                    buttonY + (tabBarButtonHeight - guiFont.FONT_HEIGHT) / 2,
                     tabScrollX > 0f ? GuiColors.TAB_SCROLL_BUTTON_ARROW : GuiColors.TEXT_DISABLED);
 
             int scrollRightX = tabsAreaX + tabsAreaWidth - tabBarScrollButtonWidth;
@@ -862,8 +865,8 @@ public class Gui extends GuiScreen {
             drawRoundedRectWithBorderUsingGL(scrollRightX, buttonY, tabBarScrollButtonWidth, tabBarButtonHeight, 2f,
                     scrollRightHover ? GuiColors.TAB_SCROLL_BUTTON_HOVER_BG : GuiColors.TAB_SCROLL_BUTTON_BG,
                     GuiColors.COMPONENT_BORDER, 1f);
-            drawCenteredString(fontRendererObj, ">", scrollRightX + tabBarScrollButtonWidth / 2,
-                    buttonY + (tabBarButtonHeight - fontRendererObj.FONT_HEIGHT) / 2,
+            drawCenteredString(guiFont, ">", scrollRightX + tabBarScrollButtonWidth / 2,
+                    buttonY + (tabBarButtonHeight - guiFont.FONT_HEIGHT) / 2,
                     tabScrollX < maxTabScrollX ? GuiColors.TAB_SCROLL_BUTTON_ARROW : GuiColors.TEXT_DISABLED);
         }
 
@@ -899,9 +902,9 @@ public class Gui extends GuiScreen {
                         (int) currentTabButtonVisualX + tabButtonWidth - 3,
                         tabButtonVisualY + tabBarButtonHeight - 1, GuiColors.PRIMARY_BLUE_BRIGHT);
             }
-            drawCenteredString(fontRendererObj, tab.name,
+            drawCenteredString(guiFont, tab.name,
                     (int) currentTabButtonVisualX + tabButtonWidth / 2,
-                    tabButtonVisualY + (tabBarButtonHeight - fontRendererObj.FONT_HEIGHT) / 2, textColor);
+                    tabButtonVisualY + (tabBarButtonHeight - guiFont.FONT_HEIGHT) / 2, textColor);
             currentTabButtonVisualX += tabButtonWidth + tabButtonSpacing;
         }
         stopScissor();

@@ -1,6 +1,7 @@
 package com.konayuki.statflex.gui.elements;
 
 import com.konayuki.statflex.gui.GuiColors;
+import com.konayuki.statflex.gui.GuiFonts;
 import net.minecraft.client.gui.GuiTextField;
 
 public class Color extends GuiComponentBase {
@@ -40,7 +41,7 @@ public class Color extends GuiComponentBase {
     }
 
     private static int fontHeight() {
-        return net.minecraft.client.Minecraft.getMinecraft().fontRendererObj.FONT_HEIGHT;
+        return GuiFonts.getInstance().FONT_HEIGHT;
     }
 
     public String getColorKey() {

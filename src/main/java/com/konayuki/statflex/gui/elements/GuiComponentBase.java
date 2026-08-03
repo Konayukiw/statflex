@@ -1,6 +1,7 @@
 package com.konayuki.statflex.gui.elements;
 
 import com.konayuki.statflex.gui.GuiColors;
+import com.konayuki.statflex.gui.GuiFonts;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
@@ -16,11 +17,11 @@ public abstract class GuiComponentBase {
     public static final float MODERN_BORDER_THICKNESS = 1f;
     public static final int MODERN_ELEMENT_PADDING_X = 10;
     public static final float MODERN_ELEMENT_PADDING_Y_RATIO = 0.3f;
-    public static final int MODERN_TEXT_INPUT_HEIGHT = 24;
-    public static final int MODERN_BUTTON_HEIGHT = 26;
-    public static final int MODERN_DROPDOWN_HEIGHT = 24;
-    public static final int MODERN_CHECKBOX_SIZE = 14;
-    public static final int MODERN_SLIDER_HEIGHT = 18;
+    public static final int MODERN_TEXT_INPUT_HEIGHT = 26;
+    public static final int MODERN_BUTTON_HEIGHT = 28;
+    public static final int MODERN_DROPDOWN_HEIGHT = 26;
+    public static final int MODERN_CHECKBOX_SIZE = 16;
+    public static final int MODERN_SLIDER_HEIGHT = 20;
     public static final float MODERN_SLIDER_KNOB_RADIUS = 7f;
     public static final float MODERN_SLIDER_TRACK_HEIGHT = 5f;
 
@@ -35,7 +36,7 @@ public abstract class GuiComponentBase {
     public String label;
 
     protected final Minecraft mc = Minecraft.getMinecraft();
-    protected final FontRenderer fontRenderer = mc.fontRendererObj;
+    protected final FontRenderer fontRenderer = GuiFonts.getInstance();
 
     public boolean enabled = true;
     public boolean visible = true;

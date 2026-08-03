@@ -19,7 +19,7 @@ public class Dropdown extends GuiComponentBase {
     private final List<String> options;
     private int selectedIndex = -1;
     public boolean isOpen = false;
-    public final int optionHeight = 22;
+    public final int optionHeight = 24;
     public final int maxDisplayableOptions = 5;
 
     private float scrollYOptions = 0f;
