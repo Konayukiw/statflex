@@ -31,14 +31,14 @@ public class GuiFonts extends FontRenderer {
 
     public static GuiFonts getInstance() {
         if (instance == null) {
-            instance = new GuiFonts("/assets/fonts/Inter-Regular.ttf", DEFAULT_FONT_SIZE);
+            instance = new GuiFonts("/assets/fonts/dmsans.ttf", DEFAULT_FONT_SIZE);
         }
         return instance;
     }
 
     public static GuiFonts getTitle() {
         if (titleInstance == null) {
-            titleInstance = new GuiFonts("/assets/fonts/Inter-SemiBold.ttf", TITLE_FONT_SIZE);
+            titleInstance = new GuiFonts("/assets/fonts/dmsans.ttf", TITLE_FONT_SIZE);
         }
         return titleInstance;
     }
