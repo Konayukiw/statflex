@@ -64,6 +64,8 @@ public class GuiFonts extends FontRenderer {
     private final Font font;
     private final float fontSize;
     private final FontMetrics metrics;
+    private final Font fallbackFont;
+    private final FontMetrics fallbackMetrics;
     private final int ascent;
     private final int descent;
     private final Map<Character, Glyph> glyphCache = new HashMap<Character, Glyph>();
@@ -94,11 +96,15 @@ public class GuiFonts extends FontRenderer {
         }
         this.font = loaded.deriveFont(fontSize);
 
+        // メインフォントに存在しないグリフ(✕ など)用のシステムフォントフォールバック
+        this.fallbackFont = new Font(Font.SANS_SERIF, Font.PLAIN, 1).deriveFont(fontSize);
+
         BufferedImage probe = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = probe.createGraphics();
         try {
             graphics.setFont(this.font);
             this.metrics = graphics.getFontMetrics(this.font);
+            this.fallbackMetrics = graphics.getFontMetrics(this.fallbackFont);
         } finally {
             graphics.dispose();
         }
@@ -281,11 +287,13 @@ public class GuiFonts extends FontRenderer {
 
         BufferedImage cell = new BufferedImage(cellWidth, cellHeight, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = cell.createGraphics();
+        boolean useFallback = !font.canDisplay(character);
+        Font drawFont = useFallback ? fallbackFont.deriveFont(rasterSize) : font.deriveFont(rasterSize);
         try {
             graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
             graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             graphics.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
-            graphics.setFont(font.deriveFont(rasterSize));
+            graphics.setFont(drawFont);
             graphics.setColor(Color.WHITE);
             graphics.drawString(String.valueOf(character), RASTER_SCALE * 2, baseline);
         } finally {
@@ -306,7 +314,8 @@ public class GuiFonts extends FontRenderer {
         }
 
         if (maxX < 0) {
-            return new Glyph(-1, metrics.charWidth(character) + LETTER_SPACING, 0f, 0f, 0f, 0f);
+            FontMetrics emptyMetrics = useFallback ? fallbackMetrics : metrics;
+            return new Glyph(-1, emptyMetrics.charWidth(character) + LETTER_SPACING, 0f, 0f, 0f, 0f);
         }
 
         int pad = 1;
@@ -342,6 +351,8 @@ public class GuiFonts extends FontRenderer {
         float advance;
         if (font.canDisplay(character)) {
             advance = metrics.charWidth(character) + LETTER_SPACING;
+        } else if (fallbackFont.canDisplay(character)) {
+            advance = fallbackMetrics.charWidth(character) + LETTER_SPACING;
         } else {
             advance = texWidth / (float) RASTER_SCALE + 1f + LETTER_SPACING;
         }
