@@ -1,7 +1,7 @@
 package com.konayuki.statflex.features.skin;
 
 import com.konayuki.statflex.utils.chat.Chat;
-import com.konayuki.statflex.utils.ConnectionUtil;
+import com.konayuki.statflex.utils.Connection;
 import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.utils.Settings;
 import com.konayuki.statflex.utils.Toggles;
@@ -89,7 +89,7 @@ public class Skin {
             conn.setRequestProperty("User-Agent", "Mozilla/5.0");
 
             if (Toggles.ignoreCertificates && conn instanceof HttpsURLConnection) {
-                ConnectionUtil.trustAllCertificates((HttpsURLConnection) conn);
+                Connection.trustAllCertificates((HttpsURLConnection) conn);
             }
 
             if (conn.getResponseCode() != 200) {
@@ -178,7 +178,7 @@ public class Skin {
                             + "(KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36");
 
             if (Toggles.ignoreCertificates && conn instanceof HttpsURLConnection) {
-                ConnectionUtil.trustAllCertificates((HttpsURLConnection) conn);
+                Connection.trustAllCertificates((HttpsURLConnection) conn);
             }
 
             BufferedImage image;
