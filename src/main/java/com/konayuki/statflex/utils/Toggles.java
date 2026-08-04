@@ -61,7 +61,7 @@ public final class Toggles {
     }
 
     public static boolean isHypixelFeatureAllowed() {
-        return !disableHypixelFeaturesOutsideHypixel || ServerUtil.isHypixelServer();
+        return !disableHypixelFeaturesOutsideHypixel || isHypixel.isHypixelServer();
     }
 
     public static void setIgnoreCertificates(boolean ignore) {

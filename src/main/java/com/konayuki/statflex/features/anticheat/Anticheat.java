@@ -62,8 +62,6 @@ public final class Anticheat {
             performCheck(player, data);
             data.updateServerPos(player);
             data.updateSneak(player);
-
-            updatePlayerData(player, data);
         }
     }
 
@@ -87,7 +85,8 @@ public final class Anticheat {
                 && player != mc.thePlayer
                 && !player.isDead
                 && player.getName() != null
-                && !player.getName().isEmpty();
+                && !player.getName().isEmpty()
+                && !isBot.isBot(player);
     }
 
     private AnticheatUtil getData(EntityPlayer player) {
@@ -98,24 +97,6 @@ public final class Anticheat {
             players.put(player.getUniqueID(), data);
         }
         return data;
-    }
-
-    private void updatePlayerData(EntityPlayer player, AnticheatUtil data) {
-        data.ticksExisted = player.ticksExisted;
-        double dx = player.posX - data.posX;
-        double dz = player.posZ - data.posZ;
-
-        data.speed = Math.sqrt(dx * dx + dz * dz);
-
-        data.posX = player.posX;
-        data.posY = player.posY;
-        data.posZ = player.posZ;
-        
-        data.speedHistory[data.speedHistoryIndex] = data.speed;
-        data.speedHistoryIndex = (data.speedHistoryIndex + 1) % AnticheatUtil.SPEED_HISTORY_SIZE;
-        if (data.speedHistoryFilled < AnticheatUtil.SPEED_HISTORY_SIZE) {
-            data.speedHistoryFilled++;
-        }
     }
 
     private void performCheck(EntityPlayer player, AnticheatUtil data) {
@@ -157,7 +138,7 @@ public final class Anticheat {
             }
         }
 
-        if (!player.capabilities.disableDamage
+        if (!player.capabilities.isFlying
                 && AnticheatUtil.timeBetween(System.currentTimeMillis(), lastClientBoundPacket) <= 200L) {
 
             double serverPosX = AnticheatUtil.getServerPosX(player);

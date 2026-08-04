@@ -1,11 +1,8 @@
 package com.konayuki.statflex.features.denick;
 
+import com.konayuki.statflex.utils.*;
 import com.konayuki.statflex.utils.chat.Chat;
-import com.konayuki.statflex.utils.Debug;
 import com.konayuki.statflex.utils.chat.Warn;
-import com.konayuki.statflex.utils.Ranks;
-import com.konayuki.statflex.utils.Messages;
-import com.konayuki.statflex.utils.Toggles;
 import com.konayuki.statflex.utils.chat.Locraw;
 import com.konayuki.statflex.features.bedwars.BedwarsList;
 import com.konayuki.statflex.features.duels.Duels;
@@ -16,6 +13,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.network.NetworkPlayerInfo;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.IChatComponent;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
@@ -89,6 +87,13 @@ public class Denick {
                 : name;
         String clean = cleanName(displayNameText).trim();
         String normalized = clean.replaceAll("\\s+", "");
+
+        if (mc.theWorld != null) {
+            EntityPlayer entity = mc.theWorld.getPlayerEntityByUUID(profile.getId());
+            if (entity != null && isBot.isBot(entity)) {
+                return;
+            }
+        }
 
         if (normalized.contains("[NPC]") || name.contains("[NPC]")) {
             return;
@@ -235,7 +240,7 @@ public class Denick {
     private static String sbU(String s) {
         if (s == null)
             return "";
-        s = Ranks.stripColor(s);
+        s = Strip.stripColor(s);
         s = Normalizer.normalize(s, Normalizer.Form.NFKC);
         s = s.replace('\u00A0', ' ').replace('\u2007', ' ').replace('\u202F', ' ');
         s = s.replaceAll("[\\p{Cf}\\p{Mn}\\p{Me}]", "");

@@ -4,6 +4,7 @@ import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.api.HypixelApi;
 import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.utils.Ranks;
+import com.konayuki.statflex.utils.Strip;
 
 import com.google.gson.JsonObject;
 
@@ -112,9 +113,9 @@ public class DuelsUpdated {
 
                 String rawTitle = mode != null ? Duels.getColoredTitle(wins, false)
                         : Duels.getColoredTitle(wins, true);
-                String plainTitle = stripColor(rawTitle);
+                String plainTitle = Strip.stripColor(rawTitle);
                 String modeDisplay = mode != null ? Duels.getModeDisplayName(mode.toLowerCase()) : "";
-                String plainMode = modeDisplay == null ? "" : stripColor(modeDisplay);
+                String plainMode = modeDisplay == null ? "" : Strip.stripColor(modeDisplay);
 
                 String titleWithScheme = plainTitle;
                 String modeWithScheme = plainMode;
@@ -142,12 +143,6 @@ public class DuelsUpdated {
                 Chat.send(Messages.FETCH_ERROR + e.getClass().getSimpleName());
             }
         }).start();
-    }
-
-    public static String stripColor(String input) {
-        if (input == null)
-            return "";
-        return input.replaceAll("§.", "");
     }
 
     private static String applyColorGradient(String text, String[] colors) {

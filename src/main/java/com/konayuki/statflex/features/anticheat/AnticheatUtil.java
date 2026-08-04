@@ -22,8 +22,6 @@ public final class AnticheatUtil {
     private static final Map<String, Field> fieldCache = new HashMap<String, Field>();
     private static final Set<String> missingFields = new HashSet<String>();
 
-    public static final int SPEED_HISTORY_SIZE = 6;
-
     public int fastTick;
     public int autoBlockTicks;
     public int ticksExisted;
@@ -31,8 +29,6 @@ public final class AnticheatUtil {
     public int sneakTicks;
     public int noSlowTicks;
     public int aboveVoidTicks;
-    public int speedHistoryIndex;
-    public int speedHistoryFilled;
     public double speed;
     public double posX, posY, posZ;
     public double serverPosX = Double.NaN;
@@ -42,16 +38,12 @@ public final class AnticheatUtil {
     public boolean sneaking;
     public EntityPlayer player;
 
-    public final double[] speedHistory = new double[SPEED_HISTORY_SIZE];
-
     public void update(EntityPlayer player) {
         int currentTicks = player.ticksExisted;
         posX = player.posX - player.prevPosX;
         posY = player.posY - player.prevPosY;
         posZ = player.posZ - player.prevPosZ;
         speed = Math.max(Math.abs(posX), Math.abs(posZ));
-
-        pushSpeedHistory(speed);
 
         if (speed >= 0.07D) {
             fastTick++;
@@ -83,7 +75,7 @@ public final class AnticheatUtil {
         if (player.rotationPitch >= 70.0F
                 && player.getHeldItem() != null
                 && player.getHeldItem().getItem() instanceof ItemBlock) {
-            if (getSprintingTicksLeft(player) == 1) {
+            if (player.swingProgressInt == 1) {
                 if (!sneaking && player.isSneaking()) {
                     sneakTicks++;
                 } else {
@@ -103,14 +95,6 @@ public final class AnticheatUtil {
         serverPosX = getServerPosX(player);
         serverPosY = getServerPosY(player);
         serverPosZ = getServerPosZ(player);
-    }
-
-    private void pushSpeedHistory(double value) {
-        speedHistory[speedHistoryIndex] = value;
-        speedHistoryIndex = (speedHistoryIndex + 1) % SPEED_HISTORY_SIZE;
-        if (speedHistoryFilled < SPEED_HISTORY_SIZE) {
-            speedHistoryFilled++;
-        }
     }
 
     public static boolean nullCheck() {
@@ -184,11 +168,6 @@ public final class AnticheatUtil {
 
     public static double getServerPosZ(Entity entity) {
         return getScaledServerPosition(entity, "serverPosZ", "field_70116_cv");
-    }
-
-    public static int getSprintingTicksLeft(Entity entity) {
-        Integer value = getIntField(entity, "sprintingTicksLeft", "field_110158_av");
-        return value == null ? 0 : value.intValue();
     }
 
     private static double getScaledServerPosition(Entity entity, String mcpName, String srgName) {

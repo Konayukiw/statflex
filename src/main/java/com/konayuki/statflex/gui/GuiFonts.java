@@ -1,6 +1,5 @@
 package com.konayuki.statflex.gui;
 
-import com.konayuki.statflex.utils.Debug;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
@@ -31,14 +30,14 @@ public class GuiFonts extends FontRenderer {
 
     public static GuiFonts getInstance() {
         if (instance == null) {
-            instance = new GuiFonts("/assets/fonts/dmsans.ttf", DEFAULT_FONT_SIZE);
+            instance = new GuiFonts("/assets/fonts/Cafe24Simplehae.ttf", DEFAULT_FONT_SIZE);
         }
         return instance;
     }
 
     public static GuiFonts getTitle() {
         if (titleInstance == null) {
-            titleInstance = new GuiFonts("/assets/fonts/dmsans.ttf", TITLE_FONT_SIZE);
+            titleInstance = new GuiFonts("/assets/fonts/D-DIN-PRO-800.ttf", TITLE_FONT_SIZE);
         }
         return titleInstance;
     }
@@ -80,11 +79,10 @@ public class GuiFonts extends FontRenderer {
 
         this.fontSize = fontSize;
 
-        Font loaded;
+        Font loaded = null;
         try {
             InputStream stream = GuiFonts.class.getResourceAsStream(fontResource);
             if (stream == null) {
-                Debug.log("Font resource not found: " + fontResource);
             }
             try {
                 loaded = Font.createFont(Font.TRUETYPE_FONT, stream);
@@ -92,11 +90,9 @@ public class GuiFonts extends FontRenderer {
                 stream.close();
             }
         } catch (Exception e) {
-            throw new RuntimeException("Failed to load font: " + fontResource, e);
         }
         this.font = loaded.deriveFont(fontSize);
 
-        // メインフォントに存在しないグリフ(✕ など)用のシステムフォントフォールバック
         this.fallbackFont = new Font(Font.SANS_SERIF, Font.PLAIN, 1).deriveFont(fontSize);
 
         BufferedImage probe = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);

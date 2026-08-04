@@ -6,13 +6,6 @@ public final class Ranks {
     private Ranks() {
     }
 
-    public static String stripColor(String input) {
-        if (input == null) {
-            return "";
-        }
-        return input.replaceAll("§.", "");
-    }
-
     public static String getColoredPlayerName(JsonObject player, String correctName) {
         String color = "§7";
 

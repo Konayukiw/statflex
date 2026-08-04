@@ -4,6 +4,7 @@ import com.konayuki.statflex.utils.Debug;
 import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.Settings;
 import com.konayuki.statflex.utils.Messages;
+import com.konayuki.statflex.utils.Strip;
 
 import com.google.gson.*;
 import net.minecraft.client.Minecraft;
@@ -89,7 +90,7 @@ public class AutoGG {
             return;
 
         String rawMessage = event.message.getUnformattedText();
-        String msg = stripColors(rawMessage);
+        String msg = Strip.stripColor(rawMessage);
 
         synchronized (triggers) {
             for (Pattern pattern : triggers) {
@@ -190,9 +191,5 @@ public class AutoGG {
                 .setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                         new ChatComponentText("Click to add messages."))));
         mc.thePlayer.addChatMessage(add);
-    }
-
-    private String stripColors(String input) {
-        return input.replaceAll("§.", "");
     }
 }
