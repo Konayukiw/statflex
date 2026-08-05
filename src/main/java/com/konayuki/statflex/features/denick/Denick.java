@@ -124,23 +124,58 @@ public class Denick {
                 String decoded = new String(Base64.getDecoder().decode(value));
                 JsonObject json = gson.fromJson(decoded, JsonObject.class);
 
-                if (!json.has("textures"))
-                    continue;
+                if (!json.has("textures")) continue;
                 JsonObject textures = json.getAsJsonObject("textures");
-
-                if (!textures.has("SKIN"))
-                    continue;
+                if (!textures.has("SKIN")) continue;
                 JsonObject skin = textures.getAsJsonObject("SKIN");
+                if (!skin.has("url")) continue;
 
-                if (!skin.has("url"))
-                    continue;
                 String hash = skin.get("url").getAsString().split("/")[4];
-
                 String profileName = json.has("profileName") ? json.get("profileName").getAsString() : "";
+
+                if (nicks.contains(hash)) {
+                    if (!profileName.isEmpty() && profileName.equalsIgnoreCase(name)) {
+                        return;
+                    }
+
+                    if (!profileName.isEmpty()) {
+                        markNicked(name);
+                        Chat.send(Messages.PREFIX + Color.RED + " " + profileName + " " + Color.GRAY + "is nicked as "
+                                + Color.RED + name + Color.GRAY + "!");
+
+                        Locraw.getInstance().sendLocraw(new Locraw.LocrawCallback() {
+                            @Override
+                            public void onLocrawReceived(String gameType, String mode) {
+                                processStats(profileName, gameType, mode);
+                            }
+
+                            @Override
+                            public void onLocrawTimeout() {
+                                new Thread(() -> Warn.sendWarning(
+                                        profileName + " (nicked as " + name + ")")).start();
+                            }
+                        });
+                        return;
+                    }
+
+                    final String checkName = name;
+                    new Thread(() -> {
+                        Boolean exists = Profile.nameExists(checkName);
+                        if (Boolean.TRUE.equals(exists)) {
+                            return;
+                        }
+                        if (Boolean.FALSE.equals(exists)) {
+                            markNicked(checkName);
+                            Chat.send(Messages.PREFIX + "Found a nicked player:"
+                                    + Color.RED + " " + checkName);
+                        }
+                    }, "Denick").start();
+                    return;
+                }
+
                 if (!profileName.isEmpty() && !profileName.equalsIgnoreCase(name)) {
                     markNicked(name);
-                    Chat.send(Color.DARK_GRAY + "[" + Color.RED + "S" + Color.DARK_GRAY + "]"
-                            + Color.RED + " " + profileName + " " + Color.GRAY + "is nicked as "
+                    Chat.send(Messages.PREFIX + Color.RED + " " + profileName + " " + Color.GRAY + "is nicked as "
                             + Color.RED + name + Color.GRAY + "!");
 
                     Locraw.getInstance().sendLocraw(new Locraw.LocrawCallback() {
@@ -155,23 +190,7 @@ public class Denick {
                                     profileName + " (nicked as " + name + ")")).start();
                         }
                     });
-                    return;
                 }
-
-                if (nicks.contains(hash)) {
-                    final String checkName = name;
-                    new Thread(() -> {
-                        Boolean exists = Profile.nameExists(checkName);
-                        if (Boolean.TRUE.equals(exists)) {
-                            return;
-                        }
-                        if (Boolean.FALSE.equals(exists)) {
-                            markNicked(checkName);
-                            Chat.send(Messages.PREFIX + "Found a nicked player:" + Color.RED + " " + checkName);
-                        }
-                    }, "Denick").start();
-                }
-
             } catch (Exception e) {
                 e.printStackTrace();
             }

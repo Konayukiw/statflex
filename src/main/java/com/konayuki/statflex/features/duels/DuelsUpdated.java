@@ -142,8 +142,7 @@ public class DuelsUpdated {
                 String modeAndTitle = (modeWithScheme.isEmpty() ? "" : modeWithScheme + " ") + titleWithScheme;
 
                 if (auto) {
-                    Chat.send(String.format(Color.DARK_GRAY + "[" + Color.RED + "S" + Color.DARK_GRAY + "]"
-                                    + Color.GOLD + " %s %s " + Color.GRAY + "| Wins: %s " + Color.GRAY + "| WLR: %s",
+                    Chat.send(String.format(Messages.PREFIX + Color.GOLD + " %s %s " + Color.GRAY + "| Wins: %s " + Color.GRAY + "| WLR: %s",
                             modeAndTitle, coloredPlayerName, formattedWins, coloredWLR));
                 } else {
                     if (mode == null) {

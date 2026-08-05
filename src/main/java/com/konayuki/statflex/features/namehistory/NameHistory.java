@@ -65,8 +65,7 @@ public class NameHistory {
                     return;
                 }
 
-                Chat.send(Color.DARK_GRAY + "[" + Color.RED + "S" + Color.DARK_GRAY + "] "
-                        + Color.AQUA + Color.BOLD + "Name History " + Color.GRAY + "for "
+                Chat.send(Messages.PREFIX + Color.AQUA + Color.BOLD + "Name History " + Color.GRAY + "for "
                         + Ranks.getColoredPlayerName(data, inputName) + " " + Color.GRAY + "|");
 
                 DateTimeFormatter inputFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
@@ -85,8 +84,7 @@ public class NameHistory {
                         changedAt = "First Name";
                     }
 
-                    Chat.send(String.format(Color.DARK_GRAY + "[" + Color.RED + "S" + Color.DARK_GRAY + "]"
-                            + Color.YELLOW + " %s " + Color.GRAY + "| %s", name, changedAt));
+                    Chat.send(String.format(Messages.PREFIX + Color.YELLOW + " %s " + Color.GRAY + "| %s", name, changedAt));
                 }
 
             } catch (Exception e) {
