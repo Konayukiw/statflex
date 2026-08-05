@@ -2,6 +2,7 @@ package com.konayuki.statflex.features.anticheat;
 
 import com.konayuki.statflex.utils.*;
 import com.konayuki.statflex.utils.chat.Chat;
+import com.konayuki.statflex.utils.hypixel.isBot;
 import com.konayuki.statflex.utils.packet.ReceivedPacketDetector;
 
 import net.minecraft.client.Minecraft;
