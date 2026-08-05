@@ -142,7 +142,7 @@ Open the settings GUI with `/s`. The GUI provides tabbed configuration:
 ### Automatic installation
 
 1. Launch Minecraft 1.8.9 (Badlion Client is not supported).
-2. Get statflex injector at [Latest statflex release](https://github.com/Konayukiw/statflex/releases/latest).
+2. Get statflex injector at [Latest statflex release](https://github.com/Konayukiw/statflex-injector/releases/latest).
 3. Just run injector.
 
 ### Manual installation
