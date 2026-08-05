@@ -1,7 +1,7 @@
 package com.konayuki.statflex.utils;
 
 import com.konayuki.statflex.utils.chat.Chat;
-import com.konayuki.statflex.utils.hypixel.Hypixel;
+import com.konayuki.statflex.utils.hypixel.Server;
 
 public final class Toggle {
     public static boolean listStats;
@@ -69,7 +69,7 @@ public final class Toggle {
     }
 
     public static boolean isHypixelFeatureAllowed() {
-        return !disableHypixelFeaturesOutsideHypixel || Hypixel.isHypixel();
+        return !disableHypixelFeaturesOutsideHypixel || Server.isHypixel();
     }
 
     public static void setIgnoreCertificates(boolean ignore) {
@@ -153,7 +153,7 @@ public final class Toggle {
         Setting.getInstance().disableHypixelFeaturesOutsideHypixel = disableHypixelFeaturesOutsideHypixel;
         Setting.save();
         if (!silent) {
-            announce("Auto-off outside Hypixel", disableHypixelFeaturesOutsideHypixel);
+            announce("Auto-off outside Server", disableHypixelFeaturesOutsideHypixel);
         }
     }
 }

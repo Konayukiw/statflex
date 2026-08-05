@@ -343,7 +343,7 @@ public class Commands implements ICommand {
 
             case "help":
                 Chat.send(Color.DARK_GRAY + "[" + Color.RED + "S" + Color.DARK_GRAY + "] " + Color.GRAY + "Available commands:");
-                Chat.send(BULLET + "/s api " + Color.AQUA + "[API Key] " + Color.DARK_GRAY + ": " + Color.GRAY + "Sets Hypixel API Key to enable stats viewer.");
+                Chat.send(BULLET + "/s api " + Color.AQUA + "[API Key] " + Color.DARK_GRAY + ": " + Color.GRAY + "Sets Server API Key to enable stats viewer.");
                 Chat.send(BULLET + "- You must get API Key from " + Color.YELLOW + "https://developer.hypixel.net");
                 Chat.send(BULLET + "/s flag " + Color.DARK_GRAY + ": " + Color.GRAY + "Sets Anticheat flag interval. It's up to you.");
                 Chat.send(BULLET + "/s bw " + Color.YELLOW + "[Player] -[Mode] " + Color.DARK_GRAY + ": " + Color.GRAY + "Shows their Bedwars stats in-game.");
@@ -412,7 +412,7 @@ public class Commands implements ICommand {
             String[][] settings = {
                     { "Denick", Toggle.denick ? enabled : disabled, "denickEnabled",
                             "Toggle Denick " + enabled + " / " + disabled + ". \n" + Color.YELLOW
-                                    + "Do not use denickEnabled if you want to be fully legit. This may cause of a Hypixel Ban." },
+                                    + "Do not use denickEnabled if you want to be fully legit. This may cause of a Server Ban." },
                     { "Bedwars Stats List", Toggle.listStats ? enabled : disabled, "listStats",
                             "Toggle Auto-Stats List with /who. \n" + Color.YELLOW
                                     + "With this disabled, you can see original /who list." },

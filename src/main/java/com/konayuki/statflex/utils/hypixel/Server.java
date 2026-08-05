@@ -3,8 +3,8 @@ package com.konayuki.statflex.utils.hypixel;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
 
-public final class Hypixel {
-    private Hypixel() {
+public final class Server {
+    private Server() {
     }
 
     public static boolean isHypixel() {

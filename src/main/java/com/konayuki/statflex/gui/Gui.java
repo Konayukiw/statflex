@@ -181,7 +181,7 @@ public class Gui extends GuiScreen {
         allPossibleTabsMap.put("Bedwars", new Tab("Bedwars", "Bedwars"));
         allPossibleTabsMap.put("Skywars", new Tab("Skywars", "Skywars"));
         allPossibleTabsMap.put("Duels", new Tab("Duels", "Duels"));
-        allPossibleTabsMap.put("Hypixel API", new Tab("Hypixel API", "Hypixel API"));
+        allPossibleTabsMap.put("Server API", new Tab("Server API", "Server API"));
         allPossibleTabsMap.put("Skin", new Tab("Skin", "Skin"));
         allPossibleTabsMap.put("System", new Tab("System", "System"));
         allPossibleTabsMap.put("Update", new Tab("Update", "Update"));
@@ -190,7 +190,7 @@ public class Gui extends GuiScreen {
     private void orderAndPopulateTabs() {
         tabs.clear();
         String[] order = {
-                "General", "Bedwars", "Skywars", "Duels", "Hypixel API", "Skin", "System", "Update"
+                "General", "Bedwars", "Skywars", "Duels", "Server API", "Skin", "System", "Update"
         };
         for (String tabId : order) {
             Tab tab = allPossibleTabsMap.get(tabId);
@@ -241,7 +241,7 @@ public class Gui extends GuiScreen {
             populateSkywarsTab(tab, startX, actualComponentWidth);
         } else if ("Duels".equals(tab.id)) {
             populateDuelsTab(tab, startX, actualComponentWidth);
-        } else if ("Hypixel API".equals(tab.id)) {
+        } else if ("Server API".equals(tab.id)) {
             populateHypixelApiTab(tab, startX, actualComponentWidth, setting);
         } else if ("Skin".equals(tab.id)) {
             populateSkinTab(tab, startX, actualComponentWidth, setting);
@@ -273,8 +273,8 @@ public class Gui extends GuiScreen {
             Setting.getInstance().ignoreCertificates = !v;
             Setting.save();
         });
-        addCheckbox(tab, startX, "Auto-off Outside Hypixel",
-                "Disable Auto Stats and Denick when not on Hypixel.",
+        addCheckbox(tab, startX, "Auto-off Outside Server",
+                "Disable Auto Stats and Denick when not on Server.",
                 Toggle.disableHypixelFeaturesOutsideHypixel, v -> {
             Toggle.disableHypixelFeaturesOutsideHypixel = v;
             Setting.getInstance().disableHypixelFeaturesOutsideHypixel = v;
@@ -506,7 +506,7 @@ public class Gui extends GuiScreen {
         String apiKey = setting.apiKey != null ? setting.apiKey : "";
         Text apiKeyField = new Text(
                 getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
-                actualComponentWidth, "Hypixel API Key", apiKey,
+                actualComponentWidth, "Server API Key", apiKey,
                 t -> Setting.getInstance().apiKey = t,
                 focused -> {
                     if (!focused) {

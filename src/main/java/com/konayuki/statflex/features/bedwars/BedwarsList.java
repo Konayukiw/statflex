@@ -98,8 +98,7 @@ public class BedwarsList {
             if (name.equals("online")) {
                 continue;
             }
-            if (Denick.isNicked(name)) {
-                Debug.log("Skipping nicked player: " + name);
+            if (Denick.check(name)) {
                 continue;
             }
             if (!targetList.contains(name)) {
@@ -123,8 +122,7 @@ public class BedwarsList {
             if (name.equalsIgnoreCase("online")) {
                 continue;
             }
-            if (Denick.isNicked(name)) {
-                Debug.log("Skipping nicked player: " + name);
+            if (Denick.check(name)) {
                 continue;
             }
             if (!playerNames.contains(name)) {
@@ -147,8 +145,9 @@ public class BedwarsList {
                 try {
                     HypixelApi.result result = HypixelApi.fetch(name);
                     if (!result.success) {
-                        Debug.log("Failed to fetch " + name + ": " + result.errorCode);
-                        if (!HypixelApi.NAME_NOT_FOUND.equals(result.errorCode)) {
+                        if (HypixelApi.NAME_NOT_FOUND.equals(result.errorCode)) {
+                            Denick.markNicked(name);
+                        } else {
                             failedNames.add(name);
                         }
                         return;
@@ -189,7 +188,6 @@ public class BedwarsList {
                     playerDatas.add(data);
 
                 } catch (Exception e) {
-                    Debug.log("Failed to fetch " + name + ": " + e.getClass().getSimpleName());
                     failedNames.add(name);
                 } finally {
                     latch.countDown();

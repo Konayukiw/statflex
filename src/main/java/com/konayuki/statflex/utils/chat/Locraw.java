@@ -1,11 +1,16 @@
 package com.konayuki.statflex.utils.chat;
 
+import com.konayuki.statflex.utils.Debug;
+
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class Locraw {
     private static Locraw instance;
@@ -14,7 +19,7 @@ public class Locraw {
     private String gameType = null;
     private String mode = null;
     private int locrawTimeout = 0;
-    private LocrawCallback pendingCallback = null;
+    private final List<LocrawCallback> pendingCallbacks = new ArrayList<>();
 
     private Locraw() {}
 
@@ -35,12 +40,7 @@ public class Locraw {
         if (awaitingLocraw) {
             locrawTimeout++;
             if (locrawTimeout > 100) {
-                awaitingLocraw = false;
-                locrawTimeout = 0;
-                if (pendingCallback != null) {
-                    pendingCallback.onLocrawTimeout();
-                    pendingCallback = null;
-                }
+                finish(false);
             }
         }
     }
@@ -55,27 +55,16 @@ public class Locraw {
                     gameType = json.has("gametype") ? json.get("gametype").getAsString() : null;
                     mode = json.has("mode") ? json.get("mode").getAsString() : null;
                     event.setCanceled(true);
-                    awaitingLocraw = false;
-                    locrawTimeout = 0;
-
-                    if (pendingCallback != null) {
-                        pendingCallback.onLocrawReceived(gameType, mode);
-                        pendingCallback = null;
-                    }
+                    finish(true);
                 } catch (Exception e) {
-                    awaitingLocraw = false;
-                    locrawTimeout = 0;
-                    if (pendingCallback != null) {
-                        pendingCallback.onLocrawTimeout();
-                        pendingCallback = null;
-                    }
+                    finish(false);
                 }
             }
         }
     }
 
     public void sendLocraw(LocrawCallback callback) {
-        if (awaitingLocraw) {
+        if (callback == null) {
             return;
         }
 
@@ -85,10 +74,39 @@ public class Locraw {
             return;
         }
 
-        pendingCallback = callback;
+        // A request is already out for the same answer: ride along with it rather than
+        // drop the caller, which would leave it waiting on a callback that never comes.
+        if (awaitingLocraw) {
+            pendingCallbacks.add(callback);
+            return;
+        }
+
+        pendingCallbacks.add(callback);
         awaitingLocraw = true;
         locrawTimeout = 0;
         mc.thePlayer.sendChatMessage("/locraw");
+    }
+
+    private void finish(boolean received) {
+        awaitingLocraw = false;
+        locrawTimeout = 0;
+        if (pendingCallbacks.isEmpty()) {
+            return;
+        }
+
+        List<LocrawCallback> callbacks = new ArrayList<>(pendingCallbacks);
+        pendingCallbacks.clear();
+        for (LocrawCallback callback : callbacks) {
+            try {
+                if (received) {
+                    callback.onLocrawReceived(gameType, mode);
+                } else {
+                    callback.onLocrawTimeout();
+                }
+            } catch (Exception e) {
+                Debug.error("Locraw callback failed: " + e);
+            }
+        }
     }
 
     public String getCurrentGameType() {

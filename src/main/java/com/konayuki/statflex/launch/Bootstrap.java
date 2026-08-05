@@ -14,6 +14,7 @@ import com.konayuki.statflex.features.rpc.DiscordRPC;
 import com.konayuki.statflex.utils.api.HypixelApiUtil;
 import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.chat.Locraw;
+import com.konayuki.statflex.utils.hypixel.Party;
 import com.konayuki.statflex.utils.packet.PacketUtil;
 import net.minecraft.client.Minecraft;
 
@@ -37,6 +38,7 @@ public final class Bootstrap {
     private static AutoGG autoGG;
     private static DuelsList duelsList;
     private static Locraw locraw;
+    private static Party party;
     private static DiscordRPC discordRPC;
 
     private Bootstrap() {
@@ -93,10 +95,12 @@ public final class Bootstrap {
             autoGG = new AutoGG();
             duelsList = new DuelsList();
             locraw = Locraw.getInstance();
+            party = Party.getInstance();
             discordRPC = DiscordRPC.getInstance();
 
             MinecraftForge.EVENT_BUS.register(LIFECYCLE_HANDLER);
             MinecraftForge.EVENT_BUS.register(locraw);
+            MinecraftForge.EVENT_BUS.register(party);
             MinecraftForge.EVENT_BUS.register(bwList);
             MinecraftForge.EVENT_BUS.register(swList);
             MinecraftForge.EVENT_BUS.register(denick);

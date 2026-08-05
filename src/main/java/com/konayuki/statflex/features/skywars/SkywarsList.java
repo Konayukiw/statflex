@@ -153,7 +153,7 @@ public class SkywarsList {
         if (name == null || name.isEmpty()) {
             return;
         }
-        if (Denick.isNicked(name)) {
+        if (Denick.check(name)) {
             return;
         }
         String key = name.toLowerCase();
@@ -178,6 +178,11 @@ public class SkywarsList {
                         if (apiErrorReported.compareAndSet(false, true)) {
                             Chat.send(Messages.INVALID_API);
                         }
+                    } else if (HypixelApi.NAME_NOT_FOUND.equals(result.errorCode)) {
+                        // The lobby only lists real players and nicks, so a name no
+                        // Mojang account holds is a nick rather than a failure.
+                        Debug.log("Skipping " + nameKey + ", looks nicked: " + result.errorCode);
+                        Denick.markNicked(nameKey);
                     } else {
                         Debug.log("Failed to fetch " + nameKey + ": " + result.errorCode);
                         failedNames.add(nameKey);
