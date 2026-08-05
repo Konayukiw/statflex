@@ -1,6 +1,7 @@
 package com.konayuki.statflex.features.skin;
 
 import com.konayuki.statflex.utils.chat.Chat;
+import com.konayuki.statflex.utils.Color;
 import com.konayuki.statflex.utils.Connection;
 import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.utils.Settings;
@@ -44,7 +45,7 @@ public class Skin {
 
             Profile.PlayerInfo info = Profile.getPlayerInfo(playerName);
             if (info == null) {
-                Chat.send("§8[§cS§8]§7 Player not found: " + playerName);
+                Chat.send(Messages.PREFIX + "Player not found: " + playerName);
                 return;
             }
 
@@ -52,7 +53,7 @@ public class Skin {
             String textureJson = getTextureJson(uuid);
 
             if (textureJson == null) {
-                Chat.send("§8[§cS§8]§7 Failed to fetch skin data");
+                Chat.send(Messages.PREFIX + "Failed to fetch skin data");
                 return;
             }
 
@@ -61,7 +62,7 @@ public class Skin {
             JsonObject textures = root.getAsJsonObject("textures");
 
             if (textures == null || !textures.has("SKIN")) {
-                Chat.send("§8[§cS§8]§7 No skin found.");
+                Chat.send(Messages.PREFIX + "No skin found.");
                 return;
             }
 
@@ -197,7 +198,7 @@ public class Skin {
 
         } catch (Exception e) {
             e.printStackTrace();
-            Chat.send("§8[§cS§8]§7 Failed to download skin");
+            Chat.send(Messages.PREFIX + "Failed to download skin");
         }
     }
 
@@ -226,9 +227,9 @@ public class Skin {
             if (mc.thePlayer == null) return;
 
             ChatComponentText prefix =
-                    new ChatComponentText("§8[§cS§8]§7 Saved skin: ");
+                    new ChatComponentText(Messages.PREFIX + "Saved skin: ");
             ChatComponentText path =
-                    new ChatComponentText("§e" + file.getName());
+                    new ChatComponentText(Color.YELLOW + file.getName());
             path.getChatStyle()
                     .setChatClickEvent(
                             new net.minecraft.event.ClickEvent(

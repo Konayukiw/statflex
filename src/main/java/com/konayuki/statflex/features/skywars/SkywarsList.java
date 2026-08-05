@@ -5,7 +5,9 @@ import com.konayuki.statflex.utils.api.HypixelApi;
 import com.konayuki.statflex.utils.hypixel.Ranks;
 import com.konayuki.statflex.utils.Debug;
 import com.konayuki.statflex.utils.Toggles;
+import com.konayuki.statflex.utils.Color;
 import com.konayuki.statflex.utils.Messages;
+import com.konayuki.statflex.features.denick.Denick;
 
 import com.google.gson.JsonObject;
 import net.minecraft.util.EnumChatFormatting;
@@ -151,6 +153,9 @@ public class SkywarsList {
         if (name == null || name.isEmpty()) {
             return;
         }
+        if (Denick.isNicked(name)) {
+            return;
+        }
         String key = name.toLowerCase();
         synchronized (queue) {
             if (!queue.contains(key)) {
@@ -223,8 +228,7 @@ public class SkywarsList {
         Chat.send(Messages.SKYWARS_STATS);
         for (PlayerData data : playerDatas) {
             Chat.send(data.levelFormatted + " " + data.coloredPlayerName
-                    + " §7| Wins: " + data.formattedWins
-                    + " §7| KDR: " + data.coloredKDR);
+                    + Color.GRAY + " | Wins: " + data.formattedWins + Color.GRAY + " | KDR: " + data.coloredKDR);
         }
 
         if (!failedNames.isEmpty()) {
@@ -232,8 +236,9 @@ public class SkywarsList {
             synchronized (queue) {
                 total = queue.size();
             }
-            Chat.send(Messages.PREFIX + "§c" + failedNames.size() + "§7/§c" + total
-                    + "§7 failed: §c" + String.join("§7, §c", failedNames));
+            Chat.send(Messages.PREFIX + Color.RED + failedNames.size() + Color.GRAY + "/" + Color.RED + total
+                    + Color.GRAY + " failed: " + Color.RED
+                    + String.join(Color.GRAY + ", " + Color.RED, failedNames));
         }
     }
 
@@ -251,7 +256,7 @@ public class SkywarsList {
 
         String rawFormatted = stats.has("levelFormattedWithBrackets")
                 ? stats.get("levelFormattedWithBrackets").getAsString()
-                : "§7[N/A]";
+                : Color.GRAY + "[N/A]";
 
         int wins = stats.has("wins") ? stats.get("wins").getAsInt() : 0;
         int kills = stats.has("kills") ? stats.get("kills").getAsInt() : 0;

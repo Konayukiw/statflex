@@ -3,9 +3,12 @@ package com.konayuki.statflex.features.duels;
 import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.api.HypixelApi;
 import com.konayuki.statflex.utils.hypixel.Ranks;
+import com.konayuki.statflex.utils.Color;
 import com.konayuki.statflex.utils.Messages;
 
 import com.google.gson.JsonObject;
+
+import net.minecraft.util.EnumChatFormatting;
 
 import java.text.DecimalFormat;
 
@@ -54,22 +57,23 @@ public class Duels {
                 if (modeDisplay == null || modeDisplay.isEmpty()) {
                     modeDisplay = mode != null ? mode : "";
                 }
-                String rawTitle = mode != null ? getColoredTitle(wins, false) : getColoredTitle(wins, true);
-                String title = (rawTitle == null || rawTitle.isEmpty()) ? "§8None" : rawTitle;
-                String colorCode = extractColorCode(title);
-                String titleBody = title.length() > 2 ? title.substring(2) : title;
-                String modeAndTitle = colorCode + (modeDisplay.isEmpty() ? "" : modeDisplay + " ") + titleBody;
+                Title title = findTitleOrNone(wins, mode == null);
+                String modeAndTitle = title.format
+                        + (modeDisplay.isEmpty() ? "" : modeDisplay + " ") + title.label;
 
                 if (auto) {
-                    Chat.send(String.format("§8[§cS§8] %s %s §7| Wins: %s §7| WLR: %s",
+                    Chat.send(String.format(Color.DARK_GRAY + "[" + Color.RED + "S" + Color.DARK_GRAY
+                                    + "] %s %s " + Color.GRAY + "| Wins: %s " + Color.GRAY + "| WLR: %s",
                             modeAndTitle, coloredPlayerName, formattedWins, coloredWLR));
                 } else {
                     if (mode == null) {
                         Chat.send(Messages.DUELS_STATS);
                     } else {
-                        Chat.send(String.format(Messages.DUELS_STATS +  "§7[§e%s§7]", modeDisplay));
+                        Chat.send(String.format(Messages.DUELS_STATS + Color.GRAY + "[" + Color.YELLOW + "%s"
+                                + Color.GRAY + "]", modeDisplay));
                     }
-                    Chat.send(String.format("§c || %s %s §7| Wins: %s §7| WLR: %s",
+                    Chat.send(String.format(Color.RED + " || %s %s " + Color.GRAY + "| Wins: %s "
+                                    + Color.GRAY + "| WLR: %s",
                             modeAndTitle, coloredPlayerName, formattedWins, coloredWLR));
                 }
 
@@ -269,21 +273,21 @@ public class Duels {
     public static String getFormattedWins(int wins) {
         DecimalFormat formatter = new DecimalFormat("#,###");
 
-        String color;
+        EnumChatFormatting color;
         if (wins >= 50000)
-            color = "§5";
+            color = Color.DARK_PURPLE;
         else if (wins >= 25000)
-            color = "§4";
+            color = Color.DARK_RED;
         else if (wins >= 10000)
-            color = "§c";
+            color = Color.RED;
         else if (wins >= 5000)
-            color = "§6";
+            color = Color.GOLD;
         else if (wins >= 2500)
-            color = "§e";
+            color = Color.YELLOW;
         else if (wins >= 1000)
-            color = "§f";
+            color = Color.WHITE;
         else
-            color = "§7";
+            color = Color.GRAY;
 
         return color + formatter.format(wins);
     }
@@ -291,110 +295,127 @@ public class Duels {
     public static String getColoredWLR(double wlr) {
         DecimalFormat df = new DecimalFormat("#.##");
 
-        String color;
+        EnumChatFormatting color;
         if (wlr >= 30)
-            color = "§5";
+            color = Color.DARK_PURPLE;
         else if (wlr >= 15)
-            color = "§4";
+            color = Color.DARK_RED;
         else if (wlr >= 10)
-            color = "§c";
+            color = Color.RED;
         else if (wlr >= 5)
-            color = "§6";
+            color = Color.GOLD;
         else if (wlr >= 2)
-            color = "§e";
+            color = Color.YELLOW;
         else if (wlr >= 1)
-            color = "§f";
+            color = Color.WHITE;
         else
-            color = "§7";
+            color = Color.GRAY;
 
         return color + df.format(wlr);
     }
 
-    public static String getColoredTitle(int wins, boolean isOverall) {
-        Object[][] thresholdsOverall = {
-                { 100000, "§d§lDIVINE" },
-                { 90000, "§b§lCELESTIAL V" },
-                { 80000, "§b§lCELESTIAL IV" },
-                { 70000, "§b§lCELESTIAL III" },
-                { 60000, "§b§lCELESTIAL II" },
-                { 50000, "§b§lCELESTIAL" },
-                { 44000, "§5§lGodlike V" },
-                { 38000, "§5§lGodlike IV" },
-                { 32000, "§5§lGodlike III" },
-                { 26000, "§5§lGodlike II" },
-                { 20000, "§5§lGodlike" },
-                { 18000, "§e§lGrandmaster V" },
-                { 16000, "§e§lGrandmaster IV" },
-                { 14000, "§e§lGrandmaster III" },
-                { 12000, "§e§lGrandmaster II" },
-                { 10000, "§e§lGrandmaster" },
-                { 9000, "§4§lLegend V" },
-                { 7600, "§4§lLegend IV" },
-                { 6400, "§4§lLegend III" },
-                { 5200, "§4§lLegend II" },
-                { 4000, "§4§lLegend" },
-                { 3600, "§2Master V" },
-                { 3200, "§2Master IV" },
-                { 2800, "§2Master III" },
-                { 2400, "§2Master II" },
-                { 2000, "§2Master" },
-                { 1800, "§3Diamond V" },
-                { 1600, "§3Diamond IV" },
-                { 1400, "§3Diamond III" },
-                { 1200, "§3Diamond II" },
-                { 1000, "§3Diamond" },
-                { 900, "§6Gold V" },
-                { 800, "§6Gold IV" },
-                { 700, "§6Gold III" },
-                { 600, "§6Gold II" },
-                { 500, "§6Gold" },
-                { 440, "§fIron V" },
-                { 380, "§fIron IV" },
-                { 320, "§fIron III" },
-                { 260, "§fIron II" },
-                { 200, "§fIron" },
-                { 180, "§8Rookie V" },
-                { 160, "§8Rookie IV" },
-                { 140, "§8Rookie III" },
-                { 120, "§8Rookie II" },
-                { 100, "§8Rookie" },
-        };
+    /** A Duels prestige title split into its formatting prefix and its plain label. */
+    public static final class Title {
+        public final String format;
+        public final String label;
 
+        Title(String format, String label) {
+            this.format = format;
+            this.label = label;
+        }
+    }
+
+    private static final String BOLD_DIVINE = Color.LIGHT_PURPLE.toString() + Color.BOLD;
+    private static final String BOLD_CELESTIAL = Color.AQUA.toString() + Color.BOLD;
+    private static final String BOLD_GODLIKE = Color.DARK_PURPLE.toString() + Color.BOLD;
+    private static final String BOLD_GRANDMASTER = Color.YELLOW.toString() + Color.BOLD;
+    private static final String BOLD_LEGEND = Color.DARK_RED.toString() + Color.BOLD;
+    private static final String BOLD_ASCENDED = Color.RED.toString() + Color.BOLD;
+    private static final String MASTER = Color.DARK_GREEN.toString();
+    private static final String DIAMOND = Color.DARK_AQUA.toString();
+    private static final String GOLD_TITLE = Color.GOLD.toString();
+    private static final String IRON = Color.WHITE.toString();
+    private static final String ROOKIE = Color.DARK_GRAY.toString();
+
+    private static final Object[][] TITLE_THRESHOLDS = {
+            { 100000, BOLD_DIVINE, "DIVINE" },
+            { 90000, BOLD_CELESTIAL, "CELESTIAL V" },
+            { 80000, BOLD_CELESTIAL, "CELESTIAL IV" },
+            { 70000, BOLD_CELESTIAL, "CELESTIAL III" },
+            { 60000, BOLD_CELESTIAL, "CELESTIAL II" },
+            { 50000, BOLD_CELESTIAL, "CELESTIAL" },
+            { 44000, BOLD_GODLIKE, "Godlike V" },
+            { 38000, BOLD_GODLIKE, "Godlike IV" },
+            { 32000, BOLD_GODLIKE, "Godlike III" },
+            { 26000, BOLD_GODLIKE, "Godlike II" },
+            { 20000, BOLD_GODLIKE, "Godlike" },
+            { 18000, BOLD_GRANDMASTER, "Grandmaster V" },
+            { 16000, BOLD_GRANDMASTER, "Grandmaster IV" },
+            { 14000, BOLD_GRANDMASTER, "Grandmaster III" },
+            { 12000, BOLD_GRANDMASTER, "Grandmaster II" },
+            { 10000, BOLD_GRANDMASTER, "Grandmaster" },
+            { 9000, BOLD_LEGEND, "Legend V" },
+            { 7600, BOLD_LEGEND, "Legend IV" },
+            { 6400, BOLD_LEGEND, "Legend III" },
+            { 5200, BOLD_LEGEND, "Legend II" },
+            { 4000, BOLD_LEGEND, "Legend" },
+            { 3600, MASTER, "Master V" },
+            { 3200, MASTER, "Master IV" },
+            { 2800, MASTER, "Master III" },
+            { 2400, MASTER, "Master II" },
+            { 2000, MASTER, "Master" },
+            { 1800, DIAMOND, "Diamond V" },
+            { 1600, DIAMOND, "Diamond IV" },
+            { 1400, DIAMOND, "Diamond III" },
+            { 1200, DIAMOND, "Diamond II" },
+            { 1000, DIAMOND, "Diamond" },
+            { 900, GOLD_TITLE, "Gold V" },
+            { 800, GOLD_TITLE, "Gold IV" },
+            { 700, GOLD_TITLE, "Gold III" },
+            { 600, GOLD_TITLE, "Gold II" },
+            { 500, GOLD_TITLE, "Gold" },
+            { 440, IRON, "Iron V" },
+            { 380, IRON, "Iron IV" },
+            { 320, IRON, "Iron III" },
+            { 260, IRON, "Iron II" },
+            { 200, IRON, "Iron" },
+            { 180, ROOKIE, "Rookie V" },
+            { 160, ROOKIE, "Rookie IV" },
+            { 140, ROOKIE, "Rookie III" },
+            { 120, ROOKIE, "Rookie II" },
+            { 100, ROOKIE, "Rookie" },
+    };
+
+    /** Shown by /s duels when the player has not reached the lowest title yet. */
+    private static final Title NO_TITLE = new Title(Color.DARK_GRAY.toString(), "None");
+
+    /** Returns the matching title, or {@code null} when the player has none yet. */
+    public static Title findTitle(int wins, boolean isOverall) {
         int usedWins = isOverall ? wins : wins * 2;
 
         if (usedWins >= 200000) {
             int ascendedLevel = ((usedWins - 200000) / 20000) + 1;
-            if (ascendedLevel == 1) {
-                return "§c§lASCENDED";
-            } else {
-                return "§c§lASCENDED " + toRoman(ascendedLevel);
-            }
+            return ascendedLevel == 1
+                    ? new Title(BOLD_ASCENDED, "ASCENDED")
+                    : new Title(BOLD_ASCENDED, "ASCENDED " + toRoman(ascendedLevel));
         }
 
-        for (Object[] entry : thresholdsOverall) {
-            int reqWins = (int) entry[0];
-            String title = (String) entry[1];
-            if (usedWins >= reqWins) {
-                return title;
+        for (Object[] entry : TITLE_THRESHOLDS) {
+            if (usedWins >= (int) entry[0]) {
+                return new Title((String) entry[1], (String) entry[2]);
             }
         }
-        return "";
+        return null;
     }
 
-    public static String extractColorCode(String title) {
-        if (title != null && title.startsWith("§")) {
-            StringBuilder code = new StringBuilder();
-            for (int i = 0; i < title.length() - 1; i++) {
-                if (title.charAt(i) == '§') {
-                    code.append(title.charAt(i)).append(title.charAt(i + 1));
-                    i++;
-                } else {
-                    break;
-                }
-            }
-            return code.toString();
-        }
-        return "§8";
+    public static Title findTitleOrNone(int wins, boolean isOverall) {
+        Title title = findTitle(wins, isOverall);
+        return title != null ? title : NO_TITLE;
+    }
+
+    public static String getColoredTitle(int wins, boolean isOverall) {
+        Title title = findTitle(wins, isOverall);
+        return title == null ? "" : title.format + title.label;
     }
 
     private static String toRoman(int num) {

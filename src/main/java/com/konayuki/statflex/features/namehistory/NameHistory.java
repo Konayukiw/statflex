@@ -2,6 +2,7 @@ package com.konayuki.statflex.features.namehistory;
 
 import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.hypixel.Ranks;
+import com.konayuki.statflex.utils.Color;
 import com.konayuki.statflex.utils.Connection;
 import com.konayuki.statflex.utils.Messages;
 
@@ -48,23 +49,25 @@ public class NameHistory {
                 JsonObject response = parser.parse(reader).getAsJsonObject();
 
                 if (!response.has("success") || !response.get("success").getAsBoolean()) {
-                    Chat.send("§8[§cS§8]§7 Failed to fetch name history for " + properName);
+                    Chat.send(Messages.PREFIX + "Failed to fetch name history for " + properName);
                     return;
                 }
 
                 JsonObject data = response.getAsJsonObject("data");
                 if (data == null || !data.has("usernames")) {
-                    Chat.send("§8[§cS§8]§7 No name history found for " + properName);
+                    Chat.send(Messages.PREFIX + "No name history found for " + properName);
                     return;
                 }
 
                 JsonArray names = data.getAsJsonArray("usernames");
                 if (names.size() == 0) {
-                    Chat.send("§8[§cS§8]§7 No name history found for " + properName);
+                    Chat.send(Messages.PREFIX + "No name history found for " + properName);
                     return;
                 }
 
-                Chat.send("§8[§cS§8] §b§lName History §7for " + Ranks.getColoredPlayerName(data, inputName) + " §7|");
+                Chat.send(Color.DARK_GRAY + "[" + Color.RED + "S" + Color.DARK_GRAY + "] "
+                        + Color.AQUA + Color.BOLD + "Name History " + Color.GRAY + "for "
+                        + Ranks.getColoredPlayerName(data, inputName) + " " + Color.GRAY + "|");
 
                 DateTimeFormatter inputFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
                 DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -82,11 +85,12 @@ public class NameHistory {
                         changedAt = "First Name";
                     }
 
-                    Chat.send(String.format("§8[§cS§8]§e %s §7| %s", name, changedAt));
+                    Chat.send(String.format(Color.DARK_GRAY + "[" + Color.RED + "S" + Color.DARK_GRAY + "]"
+                            + Color.YELLOW + " %s " + Color.GRAY + "| %s", name, changedAt));
                 }
 
             } catch (Exception e) {
-                Chat.send("§8[§cS§8]§7 Failed to fetch name history: " + e.getClass().getSimpleName());
+                Chat.send(Messages.PREFIX + "Failed to fetch name history: " + e.getClass().getSimpleName());
                 e.printStackTrace();
             }
         }, "NameHistory").start();

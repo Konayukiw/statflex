@@ -35,6 +35,21 @@ public class Denick {
 
     private static final Gson gson = new Gson();
     private static final Set<String> nicks = loadHashesFromJson();
+    private static final Set<String> nickedPlayers = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    public static void markNicked(String name) {
+        if (name == null || name.isEmpty())
+            return;
+        nickedPlayers.add(name.toLowerCase());
+    }
+
+    public static boolean isNicked(String name) {
+        return name != null && nickedPlayers.contains(name.toLowerCase());
+    }
+
+    public static void clearNicked() {
+        nickedPlayers.clear();
+    }
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
@@ -59,6 +74,7 @@ public class Denick {
     public void onWorldJoin(EntityJoinWorldEvent event) {
         if (event.entity == mc.thePlayer) {
             parsed.clear();
+            clearNicked();
         }
     }
 
@@ -122,7 +138,10 @@ public class Denick {
 
                 String profileName = json.has("profileName") ? json.get("profileName").getAsString() : "";
                 if (!profileName.isEmpty() && !profileName.equalsIgnoreCase(name)) {
-                    Chat.send("§8[§cS§8]§c " + profileName + " §7is nicked as §c" + name + "§7!");
+                    markNicked(name);
+                    Chat.send(Color.DARK_GRAY + "[" + Color.RED + "S" + Color.DARK_GRAY + "]"
+                            + Color.RED + " " + profileName + " " + Color.GRAY + "is nicked as "
+                            + Color.RED + name + Color.GRAY + "!");
 
                     Locraw.getInstance().sendLocraw(new Locraw.LocrawCallback() {
                         @Override
@@ -147,7 +166,8 @@ public class Denick {
                             return;
                         }
                         if (Boolean.FALSE.equals(exists)) {
-                            Chat.send("§8[§cS§8]§7 Found a nicked player:§c " + checkName);
+                            markNicked(checkName);
+                            Chat.send(Messages.PREFIX + "Found a nicked player:" + Color.RED + " " + checkName);
                         }
                     }, "Denick").start();
                 }

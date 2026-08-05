@@ -1,5 +1,6 @@
 package com.konayuki.statflex.features.duels;
 
+import com.konayuki.statflex.utils.Color;
 import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.utils.Strip;
 import com.konayuki.statflex.utils.chat.Chat;
@@ -8,49 +9,71 @@ import com.konayuki.statflex.utils.hypixel.Ranks;
 
 import com.google.gson.JsonObject;
 
+import net.minecraft.util.EnumChatFormatting;
+
 import java.util.HashMap;
 import java.util.Map;
 
 public class DuelsUpdated {
 
-    private static final Map<String, String[]> COLOR_MAP = new HashMap<>();
+    private static final Map<String, EnumChatFormatting[]> COLOR_MAP = new HashMap<>();
     static {
-        COLOR_MAP.put("prefix_scheme_boilerplate_gold", new String[] { "§6" });
-        COLOR_MAP.put("prefix_scheme_absorption", new String[] { "§e" });
-        COLOR_MAP.put("prefix_scheme_heavy_dark_green", new String[] { "§2" });
-        COLOR_MAP.put("prefix_scheme_explosive_dark_red", new String[] { "§4" });
-        COLOR_MAP.put("prefix_scheme_good_ol_gray", new String[] { "§7" });
-        COLOR_MAP.put("prefix_scheme_vanilla_white", new String[] { "§f" });
-        COLOR_MAP.put("prefix_scheme_ender_green", new String[] { "§a" });
-        COLOR_MAP.put("prefix_scheme_platformer_dark_purple", new String[] { "§5" });
-        COLOR_MAP.put("prefix_scheme_armored_aqua", new String[] { "§b" });
-        COLOR_MAP.put("prefix_scheme_pearl_dark_aqua", new String[] { "§3" });
-        COLOR_MAP.put("prefix_scheme_withering_back", new String[] { "§0" });
-        COLOR_MAP.put("prefix_scheme_persistent_dark_blue", new String[] { "§1" });
-        COLOR_MAP.put("prefix_scheme_carpeted_light_purple", new String[] { "§d" });
-        COLOR_MAP.put("prefix_scheme_punchable_red", new String[] { "§c" });
-        COLOR_MAP.put("prefix_scheme_drawstring_dark_gray", new String[] { "§8" });
-        COLOR_MAP.put("prefix_scheme_blitz_blue", new String[] { "§9" });
-        COLOR_MAP.put("prefix_scheme_blossoms", new String[] { "§5", "§d", "§f", "§d", "§f" });
-        COLOR_MAP.put("prefix_scheme_ultra_hardcore_undertone", new String[] { "§2", "§a", "§e", "§e", "§6" });
-        COLOR_MAP.put("prefix_scheme_in_case_of_chroma", new String[] { "§5", "§f", "§9", "§1" });
-        COLOR_MAP.put("prefix_scheme_elusive_jeremiah_huestring", new String[] { "§3", "§6", "§6", "§e", "§b" });
-        COLOR_MAP.put("prefix_scheme_healthy_stain", new String[] { "§8", "§7", "§7", "§f", "§c" });
-        COLOR_MAP.put("prefix_scheme_four_team_tie_dye", new String[] { "§e", "§a", "§f", "§c", "§9" });
-        COLOR_MAP.put("prefix_scheme_combo_coating", new String[] { "§4", "§c", "§6", "§e", "§f" });
-        COLOR_MAP.put("prefix_scheme_mythic_pigment", new String[] { "§c", "§e", "§a", "§b", "§d" });
-        COLOR_MAP.put("prefix_scheme_picturesque_firework", new String[] { "§1", "§9", "§f", "§c", "§4" });
-        COLOR_MAP.put("prefix_scheme_punching_paint", new String[] { "§4", "§5", "§5", "§d", "§b" });
-        COLOR_MAP.put("prefix_scheme_flint_gradient", new String[] { "§f", "§7", "§8", "§0", "§0" });
-        COLOR_MAP.put("prefix_scheme_a_splash_of_star", new String[] { "§1", "§3", "§3", "§b" });
-        COLOR_MAP.put("prefix_scheme_sunny_shades", new String[] { "§3", "§b", "§b", "§f", "§e" });
-        COLOR_MAP.put("prefix_scheme_festive_finish", new String[] { "§2", "§c", "§c", "§c", "§2" });
-        COLOR_MAP.put("prefix_scheme_with_a_side_of_skies", new String[] { "§3", "§a", "§a", "§a", "§2" });
-        COLOR_MAP.put("prefix_scheme_overpowered_gloss", new String[] { "§d", "§d", "§b", "§b", "§f" });
-        COLOR_MAP.put("prefix_scheme_the_impossible_varnish", new String[] { "§d", "§a", "§a", "§a", "§f" });
-        COLOR_MAP.put("prefix_scheme_color_of_a_flash", new String[] { "§8", "§f", "§f", "§f", "§8" });
-        COLOR_MAP.put("prefix_scheme_bedding_hues", new String[] { "§c", "§c", "§c", "§f", "§f" });
-        COLOR_MAP.put("prefix_scheme_variety_values", new String[] { "§b", "§f", "§f", "§f", "§b" });
+        COLOR_MAP.put("prefix_scheme_boilerplate_gold", new EnumChatFormatting[] { Color.GOLD });
+        COLOR_MAP.put("prefix_scheme_absorption", new EnumChatFormatting[] { Color.YELLOW });
+        COLOR_MAP.put("prefix_scheme_heavy_dark_green", new EnumChatFormatting[] { Color.DARK_GREEN });
+        COLOR_MAP.put("prefix_scheme_explosive_dark_red", new EnumChatFormatting[] { Color.DARK_RED });
+        COLOR_MAP.put("prefix_scheme_good_ol_gray", new EnumChatFormatting[] { Color.GRAY });
+        COLOR_MAP.put("prefix_scheme_vanilla_white", new EnumChatFormatting[] { Color.WHITE });
+        COLOR_MAP.put("prefix_scheme_ender_green", new EnumChatFormatting[] { Color.GREEN });
+        COLOR_MAP.put("prefix_scheme_platformer_dark_purple", new EnumChatFormatting[] { Color.DARK_PURPLE });
+        COLOR_MAP.put("prefix_scheme_armored_aqua", new EnumChatFormatting[] { Color.AQUA });
+        COLOR_MAP.put("prefix_scheme_pearl_dark_aqua", new EnumChatFormatting[] { Color.DARK_AQUA });
+        COLOR_MAP.put("prefix_scheme_withering_back", new EnumChatFormatting[] { Color.BLACK });
+        COLOR_MAP.put("prefix_scheme_persistent_dark_blue", new EnumChatFormatting[] { Color.DARK_BLUE });
+        COLOR_MAP.put("prefix_scheme_carpeted_light_purple", new EnumChatFormatting[] { Color.LIGHT_PURPLE });
+        COLOR_MAP.put("prefix_scheme_punchable_red", new EnumChatFormatting[] { Color.RED });
+        COLOR_MAP.put("prefix_scheme_drawstring_dark_gray", new EnumChatFormatting[] { Color.DARK_GRAY });
+        COLOR_MAP.put("prefix_scheme_blitz_blue", new EnumChatFormatting[] { Color.BLUE });
+        COLOR_MAP.put("prefix_scheme_blossoms", new EnumChatFormatting[] {
+                Color.DARK_PURPLE, Color.LIGHT_PURPLE, Color.WHITE, Color.LIGHT_PURPLE, Color.WHITE });
+        COLOR_MAP.put("prefix_scheme_ultra_hardcore_undertone", new EnumChatFormatting[] {
+                Color.DARK_GREEN, Color.GREEN, Color.YELLOW, Color.YELLOW, Color.GOLD });
+        COLOR_MAP.put("prefix_scheme_in_case_of_chroma", new EnumChatFormatting[] {
+                Color.DARK_PURPLE, Color.WHITE, Color.BLUE, Color.DARK_BLUE });
+        COLOR_MAP.put("prefix_scheme_elusive_jeremiah_huestring", new EnumChatFormatting[] {
+                Color.DARK_AQUA, Color.GOLD, Color.GOLD, Color.YELLOW, Color.AQUA });
+        COLOR_MAP.put("prefix_scheme_healthy_stain", new EnumChatFormatting[] {
+                Color.DARK_GRAY, Color.GRAY, Color.GRAY, Color.WHITE, Color.RED });
+        COLOR_MAP.put("prefix_scheme_four_team_tie_dye", new EnumChatFormatting[] {
+                Color.YELLOW, Color.GREEN, Color.WHITE, Color.RED, Color.BLUE });
+        COLOR_MAP.put("prefix_scheme_combo_coating", new EnumChatFormatting[] {
+                Color.DARK_RED, Color.RED, Color.GOLD, Color.YELLOW, Color.WHITE });
+        COLOR_MAP.put("prefix_scheme_mythic_pigment", new EnumChatFormatting[] {
+                Color.RED, Color.YELLOW, Color.GREEN, Color.AQUA, Color.LIGHT_PURPLE });
+        COLOR_MAP.put("prefix_scheme_picturesque_firework", new EnumChatFormatting[] {
+                Color.DARK_BLUE, Color.BLUE, Color.WHITE, Color.RED, Color.DARK_RED });
+        COLOR_MAP.put("prefix_scheme_punching_paint", new EnumChatFormatting[] {
+                Color.DARK_RED, Color.DARK_PURPLE, Color.DARK_PURPLE, Color.LIGHT_PURPLE, Color.AQUA });
+        COLOR_MAP.put("prefix_scheme_flint_gradient", new EnumChatFormatting[] {
+                Color.WHITE, Color.GRAY, Color.DARK_GRAY, Color.BLACK, Color.BLACK });
+        COLOR_MAP.put("prefix_scheme_a_splash_of_star", new EnumChatFormatting[] {
+                Color.DARK_BLUE, Color.DARK_AQUA, Color.DARK_AQUA, Color.AQUA });
+        COLOR_MAP.put("prefix_scheme_sunny_shades", new EnumChatFormatting[] {
+                Color.DARK_AQUA, Color.AQUA, Color.AQUA, Color.WHITE, Color.YELLOW });
+        COLOR_MAP.put("prefix_scheme_festive_finish", new EnumChatFormatting[] {
+                Color.DARK_GREEN, Color.RED, Color.RED, Color.RED, Color.DARK_GREEN });
+        COLOR_MAP.put("prefix_scheme_with_a_side_of_skies", new EnumChatFormatting[] {
+                Color.DARK_AQUA, Color.GREEN, Color.GREEN, Color.GREEN, Color.DARK_GREEN });
+        COLOR_MAP.put("prefix_scheme_overpowered_gloss", new EnumChatFormatting[] {
+                Color.LIGHT_PURPLE, Color.LIGHT_PURPLE, Color.AQUA, Color.AQUA, Color.WHITE });
+        COLOR_MAP.put("prefix_scheme_the_impossible_varnish", new EnumChatFormatting[] {
+                Color.LIGHT_PURPLE, Color.GREEN, Color.GREEN, Color.GREEN, Color.WHITE });
+        COLOR_MAP.put("prefix_scheme_color_of_a_flash", new EnumChatFormatting[] {
+                Color.DARK_GRAY, Color.WHITE, Color.WHITE, Color.WHITE, Color.DARK_GRAY });
+        COLOR_MAP.put("prefix_scheme_bedding_hues", new EnumChatFormatting[] {
+                Color.RED, Color.RED, Color.RED, Color.WHITE, Color.WHITE });
+        COLOR_MAP.put("prefix_scheme_variety_values", new EnumChatFormatting[] {
+                Color.AQUA, Color.WHITE, Color.WHITE, Color.WHITE, Color.AQUA });
     }
 
     public static void fetchStats(String inputName, String mode) {
@@ -98,18 +121,9 @@ public class DuelsUpdated {
                     schemeName = stats.get("active_prefix_scheme").getAsString();
                 }
 
-                String[] schemeColors = null;
-                if (schemeName != null && COLOR_MAP.containsKey(schemeName)) {
-                    schemeColors = COLOR_MAP.get(schemeName);
-
-                    if (wins > 100_000) {
-                        for (int i = 0; i < schemeColors.length; i++) {
-                            if (schemeColors[i].startsWith("§") && schemeColors[i].length() >= 2) {
-                                schemeColors[i] = schemeColors[i].substring(0, 2) + "§l" + schemeColors[i].substring(2);
-                            }
-                        }
-                    }
-                }
+                EnumChatFormatting[] schemeColors =
+                        schemeName != null ? COLOR_MAP.get(schemeName) : null;
+                boolean boldScheme = wins > 100_000;
 
                 String rawTitle = mode != null ? Duels.getColoredTitle(wins, false)
                         : Duels.getColoredTitle(wins, true);
@@ -120,22 +134,25 @@ public class DuelsUpdated {
                 String titleWithScheme = plainTitle;
                 String modeWithScheme = plainMode;
                 if (schemeColors != null) {
-                    titleWithScheme = applyColorGradient(plainTitle, schemeColors);
-                    modeWithScheme = applyColorGradient(plainMode, schemeColors);
+                    titleWithScheme = applyColorGradient(plainTitle, schemeColors, boldScheme);
+                    modeWithScheme = applyColorGradient(plainMode, schemeColors, boldScheme);
                 }
 
                 String modeAndTitle = (modeWithScheme.isEmpty() ? "" : modeWithScheme + " ") + titleWithScheme;
 
                 if (auto) {
-                    Chat.send(String.format("§8[§cS§8]§6 %s %s §7| Wins: %s §7| WLR: %s",
+                    Chat.send(String.format(Color.DARK_GRAY + "[" + Color.RED + "S" + Color.DARK_GRAY + "]"
+                                    + Color.GOLD + " %s %s " + Color.GRAY + "| Wins: %s " + Color.GRAY + "| WLR: %s",
                             modeAndTitle, coloredPlayerName, formattedWins, coloredWLR));
                 } else {
                     if (mode == null) {
                         Chat.send(Messages.DUELS_STATS);
                     } else {
-                        Chat.send(String.format(Messages.DUELS_STATS + "§7[§e%s§7]", modeDisplay));
+                        Chat.send(String.format(Messages.DUELS_STATS + Color.GRAY + "[" + Color.YELLOW + "%s"
+                                + Color.GRAY + "]", modeDisplay));
                     }
-                    Chat.send(String.format("§c ||§6 %s %s §7| Wins: %s §7| WLR: %s",
+                    Chat.send(String.format(Color.RED + " ||" + Color.GOLD + " %s %s " + Color.GRAY
+                                    + "| Wins: %s " + Color.GRAY + "| WLR: %s",
                             modeAndTitle, coloredPlayerName, formattedWins, coloredWLR));
                 }
 
@@ -145,16 +162,23 @@ public class DuelsUpdated {
         }, "DuelsUpdated").start();
     }
 
-    private static String applyColorGradient(String text, String[] colors) {
+    private static String applyColorGradient(String text, EnumChatFormatting[] colors, boolean bold) {
         StringBuilder sb = new StringBuilder();
         int colorCount = colors.length;
         if (colorCount == 1) {
-            sb.append(colors[0]).append(text);
+            sb.append(colors[0]);
+            if (bold) {
+                sb.append(Color.BOLD);
+            }
+            sb.append(text);
             return sb.toString();
         }
         for (int i = 0; i < text.length(); i++) {
-            String color = colors[Math.min(i, colorCount - 1)];
-            sb.append(color).append(text.charAt(i));
+            sb.append(colors[Math.min(i, colorCount - 1)]);
+            if (bold) {
+                sb.append(Color.BOLD);
+            }
+            sb.append(text.charAt(i));
         }
         return sb.toString();
     }

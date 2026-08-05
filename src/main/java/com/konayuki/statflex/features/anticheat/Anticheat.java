@@ -230,7 +230,7 @@ public final class Anticheat {
         }
 
         String displayName = player.getDisplayName() == null ? player.getName() : player.getDisplayName().getFormattedText();
-        Chat.send(Messages.PREFIX + "§e" + displayName + " §7flagged §c" + cheat);
+        Chat.send(Messages.PREFIX + Color.YELLOW + displayName + " " + Color.GRAY + "flagged " + Color.RED + cheat);
         if (AnticheatUtil.timeBetween(lastAlert, now) >= 1500L) {
             mc.thePlayer.playSound("note.pling", 1.0F, 1.0F);
             lastAlert = now;

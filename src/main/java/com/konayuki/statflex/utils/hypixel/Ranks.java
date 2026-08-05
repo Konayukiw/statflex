@@ -1,30 +1,33 @@
 package com.konayuki.statflex.utils.hypixel;
 
 import com.google.gson.JsonObject;
+import com.konayuki.statflex.utils.Color;
+
+import net.minecraft.util.EnumChatFormatting;
 
 public final class Ranks {
     private Ranks() {
     }
 
     public static String getColoredPlayerName(JsonObject player, String correctName) {
-        String color = "§7";
+        EnumChatFormatting color = Color.GRAY;
 
         if (player.has("rank")
                 && "YOUTUBER".equalsIgnoreCase(player.get("rank").getAsString())) {
-            color = "§c";
+            color = Color.RED;
         } else if (player.has("monthlyPackageRank")
                 && "SUPERSTAR".equalsIgnoreCase(player.get("monthlyPackageRank").getAsString())) {
-            color = "§6";
+            color = Color.GOLD;
         } else if (player.has("newPackageRank") && !player.get("newPackageRank").isJsonNull()) {
             switch (player.get("newPackageRank").getAsString()) {
                 case "VIP":
                 case "VIP_PLUS":
-                    color = "§a";
+                    color = Color.GREEN;
                     break;
 
                 case "MVP":
                 case "MVP_PLUS":
-                    color = "§b";
+                    color = Color.AQUA;
                     break;
             }
         }

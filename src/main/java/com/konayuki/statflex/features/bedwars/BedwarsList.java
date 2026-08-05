@@ -8,7 +8,9 @@ import com.konayuki.statflex.utils.hypixel.Ranks;
 import com.konayuki.statflex.utils.Debug;
 import com.konayuki.statflex.utils.Toggles;
 import com.konayuki.statflex.utils.Settings;
+import com.konayuki.statflex.utils.Color;
 import com.konayuki.statflex.utils.Messages;
+import com.konayuki.statflex.features.denick.Denick;
 
 import com.google.gson.JsonObject;
 import net.minecraft.client.Minecraft;
@@ -96,6 +98,13 @@ public class BedwarsList {
         Matcher matcher = namePattern.matcher(stripped);
         while (matcher.find()) {
             String name = matcher.group();
+            if (name.equals("online")) {
+                continue;
+            }
+            if (Denick.isNicked(name)) {
+                Debug.log("Skipping nicked player: " + name);
+                continue;
+            }
             if (!targetList.contains(name)) {
                 targetList.add(name);
             }
@@ -106,7 +115,25 @@ public class BedwarsList {
         listBedwarsStats(playerNames, false);
     }
 
-    public static void listBedwarsStats(List<String> playerNames, boolean forceWarn) {
+    public static void listBedwarsStats(List<String> rawPlayerNames, boolean forceWarn) {
+        if (rawPlayerNames.isEmpty()) return;
+
+        List<String> playerNames = new ArrayList<>();
+        for (String name : rawPlayerNames) {
+            if (name == null || name.isEmpty()) {
+                continue;
+            }
+            if (name.equalsIgnoreCase("online")) {
+                continue;
+            }
+            if (Denick.isNicked(name)) {
+                Debug.log("Skipping nicked player: " + name);
+                continue;
+            }
+            if (!playerNames.contains(name)) {
+                playerNames.add(name);
+            }
+        }
         if (playerNames.isEmpty()) return;
 
         if (HypixelApiUtil.getApiKey().equals("N/A")) {
@@ -121,10 +148,6 @@ public class BedwarsList {
         for (String name : playerNames) {
             new Thread(() -> {
                 try {
-                    if (name.toLowerCase().equals("online")) {
-                        return;
-                    }
-
                     HypixelApi.result result = HypixelApi.Fetch(name);
                     if (!result.success) {
                         Debug.log("Failed to fetch " + name + ": " + result.errorCode);
@@ -185,12 +208,14 @@ public class BedwarsList {
                 Chat.send(Messages.BEDWARS_STATS);
 
                 for (PlayerData data : playerDatas) {
-                    Chat.send(data.coloredLevel + " " + data.coloredPlayerName + " §7| Finals: " + data.formattedFinals + " §7| FKDR: " + data.coloredFKDR);
+                    Chat.send(data.coloredLevel + " " + data.coloredPlayerName + " " + Color.GRAY + "| Finals: "
+                            + data.formattedFinals + " " + Color.GRAY + "| FKDR: " + data.coloredFKDR);
                 }
 
                 if (!failedNames.isEmpty()) {
-                    Chat.send(Messages.PREFIX + "§c" + failedNames.size() + "§7/§c" + playerNames.size()
-                            + "§7 failed: §c" + String.join("§7, §c", failedNames));
+                    Chat.send(Messages.PREFIX + Color.RED + failedNames.size() + Color.GRAY + "/" + Color.RED + playerNames.size()
+                            + Color.GRAY + " failed: " + Color.RED
+                            + String.join(Color.GRAY + ", " + Color.RED, failedNames));
                 }
 
                 maybeWarnPlayers(playerDatas, forceWarn);

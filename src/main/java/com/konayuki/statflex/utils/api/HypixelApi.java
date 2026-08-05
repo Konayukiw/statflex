@@ -3,6 +3,7 @@ package com.konayuki.statflex.utils.api;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.konayuki.statflex.utils.Color;
 import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.utils.api.Profile.PlayerInfo;
 import com.konayuki.statflex.utils.chat.Chat;
@@ -75,7 +76,7 @@ public final class HypixelApi {
                 || NAME_NOT_FOUND.equals(result.errorCode)) {
             Chat.send(Messages.PLAYER_NOT_FOUND);
         } else {
-            Chat.send(Messages.FETCH_ERROR + result.properName + "§7| " + result.errorCode);
+            Chat.send(Messages.FETCH_ERROR + result.properName + Color.GRAY + "| " + result.errorCode);
         }
     }
 

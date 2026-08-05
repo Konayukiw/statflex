@@ -14,7 +14,14 @@ public final class Toggles {
     public static boolean disableHypixelFeaturesOutsideHypixel;
     public static boolean discordRpc;
 
+    private static final String ENABLED = Color.AQUA.toString() + Color.BOLD + "Enabled";
+    private static final String DISABLED = Color.RED.toString() + Color.BOLD + "Disabled";
+
     private Toggles() {
+    }
+
+    private static void announce(String label, boolean enabled) {
+        Chat.send(Messages.PREFIX + label + " has been " + (enabled ? ENABLED : DISABLED));
     }
 
     public static void syncFromSettings(Settings settings) {
@@ -74,9 +81,7 @@ public final class Toggles {
         Settings.getInstance().listStatsEnabled = listStats;
         Settings.save();
         if (!silent) {
-            Chat.send(listStats
-                    ? "§8[§cS§8]§7 Stats list has been §b§lEnabled"
-                    : "§8[§cS§8]§7 Stats list has been §c§lDisabled");
+            announce("Stats list", listStats);
         }
     }
 
@@ -85,9 +90,7 @@ public final class Toggles {
         Settings.getInstance().skywarsListStatsEnabled = skywarsListStats;
         Settings.save();
         if (!silent) {
-            Chat.send(skywarsListStats
-                    ? "§8[§cS§8]§7 Skywars stats list has been §b§lEnabled"
-                    : "§8[§cS§8]§7 Skywars stats list has been §c§lDisabled");
+            announce("Skywars stats list", skywarsListStats);
         }
     }
 
@@ -96,9 +99,7 @@ public final class Toggles {
         Settings.getInstance().autoStatsEnabled = autoStats;
         Settings.save();
         if (!silent) {
-            Chat.send(autoStats
-                    ? "§8[§cS§8]§7 Duels Auto-Stats has been §b§lEnabled"
-                    : "§8[§cS§8]§7 Duels Auto-Stats has been §c§lDisabled");
+            announce("Duels Auto-Stats", autoStats);
         }
     }
 
@@ -107,9 +108,7 @@ public final class Toggles {
         Settings.getInstance().denickEnabled = denick;
         Settings.save();
         if (!silent) {
-            Chat.send(denick
-                    ? "§8[§cS§8]§7 Denick has been §b§lEnabled"
-                    : "§8[§cS§8]§7 Denick has been §c§lDisabled");
+            announce("Denick", denick);
         }
     }
 
@@ -118,9 +117,7 @@ public final class Toggles {
         Settings.getInstance().duelsUpdated = duelsUpdated;
         Settings.save();
         if (!silent) {
-            Chat.send(duelsUpdated
-                    ? "§8[§cS§8]§7 Updated Duels Titles has been §b§lEnabled"
-                    : "§8[§cS§8]§7 Updated Duels Titles has been §c§lDisabled");
+            announce("Updated Duels Titles", duelsUpdated);
         }
     }
 
@@ -129,9 +126,7 @@ public final class Toggles {
         Settings.getInstance().ignoreCertificates = ignoreCertificates;
         Settings.save();
         if (!silent) {
-            Chat.send(ignoreCertificates
-                    ? "§8[§cS§8]§7 Secure connection has been §c§lDisabled"
-                    : "§8[§cS§8]§7 Secure connection has been §b§lEnabled");
+            announce("Secure connection", !ignoreCertificates);
         }
     }
 
@@ -140,9 +135,7 @@ public final class Toggles {
         Settings.getInstance().keepWhoEnabled = keepWho;
         Settings.save();
         if (!silent) {
-            Chat.send(keepWho
-                    ? "§8[§cS§8]§7 Original /who keeper has been §b§lEnabled"
-                    : "§8[§cS§8]§7 Original /who keeper has been §c§lDisabled");
+            announce("Original /who keeper", keepWho);
         }
     }
 
@@ -151,9 +144,7 @@ public final class Toggles {
         Settings.getInstance().discordRpcEnabled = discordRpc;
         Settings.save();
         if (!silent) {
-            Chat.send(discordRpc
-                    ? "§8[§cS§8]§7 Discord RPC has been §b§lEnabled"
-                    : "§8[§cS§8]§7 Discord RPC has been §c§lDisabled");
+            announce("Discord RPC", discordRpc);
         }
     }
 
@@ -162,9 +153,7 @@ public final class Toggles {
         Settings.getInstance().disableHypixelFeaturesOutsideHypixel = disableHypixelFeaturesOutsideHypixel;
         Settings.save();
         if (!silent) {
-            Chat.send(disableHypixelFeaturesOutsideHypixel
-                    ? "§8[§cS§8]§7 Auto-off outside Hypixel has been §b§lEnabled"
-                    : "§8[§cS§8]§7 Auto-off outside Hypixel has been §c§lDisabled");
+            announce("Auto-off outside Hypixel", disableHypixelFeaturesOutsideHypixel);
         }
     }
 }
