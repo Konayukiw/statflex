@@ -1,10 +1,10 @@
 package com.konayuki.statflex.utils;
 
-public final class Strip {
-    private Strip() {
+public final class Text {
+    private Text() {
     }
 
-    public static String stripColor(String input) {
+    public static String strip(String input) {
         if (input == null) {
             return "";
         }

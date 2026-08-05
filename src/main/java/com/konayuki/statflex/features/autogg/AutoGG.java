@@ -2,9 +2,9 @@ package com.konayuki.statflex.features.autogg;
 
 import com.konayuki.statflex.utils.Color;
 import com.konayuki.statflex.utils.Debug;
-import com.konayuki.statflex.utils.chat.Chat;
-import com.konayuki.statflex.utils.Settings;
 import com.konayuki.statflex.utils.Messages;
+import com.konayuki.statflex.utils.Setting;
+import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.Strip;
 
 import com.google.gson.*;
@@ -39,14 +39,14 @@ public class AutoGG {
     private volatile int sendIndex = 0;
 
     public AutoGG() {
-        Settings.load();
+        Setting.load();
         reloadMessages();
     }
 
     private void reloadMessages() {
         synchronized (gg) {
             gg.clear();
-            String[] saved = Settings.getInstance().gg;
+            String[] saved = Setting.getInstance().gg;
             if (saved != null) {
                 Collections.addAll(gg, saved);
             } else {
@@ -100,7 +100,7 @@ public class AutoGG {
             for (Pattern pattern : triggers) {
                 if (pattern.matcher(msg).find()) {
                     Debug.log("Trigger matched: " + msg);
-                    Settings.load();
+                    Setting.load();
                     reloadMessages();
                     synchronized (gg) {
                         if (!gg.isEmpty()) {
@@ -148,8 +148,8 @@ public class AutoGG {
                     int idx = Integer.parseInt(args[1]);
                     if (idx >= 0 && idx < gg.size()) {
                         gg.remove(idx);
-                        Settings.getInstance().gg = gg.toArray(new String[0]);
-                        Settings.save();
+                        Setting.getInstance().gg = gg.toArray(new String[0]);
+                        Setting.save();
                         Chat.send(PREFIX + "Removed message.");
                     } else {
                         Chat.send(PREFIX + "Selected message does not exist.");
@@ -160,8 +160,8 @@ public class AutoGG {
             } else {
                 String msg = String.join(" ", args);
                 gg.add(msg);
-                Settings.getInstance().gg = gg.toArray(new String[0]);
-                Settings.save();
+                Setting.getInstance().gg = gg.toArray(new String[0]);
+                Setting.save();
                 Chat.send(PREFIX + "Added message: " + Color.YELLOW + msg);
             }
         }

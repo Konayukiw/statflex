@@ -1,8 +1,8 @@
 package com.konayuki.statflex.features.duels;
 
+import com.konayuki.statflex.utils.Toggle;
 import com.konayuki.statflex.utils.chat.Locraw;
 import com.konayuki.statflex.utils.Strip;
-import com.konayuki.statflex.utils.Toggles;
 
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -17,7 +17,7 @@ public class DuelsList {
 
     @SubscribeEvent
     public void onChatReceived(ClientChatReceivedEvent event) {
-        if (!Toggles.isAutoStats()) {
+        if (!Toggle.isAutoStats()) {
             return;
         }
 
@@ -33,7 +33,7 @@ public class DuelsList {
 
     @SubscribeEvent
     public void onClientTick(net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent event) {
-        if (!Toggles.isAutoStats() || pendingChatLine == null) {
+        if (!Toggle.isAutoStats() || pendingChatLine == null) {
             return;
         }
 

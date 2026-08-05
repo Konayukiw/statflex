@@ -1,10 +1,10 @@
 package com.konayuki.statflex.features.bedwars;
 
+import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.api.HypixelApi;
 import com.konayuki.statflex.utils.hypixel.Ranks;
 import com.konayuki.statflex.utils.Color;
-import com.konayuki.statflex.utils.Messages;
 
 import com.google.gson.JsonObject;
 
@@ -17,9 +17,9 @@ public class Bedwars {
     public static void fetchStats(String inputName, String mode) {
         new Thread(() -> {
             try {
-                HypixelApi.result result = HypixelApi.Fetch(inputName);
+                HypixelApi.result result = HypixelApi.fetch(inputName);
                 if (!result.success) {
-                    HypixelApi.sendError(result);
+                    HypixelApi.error(result);
                     return;
                 }
 
@@ -56,7 +56,7 @@ public class Bedwars {
                 }
 
                 String coloredLevel = getColoredLevel(level);
-                String coloredPlayerName = Ranks.getColoredPlayerName(player, properName);
+                String coloredPlayerName = Ranks.rank(player, properName);
                 String formattedFinals = getFormattedFinals(finals);
                 String coloredFKDR = getColoredFKDR(fkdr);
 

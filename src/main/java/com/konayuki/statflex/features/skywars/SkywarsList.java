@@ -1,12 +1,12 @@
 package com.konayuki.statflex.features.skywars;
 
+import com.konayuki.statflex.utils.Messages;
+import com.konayuki.statflex.utils.Toggle;
 import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.api.HypixelApi;
 import com.konayuki.statflex.utils.hypixel.Ranks;
 import com.konayuki.statflex.utils.Debug;
-import com.konayuki.statflex.utils.Toggles;
 import com.konayuki.statflex.utils.Color;
-import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.features.denick.Denick;
 
 import com.google.gson.JsonObject;
@@ -42,7 +42,7 @@ public class SkywarsList {
 
     @SubscribeEvent
     public void onChat(ClientChatReceivedEvent event) {
-        if (!Toggles.isSkywarsListStats()) {
+        if (!Toggle.isSkywarsListStats()) {
             return;
         }
 
@@ -55,7 +55,7 @@ public class SkywarsList {
         String lower = trimmed.toLowerCase();
 
         if (lower.startsWith("online:")) {
-            if (!Toggles.isKeepWho()) {
+            if (!Toggle.isKeepWho()) {
                 event.setCanceled(true);
             }
             resetSession();
@@ -71,7 +71,7 @@ public class SkywarsList {
         }
 
         if (lower.startsWith("mode:")) {
-            if (!Toggles.isKeepWho()) {
+            if (!Toggle.isKeepWho()) {
                 event.setCanceled(true);
             }
             beginCollection();
@@ -91,7 +91,7 @@ public class SkywarsList {
                 return;
             }
 
-            if (!Toggles.isKeepWho()) {
+            if (!Toggle.isKeepWho()) {
                 event.setCanceled(true);
             }
 
@@ -112,7 +112,7 @@ public class SkywarsList {
         if (event.phase != TickEvent.Phase.END) {
             return;
         }
-        if (!Toggles.isSkywarsListStats() || !collecting.get() || collectionDone.get()) {
+        if (!Toggle.isSkywarsListStats() || !collecting.get() || collectionDone.get()) {
             return;
         }
 
@@ -172,7 +172,7 @@ public class SkywarsList {
         pendingFetches.incrementAndGet();
         new Thread(() -> {
             try {
-                HypixelApi.result result = HypixelApi.Fetch(nameKey);
+                HypixelApi.result result = HypixelApi.fetch(nameKey);
                 if (!result.success) {
                     if (HypixelApi.INVALID_API.equals(result.errorCode)) {
                         if (apiErrorReported.compareAndSet(false, true)) {
@@ -263,7 +263,7 @@ public class SkywarsList {
         int deaths = stats.has("deaths") ? stats.get("deaths").getAsInt() : 1;
         double kdr = deaths == 0 ? kills : (double) kills / deaths;
 
-        String coloredPlayerName = Ranks.getColoredPlayerName(player, properName);
+        String coloredPlayerName = Ranks.rank(player, properName);
         String formattedWins = Skywars.getFormattedWins(wins);
         String coloredKDR = Skywars.getColoredKDR(kdr);
         double score = parseLevelNumber(rawFormatted) * kdr;

@@ -2,7 +2,7 @@ package com.konayuki.statflex.features.anticheat;
 
 import com.konayuki.statflex.utils.*;
 import com.konayuki.statflex.utils.chat.Chat;
-import com.konayuki.statflex.utils.hypixel.isBot;
+import com.konayuki.statflex.utils.hypixel.Bot;
 import com.konayuki.statflex.utils.packet.ReceivedPacketDetector;
 
 import net.minecraft.client.Minecraft;
@@ -87,7 +87,7 @@ public final class Anticheat {
                 && !player.isDead
                 && player.getName() != null
                 && !player.getName().isEmpty()
-                && !isBot.isBot(player);
+                && !Bot.isBot(player);
     }
 
     private AnticheatUtil getData(EntityPlayer player) {
@@ -175,7 +175,7 @@ public final class Anticheat {
 
     private double readFlagInterval() {
         try {
-            Field field = Settings.class.getDeclaredField("flagInterval");
+            Field field = Setting.class.getDeclaredField("flagInterval");
             field.setAccessible(true);
             Object owner = Modifier.isStatic(field.getModifiers()) ? null : findSettingsInstance();
             return toDouble(field.get(owner), 5.0D);
@@ -186,17 +186,17 @@ public final class Anticheat {
 
     private Object findSettingsInstance() {
         try {
-            Field instance = Settings.class.getDeclaredField("INSTANCE");
+            Field instance = Setting.class.getDeclaredField("INSTANCE");
             instance.setAccessible(true);
             return instance.get(null);
         } catch (Throwable ignored) {}
         try {
-            Field instance = Settings.class.getDeclaredField("instance");
+            Field instance = Setting.class.getDeclaredField("instance");
             instance.setAccessible(true);
             return instance.get(null);
         } catch (Throwable ignored) {}
         try {
-            Method getInstance = Settings.class.getDeclaredMethod("getInstance");
+            Method getInstance = Setting.class.getDeclaredMethod("getInstance");
             getInstance.setAccessible(true);
             return getInstance.invoke(null);
         } catch (Throwable ignored) {

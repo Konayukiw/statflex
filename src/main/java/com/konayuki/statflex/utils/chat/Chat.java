@@ -9,7 +9,7 @@ public final class Chat {
     }
 
     public static void send(String message) {
-        runOnClientThread(() -> {
+        run(() -> {
             Minecraft mc = Minecraft.getMinecraft();
             if (mc.thePlayer != null) {
                 mc.thePlayer.addChatMessage(new ChatComponentText(message));
@@ -18,7 +18,7 @@ public final class Chat {
     }
 
     public static void send(IChatComponent component) {
-        runOnClientThread(() -> {
+        run(() -> {
             Minecraft mc = Minecraft.getMinecraft();
             if (mc.thePlayer != null) {
                 mc.thePlayer.addChatMessage(component);
@@ -26,8 +26,8 @@ public final class Chat {
         });
     }
 
-    public static void sendCommand(String command) {
-        runOnClientThread(() -> {
+    public static void command(String command) {
+        run(() -> {
             Minecraft mc = Minecraft.getMinecraft();
             if (mc.thePlayer != null) {
                 mc.thePlayer.sendChatMessage(command);
@@ -35,7 +35,7 @@ public final class Chat {
         });
     }
 
-    public static void runOnClientThread(Runnable task) {
+    public static void run(Runnable task) {
         Minecraft.getMinecraft().addScheduledTask(task);
     }
 }

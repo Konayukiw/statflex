@@ -1,6 +1,6 @@
 package com.konayuki.statflex.utils.api;
 
-import com.konayuki.statflex.utils.Settings;
+import com.konayuki.statflex.utils.Setting;
 
 public final class HypixelApiUtil {
     private static String apiKey = null;
@@ -9,17 +9,17 @@ public final class HypixelApiUtil {
     }
 
     public static void init() {
-        Settings.load();
-        apiKey = Settings.getInstance().apiKey;
+        Setting.load();
+        apiKey = Setting.getInstance().apiKey;
     }
 
-    public static void setApiKey(String key) {
+    public static void set(String key) {
         apiKey = key;
-        Settings.getInstance().apiKey = key;
-        Settings.save();
+        Setting.getInstance().apiKey = key;
+        Setting.save();
     }
 
-    public static String getApiKey() {
+    public static String get() {
         return apiKey != null && !apiKey.isEmpty() ? apiKey : "N/A";
     }
 }

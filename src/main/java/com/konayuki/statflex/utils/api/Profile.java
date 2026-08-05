@@ -15,12 +15,12 @@ public final class Profile {
     private Profile() {
     }
 
-    public static PlayerInfo getPlayerInfo(String name) {
+    public static PlayerInfo info(String name) {
         LookupResult result = lookup(name);
         return result.info;
     }
 
-    public static Boolean nameExists(String name) {
+    public static Boolean exists(String name) {
         LookupResult result = lookup(name);
         switch (result.status) {
             case FOUND:
@@ -40,7 +40,7 @@ public final class Profile {
         try {
             URL url = new URL("https://crafthead.net/profile/" + name);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            Connection.applyIfIgnoringCertificates(conn);
+            Connection.trust(conn);
 
             conn.setRequestMethod("GET");
             conn.setRequestProperty(

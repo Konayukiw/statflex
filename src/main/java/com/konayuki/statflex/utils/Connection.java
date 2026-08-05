@@ -12,13 +12,13 @@ public final class Connection {
     private Connection() {
     }
 
-    public static void applyIfIgnoringCertificates(HttpURLConnection conn) throws Exception {
-        if (Toggles.ignoreCertificates && conn instanceof HttpsURLConnection) {
-            trustAllCertificates((HttpsURLConnection) conn);
+    public static void trust(HttpURLConnection conn) throws Exception {
+        if (Toggle.ignoreCertificates && conn instanceof HttpsURLConnection) {
+            trustAll((HttpsURLConnection) conn);
         }
     }
 
-    public static void trustAllCertificates(HttpsURLConnection conn) throws Exception {
+    public static void trustAll(HttpsURLConnection conn) throws Exception {
         TrustManager[] trustAllCerts = new TrustManager[] {
                 new X509TrustManager() {
                     public void checkClientTrusted(X509Certificate[] chain, String authType) {

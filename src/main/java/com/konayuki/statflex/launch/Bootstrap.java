@@ -65,8 +65,8 @@ public final class Bootstrap {
         try {
             System.setProperty("https.protocols", "TLSv1.2");
 
-            Settings.load();
-            Toggles.syncFromSettings(Settings.getInstance());
+            Setting.load();
+            Toggle.syncFromSettings(Setting.getInstance());
             Anticheat.register();
             PacketUtil.register();
             Commands.register();

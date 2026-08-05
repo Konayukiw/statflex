@@ -2,7 +2,7 @@ package com.konayuki.statflex.features.duels;
 
 import com.konayuki.statflex.utils.Color;
 import com.konayuki.statflex.utils.Messages;
-import com.konayuki.statflex.utils.Strip;
+import com.konayuki.statflex.utils.Text;
 import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.api.HypixelApi;
 import com.konayuki.statflex.utils.hypixel.Ranks;
@@ -84,9 +84,9 @@ public class DuelsUpdated {
     public static void fetchStats(String inputName, String mode, boolean auto) {
         new Thread(() -> {
             try {
-                HypixelApi.result result = HypixelApi.Fetch(inputName);
+                HypixelApi.result result = HypixelApi.fetch(inputName);
                 if (!result.success) {
-                    HypixelApi.sendError(result);
+                    HypixelApi.error(result);
                     return;
                 }
 
@@ -113,7 +113,7 @@ public class DuelsUpdated {
                 }
                 wlr = losses == 0 ? wins : (double) wins / losses;
 
-                String coloredPlayerName = Ranks.getColoredPlayerName(player, properName);
+                String coloredPlayerName = Ranks.rank(player, properName);
                 String formattedWins = Duels.getFormattedWins(wins);
                 String coloredWLR = Duels.getColoredWLR(wlr);
 
@@ -128,9 +128,9 @@ public class DuelsUpdated {
 
                 String rawTitle = mode != null ? Duels.getColoredTitle(wins, false)
                         : Duels.getColoredTitle(wins, true);
-                String plainTitle = Strip.stripColor(rawTitle);
+                String plainTitle = Text.strip(rawTitle);
                 String modeDisplay = mode != null ? Duels.getModeDisplayName(mode.toLowerCase()) : "";
-                String plainMode = modeDisplay == null ? "" : Strip.stripColor(modeDisplay);
+                String plainMode = modeDisplay == null ? "" : Text.strip(modeDisplay);
 
                 String titleWithScheme = plainTitle;
                 String modeWithScheme = plainMode;

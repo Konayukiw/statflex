@@ -30,7 +30,7 @@ public class GuiFonts extends FontRenderer {
 
     public static GuiFonts getInstance() {
         if (instance == null) {
-            instance = new GuiFonts("/assets/fonts/FiraCode.ttf", DEFAULT_FONT_SIZE);
+            instance = new GuiFonts("/assets/fonts/Celik-Display-Pro-Black.ttf", DEFAULT_FONT_SIZE);
         }
         return instance;
     }

@@ -3,11 +3,11 @@ package com.konayuki.statflex.utils.hypixel;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
 
-public final class isHypixel {
-    private isHypixel() {
+public final class Hypixel {
+    private Hypixel() {
     }
 
-    public static boolean isHypixelServer() {
+    public static boolean isHypixel() {
         Minecraft minecraft = Minecraft.getMinecraft();
         if (minecraft == null || minecraft.isSingleplayer()) {
             return false;

@@ -1,10 +1,10 @@
 package com.konayuki.statflex.features.skywars;
 
+import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.api.HypixelApi;
 import com.konayuki.statflex.utils.hypixel.Ranks;
 import com.konayuki.statflex.utils.Color;
-import com.konayuki.statflex.utils.Messages;
 
 import com.google.gson.JsonObject;
 
@@ -17,9 +17,9 @@ public class Skywars {
     public static void fetchStats(String playerName, String mode) {
         new Thread(() -> {
             try {
-                HypixelApi.result result = HypixelApi.Fetch(playerName);
+                HypixelApi.result result = HypixelApi.fetch(playerName);
                 if (!result.success) {
-                    HypixelApi.sendError(result);
+                    HypixelApi.error(result);
                     return;
                 }
 
@@ -41,7 +41,7 @@ public class Skywars {
                         : Color.GRAY + "[N/A]";
 
                 String modeKey = getModeKey(mode);
-                String coloredPlayerName = Ranks.getColoredPlayerName(player, properName);
+                String coloredPlayerName = Ranks.rank(player, properName);
 
                 String killsKey = "kills" + (modeKey != null ? "_" + modeKey : "");
                 String winsKey = "wins" + (modeKey != null ? "_" + modeKey : "");

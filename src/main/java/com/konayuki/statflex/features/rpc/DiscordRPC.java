@@ -2,9 +2,8 @@ package com.konayuki.statflex.features.rpc;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.konayuki.statflex.utils.Debug;
-import com.konayuki.statflex.utils.Settings;
-import com.konayuki.statflex.utils.Toggles;
+import com.konayuki.statflex.utils.Setting;
+import com.konayuki.statflex.utils.Toggle;
 import net.minecraft.client.Minecraft;
 
 import java.io.IOException;
@@ -60,7 +59,7 @@ public class DiscordRPC {
     }
 
     public void onTick() {
-        if (!Toggles.discordRpc) {
+        if (!Toggle.discordRpc) {
             if (connected) {
                 disconnect();
             }
@@ -109,7 +108,7 @@ public class DiscordRPC {
             return;
         }
 
-        String appId = Settings.getInstance().discordRpcApplicationId;
+        String appId = Setting.getInstance().discordRpcApplicationId;
         if (appId == null || appId.isEmpty()) {
             return;
         }
@@ -154,7 +153,7 @@ public class DiscordRPC {
     }
 
     public boolean updatePresence(String playerName, String serverIP) {
-        if (!Toggles.discordRpc) {
+        if (!Toggle.discordRpc) {
             return false;
         }
 

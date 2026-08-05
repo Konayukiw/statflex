@@ -44,8 +44,8 @@ public class Commands implements ICommand {
     private static int openGuiTicks = -1;
     private static String openGuiTab;
 
-    public static void syncFromSettings(Settings settings) {
-        Toggles.syncFromSettings(settings);
+    public static void syncFromSettings(Setting setting) {
+        Toggle.syncFromSettings(setting);
     }
 
     public static synchronized void register() {
@@ -111,9 +111,9 @@ public class Commands implements ICommand {
                 }
                 String key = args[1];
 
-                HypixelApiUtil.setApiKey(key);
-                Settings.getInstance().apiKey = key;
-                Settings.save();
+                HypixelApiUtil.set(key);
+                Setting.getInstance().apiKey = key;
+                Setting.save();
                 Chat.send(Messages.API_SET);
                 break;
 
@@ -152,7 +152,7 @@ public class Commands implements ICommand {
                 }
                 String duelsName = args[1];
                 String duelsMode = (args.length >= 3 && args[2].startsWith("-")) ? args[2].substring(1) : null;
-                if (Toggles.duelsUpdated) {
+                if (Toggle.duelsUpdated) {
                     DuelsUpdated.fetchStats(duelsName, duelsMode);
                 } else {
                     Duels.fetchStats(duelsName, duelsMode);
@@ -160,15 +160,16 @@ public class Commands implements ICommand {
                 break;
 
             case "duelsupdate":
-                Toggles.toggleDuelsUpdate(false);
+                Toggle.toggleDuelsUpdate(false);
                 break;
 
             case "list":
-                Toggles.toggleListStats(false);
+                Toggle.toggleBedwarsListStats(false);
+                Toggle.toggleSkywarsListStats(false);
                 break;
 
             case "auto":
-                Toggles.toggleAutoStats(false);
+                Toggle.toggleAutoStats(false);
                 break;
 
             case "nh":
@@ -207,21 +208,21 @@ public class Commands implements ICommand {
 
             case "secure":
             case "secureconnection":
-                Toggles.toggleIgnoreCertificates(false);
+                Toggle.toggleIgnoreCertificates(false);
                 break;
 
             case "denick":
             case "denickEnabled":
-                Toggles.toggleDenick(false);
+                Toggle.toggleDenick(false);
                 break;
 
             case "rpc":
             case "discordrpc":
-                Toggles.toggleDiscordRpc(false);
+                Toggle.toggleDiscordRpc(false);
                 break;
 
             case "keepwho":
-                Toggles.toggleKeepWho(false);
+                Toggle.toggleKeepWho(false);
                 break;
 
             case "warn":
@@ -230,29 +231,29 @@ public class Commands implements ICommand {
                     return;
                 }
                 try {
-                    Settings settings = Settings.getInstance();
+                    Setting setting = Setting.getInstance();
 
                     if (args.length == 2) {
                         if (args[1].contains(".")) {
-                            settings.warnLevel = 0;
-                            settings.warnFKDR = Double.parseDouble(args[1]);
+                            setting.warnLevel = 0;
+                            setting.warnFKDR = Double.parseDouble(args[1]);
                             Chat.send(Messages.PREFIX + "Players higher than " + Color.YELLOW + Color.BOLD
-                                    + settings.warnFKDR + " FKDR " + Color.GRAY + "will be warned.");
+                                    + setting.warnFKDR + " FKDR " + Color.GRAY + "will be warned.");
                         } else {
-                            settings.warnLevel = Integer.parseInt(args[1]);
-                            settings.warnFKDR = 0;
+                            setting.warnLevel = Integer.parseInt(args[1]);
+                            setting.warnFKDR = 0;
                             Chat.send(Messages.PREFIX + "Players higher than " + Color.YELLOW + Color.BOLD
-                                    + "✫" + settings.warnLevel + Color.GRAY + " will be warned.");
+                                    + "✫" + setting.warnLevel + Color.GRAY + " will be warned.");
                         }
                     } else {
-                        settings.warnLevel = Integer.parseInt(args[1]);
-                        settings.warnFKDR = Double.parseDouble(args[2]);
+                        setting.warnLevel = Integer.parseInt(args[1]);
+                        setting.warnFKDR = Double.parseDouble(args[2]);
                         Chat.send(Messages.PREFIX + "Players higher than " + Color.YELLOW + Color.BOLD
-                                + "✫" + settings.warnLevel + Color.GRAY + ", " + Color.YELLOW + Color.BOLD
-                                + settings.warnFKDR + " FKDR " + Color.GRAY + "will be warned.");
+                                + "✫" + setting.warnLevel + Color.GRAY + ", " + Color.YELLOW + Color.BOLD
+                                + setting.warnFKDR + " FKDR " + Color.GRAY + "will be warned.");
                     }
 
-                    Settings.save();
+                    Setting.save();
                 } catch (NumberFormatException e) {
                     Chat.send(Messages.PREFIX + "Invalid number format.");
                 }
@@ -291,7 +292,7 @@ public class Commands implements ICommand {
                         break;
                     }
 
-                    Settings.getInstance().setSkinSaveDir(dir);
+                    Setting.getInstance().setDir(dir);
 
                     Chat.send(Messages.PREFIX + "Skin save directory set to:" + Color.YELLOW + dir.getAbsolutePath());
                     break;
@@ -306,25 +307,25 @@ public class Commands implements ICommand {
                     String setting = args[1].toLowerCase();
                     switch (setting) {
                         case "liststats":
-                            Toggles.toggleListStats(true);
+                            Toggle.toggleBedwarsListStats(true);
                             break;
                         case "autoduels":
-                            Toggles.toggleAutoStats(true);
+                            Toggle.toggleAutoStats(true);
                             break;
                         case "duelsupdate":
-                            Toggles.toggleDuelsUpdate(true);
+                            Toggle.toggleDuelsUpdate(true);
                             break;
                         case "denick":
                         case "denickEnabled":
-                            Toggles.toggleDenick(true);
+                            Toggle.toggleDenick(true);
                             break;
                         case "autogg":
                             break;
                         case "secure":
-                            Toggles.toggleIgnoreCertificates(true);
+                            Toggle.toggleIgnoreCertificates(true);
                             break;
                         case "keepwho":
-                            Toggles.toggleKeepWho(true);
+                            Toggle.toggleKeepWho(true);
                             break;
                         default:
                             Chat.send(Messages.USAGE);
@@ -350,19 +351,19 @@ public class Commands implements ICommand {
                 Chat.send(BULLET + "/s duels " + Color.YELLOW + "[Player] -[Mode] " + Color.DARK_GRAY + ": " + Color.GRAY + "Shows their Duels stats in-game.");
                 Chat.send(BULLET + "/s nh " + Color.YELLOW + "[Player] " + Color.DARK_GRAY + ": " + Color.GRAY + "Shows their Name History.");
                 Chat.send(BULLET + "/s autogg " + Color.DARK_GRAY + ": " + Color.GRAY + "Shows current AutoGG messages.");
-                Chat.send(BULLET + "/s autogg " + Color.YELLOW + "[Message] " + Color.DARK_GRAY + ": " + Color.GRAY + "Add new AutoGG message.");
+                Chat.send(BULLET + "/s autogg " + Color.YELLOW + "[Messages] " + Color.DARK_GRAY + ": " + Color.GRAY + "Add new AutoGG message.");
                 Chat.send(BULLET + "- Keep it under 9 messages or get blocked for spamming.");
-                Chat.send(BULLET + "/s list " + Color.DARK_GRAY + ": " + Color.GRAY + "Toggles whether the stats list is displayed with /who.");
-                Chat.send(BULLET + "/s auto " + Color.DARK_GRAY + ": " + Color.GRAY + "Toggles auto stats viewer for Duels.");
-                Chat.send(BULLET + "/s denick " + Color.DARK_GRAY + ": " + Color.GRAY + "Toggles Denicker which can denick original skin users.");
+                Chat.send(BULLET + "/s list " + Color.DARK_GRAY + ": " + Color.GRAY + "Toggle whether the stats list is displayed with /who.");
+                Chat.send(BULLET + "/s auto " + Color.DARK_GRAY + ": " + Color.GRAY + "Toggle auto stats viewer for Duels.");
+                Chat.send(BULLET + "/s denick " + Color.DARK_GRAY + ": " + Color.GRAY + "Toggle Denicker which can denick original skin users.");
                 Chat.send(BULLET + "- It's possibly bannable, use at your own risk.");
-                Chat.send(BULLET + "/s keepwho " + Color.DARK_GRAY + ": " + Color.GRAY + "Toggles whether the original /who message remains visible.");
+                Chat.send(BULLET + "/s keepwho " + Color.DARK_GRAY + ": " + Color.GRAY + "Toggle whether the original /who message remains visible.");
                 Chat.send(BULLET + "/s skin " + Color.YELLOW + "[Player] " + Color.DARK_GRAY + ": " + Color.GRAY + "Download their skin locally.");
                 Chat.send(BULLET + "- Add -npcSkin to force saving NPC or Nick Skin if they have existing username.");
                 Chat.send(BULLET + "/s dir " + Color.YELLOW + "[Path] " + Color.DARK_GRAY + ": " + Color.GRAY + "Determines the directory to save skin files.");
                 Chat.send(BULLET + "/s add " + Color.YELLOW + "[Player] [Reason] " + Color.DARK_GRAY + ": " + Color.GRAY + "Reports cheaters to share and notify when you queued them.");
                 Chat.send(BULLET + "/s settings " + Color.DARK_GRAY + ": " + Color.GRAY + "Opens togglable settings");
-                Chat.send(BULLET + "/s secure " + Color.DARK_GRAY + ": " + Color.GRAY + "Toggles secure connections.");
+                Chat.send(BULLET + "/s secure " + Color.DARK_GRAY + ": " + Color.GRAY + "Toggle secure connections.");
                 Chat.send(BULLET + "- This should be disabled if you have errors while getting stats.");
                 Chat.send(BULLET + "- Usually, disabling this is not recommended as it can be insecure.");
                 Chat.send(" ");
@@ -381,7 +382,7 @@ public class Commands implements ICommand {
         if (args.length < 2) {
             Chat.send(Messages.USAGE);
             Chat.send(BULLET + "Current value: " + Color.YELLOW + Color.BOLD
-                    + Settings.getInstance().getFlagInterval() + Color.GRAY + "s");
+                    + Setting.getInstance().flag() + Color.GRAY + "s");
             return;
         }
 
@@ -390,7 +391,7 @@ public class Commands implements ICommand {
             if (value < 0) value = 0;
             if (value > 20) value = 20;
 
-            Settings.getInstance().setFlagInterval(value);
+            Setting.getInstance().setFlag(value);
 
             Chat.send(BULLET + "Set flag interval to " + Color.YELLOW + Color.BOLD + value + Color.GRAY + "s");
         } catch (NumberFormatException e) {
@@ -403,29 +404,29 @@ public class Commands implements ICommand {
     private static void sendSettings() {
         try {
             IChatComponent root = new ChatComponentText(
-                    Color.DARK_GRAY + "[" + Color.RED + "S" + Color.DARK_GRAY + "] " + Color.GRAY + "Settings:\n");
+                    Color.DARK_GRAY + "[" + Color.RED + "S" + Color.DARK_GRAY + "] " + Color.GRAY + "Setting:\n");
 
             String enabled = Color.AQUA.toString() + Color.BOLD + "Enabled";
             String disabled = Color.RED.toString() + Color.BOLD + "Disabled";
 
             String[][] settings = {
-                    { "Denick", Toggles.denick ? enabled : disabled, "denickEnabled",
+                    { "Denick", Toggle.denick ? enabled : disabled, "denickEnabled",
                             "Toggle Denick " + enabled + " / " + disabled + ". \n" + Color.YELLOW
                                     + "Do not use denickEnabled if you want to be fully legit. This may cause of a Hypixel Ban." },
-                    { "Bedwars Stats List", Toggles.listStats ? enabled : disabled, "listStats",
+                    { "Bedwars Stats List", Toggle.listStats ? enabled : disabled, "listStats",
                             "Toggle Auto-Stats List with /who. \n" + Color.YELLOW
                                     + "With this disabled, you can see original /who list." },
-                    { "Auto Duels Stats", Toggles.autoStats ? enabled : disabled, "autoDuels",
+                    { "Auto Duels Stats", Toggle.autoStats ? enabled : disabled, "autoDuels",
                             "Toggle Auto Duels Stats. \n" + Color.YELLOW
                                     + "You can get enemy stats automatically" },
-                    { "Updated Duels Titles", Toggles.duelsUpdated ? enabled : disabled, "duelsUpdated",
+                    { "Updated Duels Titles", Toggle.duelsUpdated ? enabled : disabled, "duelsUpdated",
                             "Toggle New Duels Titles. \n" + Color.YELLOW
                                     + "With this enabled, Duels Title can be shown with updated schemes." },
-                    { "Secure Connection", !Toggles.ignoreCertificates ? enabled : disabled, "secure",
+                    { "Secure Connection", !Toggle.ignoreCertificates ? enabled : disabled, "secure",
                             Color.RED.toString() + Color.BOLD + "Do NOT Enable this! " + Color.YELLOW
                                     + "Only use this to avoid fetching errors. \n" + Color.YELLOW
                                     + "This lets you allow all certificates." },
-                    { "Keep Original /who", Toggles.keepWho ? enabled : disabled, "keepwho",
+                    { "Keep Original /who", Toggle.keepWho ? enabled : disabled, "keepwho",
                             "Keep original /who output visible while Bedwars Stats List Enabled." }
             };
 
@@ -441,7 +442,7 @@ public class Commands implements ICommand {
                 root.appendSibling(line);
             }
 
-            ChatUtil.registerMessage(SETTINGS_CHAT_ID, root);
+            ChatUtil.register(SETTINGS_CHAT_ID, root);
 
         } catch (Exception e) {
             e.printStackTrace();

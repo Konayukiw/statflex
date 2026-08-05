@@ -1,6 +1,6 @@
 package com.konayuki.statflex.utils.chat;
 
-import com.konayuki.statflex.utils.Settings;
+import com.konayuki.statflex.utils.Setting;
 import com.konayuki.statflex.utils.api.HypixelApi;
 import com.konayuki.statflex.utils.hypixel.Ranks;
 import com.konayuki.statflex.features.bedwars.Bedwars;
@@ -11,21 +11,21 @@ import net.minecraft.client.Minecraft;
 
 public class Warn {
 
-    public static void Warn(String playerName) {
+    public static void check(String playerName) {
         if (playerName == null || playerName.isEmpty()) {
             return;
         }
-        int warnLevel = Settings.getInstance().warnLevel;
-        double warnFKDR = Settings.getInstance().warnFKDR;
+        int warnLevel = Setting.getInstance().warnLevel;
+        double warnFKDR = Setting.getInstance().warnFKDR;
         if (warnLevel <= 0 && warnFKDR <= 0) {
             return;
         }
 
         new Thread(() -> {
             try {
-                HypixelApi.result result = HypixelApi.Fetch(playerName);
+                HypixelApi.result result = HypixelApi.fetch(playerName);
                 if (!result.success) {
-                    HypixelApi.sendError(result);
+                    HypixelApi.error(result);
                     return;
                 }
 
@@ -55,7 +55,7 @@ public class Warn {
 
                 BedwarsList.PlayerData data = new BedwarsList.PlayerData(
                         Bedwars.getColoredLevel(level),
-                        Ranks.getColoredPlayerName(player, result.properName),
+                        Ranks.rank(player, result.properName),
                         Bedwars.getFormattedFinals(finals),
                         Bedwars.getColoredFKDR(fkdr),
                         level * fkdr,
@@ -64,13 +64,13 @@ public class Warn {
                         finals,
                         result.properName
                 );
-                sendWarning(buildStatWarning(data));
+                warn(warnStars(data));
             } catch (Exception ignored) {
             }
         }, "Warn").start();
     }
 
-    public static String buildStatWarning(BedwarsList.PlayerData data) {
+    public static String warnStars(BedwarsList.PlayerData data) {
         String starIcon = data.level <= 1099 ? "✫" : "✪";
         String plainLevel = Bedwars.formatLevelPlain(data.level);
         String plainFinals = Bedwars.formatFinalsPlain(data.finals);
@@ -78,7 +78,7 @@ public class Warn {
         return starIcon + plainLevel + " " + data.plainName + " | Finals: " + plainFinals + " | FKDR: " + plainFKDR;
     }
 
-    public static void sendWarning(String warning) {
+    public static void warn(String warning) {
         try {
             Thread.sleep(100);
         } catch (InterruptedException ignored) {

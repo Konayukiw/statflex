@@ -9,7 +9,7 @@ public final class Ranks {
     private Ranks() {
     }
 
-    public static String getColoredPlayerName(JsonObject player, String correctName) {
+    public static String rank(JsonObject player, String correctName) {
         EnumChatFormatting color = Color.GRAY;
 
         if (player.has("rank")

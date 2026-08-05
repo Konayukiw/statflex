@@ -1,11 +1,8 @@
 package com.konayuki.statflex.features.skin;
 
+import com.konayuki.statflex.utils.*;
 import com.konayuki.statflex.utils.chat.Chat;
-import com.konayuki.statflex.utils.Color;
-import com.konayuki.statflex.utils.Connection;
-import com.konayuki.statflex.utils.Messages;
-import com.konayuki.statflex.utils.Settings;
-import com.konayuki.statflex.utils.Toggles;
+import com.konayuki.statflex.utils.Toggle;
 
 import com.google.gson.*;
 
@@ -43,7 +40,7 @@ public class Skin {
                 }
             }
 
-            Profile.PlayerInfo info = Profile.getPlayerInfo(playerName);
+            Profile.PlayerInfo info = Profile.info(playerName);
             if (info == null) {
                 Chat.send(Messages.PREFIX + "Player not found: " + playerName);
                 return;
@@ -89,8 +86,8 @@ public class Skin {
                     (HttpURLConnection) new URL(urlStr).openConnection();
             conn.setRequestProperty("User-Agent", "Mozilla/5.0");
 
-            if (Toggles.ignoreCertificates && conn instanceof HttpsURLConnection) {
-                Connection.trustAllCertificates((HttpsURLConnection) conn);
+            if (Toggle.ignoreCertificates && conn instanceof HttpsURLConnection) {
+                Connection.trustAll((HttpsURLConnection) conn);
             }
 
             if (conn.getResponseCode() != 200) {
@@ -178,8 +175,8 @@ public class Skin {
                     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                             + "(KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36");
 
-            if (Toggles.ignoreCertificates && conn instanceof HttpsURLConnection) {
-                Connection.trustAllCertificates((HttpsURLConnection) conn);
+            if (Toggle.ignoreCertificates && conn instanceof HttpsURLConnection) {
+                Connection.trustAll((HttpsURLConnection) conn);
             }
 
             BufferedImage image;
@@ -187,7 +184,7 @@ public class Skin {
                 image = ImageIO.read(in);
             }
 
-            File downloadDir = Settings.getInstance().getSkinSaveDir();
+            File downloadDir = Setting.getInstance().dir();
             if (!downloadDir.exists()) downloadDir.mkdirs();
 
             File out =

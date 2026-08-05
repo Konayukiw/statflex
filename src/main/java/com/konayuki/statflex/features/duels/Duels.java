@@ -1,10 +1,10 @@
 package com.konayuki.statflex.features.duels;
 
+import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.api.HypixelApi;
 import com.konayuki.statflex.utils.hypixel.Ranks;
 import com.konayuki.statflex.utils.Color;
-import com.konayuki.statflex.utils.Messages;
 
 import com.google.gson.JsonObject;
 
@@ -21,9 +21,9 @@ public class Duels {
     public static void fetchStats(String inputName, String mode, boolean auto) {
         new Thread(() -> {
             try {
-                HypixelApi.result result = HypixelApi.Fetch(inputName);
+                HypixelApi.result result = HypixelApi.fetch(inputName);
                 if (!result.success) {
-                    HypixelApi.sendError(result);
+                    HypixelApi.error(result);
                     return;
                 }
 
@@ -50,7 +50,7 @@ public class Duels {
                 }
                 wlr = losses == 0 ? wins : (double) wins / losses;
 
-                String coloredPlayerName = Ranks.getColoredPlayerName(player, properName);
+                String coloredPlayerName = Ranks.rank(player, properName);
                 String formattedWins = getFormattedWins(wins);
                 String coloredWLR = getColoredWLR(wlr);
                 String modeDisplay = mode != null ? getModeDisplayName(mode.toLowerCase()) : "";

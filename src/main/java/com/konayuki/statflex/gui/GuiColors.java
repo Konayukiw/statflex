@@ -1,6 +1,6 @@
 package com.konayuki.statflex.gui;
 
-import com.konayuki.statflex.utils.Settings;
+import com.konayuki.statflex.utils.Setting;
 
 import java.awt.Color;
 import java.util.LinkedHashMap;
@@ -379,26 +379,26 @@ public final class GuiColors {
         }
     }
 
-    public static void loadFromSettings(Settings settings) {
-        if (settings == null || settings.guiSystemColors == null || settings.guiSystemColors.length != SYSTEM_COLOR_KEYS.length) {
+    public static void loadFromSettings(Setting setting) {
+        if (setting == null || setting.guiSystemColors == null || setting.guiSystemColors.length != SYSTEM_COLOR_KEYS.length) {
             applyDefaults();
             return;
         }
         for (int i = 0; i < SYSTEM_COLOR_KEYS.length; i++) {
-            setSystemColorWithoutRefresh(SYSTEM_COLOR_KEYS[i], settings.guiSystemColors[i]);
+            setSystemColorWithoutRefresh(SYSTEM_COLOR_KEYS[i], setting.guiSystemColors[i]);
         }
         refreshDerived();
     }
 
-    public static void saveToSettings(Settings settings) {
-        if (settings == null) {
+    public static void saveToSettings(Setting setting) {
+        if (setting == null) {
             return;
         }
         int[] colors = new int[SYSTEM_COLOR_KEYS.length];
         for (int i = 0; i < SYSTEM_COLOR_KEYS.length; i++) {
             colors[i] = getSystemColor(SYSTEM_COLOR_KEYS[i]);
         }
-        settings.guiSystemColors = colors;
+        setting.guiSystemColors = colors;
     }
 
     public static Map<String, Integer> snapshotSystemColors() {

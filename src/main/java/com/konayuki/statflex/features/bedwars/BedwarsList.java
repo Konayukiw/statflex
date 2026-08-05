@@ -1,14 +1,11 @@
 package com.konayuki.statflex.features.bedwars;
 
+import com.konayuki.statflex.utils.*;
 import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.chat.Warn;
 import com.konayuki.statflex.utils.api.HypixelApi;
 import com.konayuki.statflex.utils.api.HypixelApiUtil;
 import com.konayuki.statflex.utils.hypixel.Ranks;
-import com.konayuki.statflex.utils.Debug;
-import com.konayuki.statflex.utils.Toggles;
-import com.konayuki.statflex.utils.Settings;
-import com.konayuki.statflex.utils.Color;
 import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.features.denick.Denick;
 
@@ -32,7 +29,7 @@ public class BedwarsList {
 
     @SubscribeEvent
     public void onChat(ClientChatReceivedEvent event) {
-        if (!Toggles.isListStats())
+        if (!Toggle.isListStats())
             return;
 
         String raw = event.message.getUnformattedText();
@@ -41,7 +38,7 @@ public class BedwarsList {
         Minecraft mc = Minecraft.getMinecraft();
 
         if (lower.startsWith("online:")) {
-            if (!Toggles.isKeepWho()) {
+            if (!Toggle.isKeepWho()) {
                 event.setCanceled(true);
             }
 
@@ -136,7 +133,7 @@ public class BedwarsList {
         }
         if (playerNames.isEmpty()) return;
 
-        if (HypixelApiUtil.getApiKey().equals("N/A")) {
+        if (HypixelApiUtil.get().equals("N/A")) {
             Chat.send(Messages.INVALID_API);
             return;
         }
@@ -148,7 +145,7 @@ public class BedwarsList {
         for (String name : playerNames) {
             new Thread(() -> {
                 try {
-                    HypixelApi.result result = HypixelApi.Fetch(name);
+                    HypixelApi.result result = HypixelApi.fetch(name);
                     if (!result.success) {
                         Debug.log("Failed to fetch " + name + ": " + result.errorCode);
                         if (!HypixelApi.NAME_NOT_FOUND.equals(result.errorCode)) {
@@ -179,7 +176,7 @@ public class BedwarsList {
 
                     PlayerData data = new PlayerData(
                             Bedwars.getColoredLevel(level),
-                            Ranks.getColoredPlayerName(player, properName),
+                            Ranks.rank(player, properName),
                             Bedwars.getFormattedFinals(finals),
                             Bedwars.getColoredFKDR(fkdr),
                             level * fkdr,
@@ -218,16 +215,16 @@ public class BedwarsList {
                             + String.join(Color.GRAY + ", " + Color.RED, failedNames));
                 }
 
-                maybeWarnPlayers(playerDatas, forceWarn);
+                warn(playerDatas, forceWarn);
 
             } catch (InterruptedException ignored) {
             }
         }, "BedwarsList").start();
     }
 
-    public static void maybeWarnPlayers(List<PlayerData> playerDatas, boolean forceWarn) {
-        int warnLevel = Settings.getInstance().warnLevel;
-        double warnFKDR = Settings.getInstance().warnFKDR;
+    public static void warn(List<PlayerData> playerDatas, boolean forceWarn) {
+        int warnLevel = Setting.getInstance().warnLevel;
+        double warnFKDR = Setting.getInstance().warnFKDR;
 
         boolean useLevel = warnLevel > 0;
         boolean useFKDR = warnFKDR > 0;
@@ -256,7 +253,7 @@ public class BedwarsList {
                 continue;
             }
 
-            Warn.sendWarning(Warn.buildStatWarning(data));
+            Warn.warn(Warn.warnStars(data));
         }
     }
 

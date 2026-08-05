@@ -3,7 +3,7 @@ package com.konayuki.statflex.update;
 import com.konayuki.statflex.statflex;
 import com.konayuki.statflex.utils.Debug;
 import com.konayuki.statflex.utils.Connection;
-import com.konayuki.statflex.utils.Toggles;
+import com.konayuki.statflex.utils.Toggle;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -42,8 +42,8 @@ public class Update {
         File mcDir = Minecraft.getMinecraft().mcDataDir;
         URLConnection raw = new URL(API_LATEST).openConnection();
         if (raw instanceof HttpsURLConnection) {
-            if (Toggles.ignoreCertificates) {
-                Connection.trustAllCertificates((HttpsURLConnection) raw);
+            if (Toggle.ignoreCertificates) {
+                Connection.trustAll((HttpsURLConnection) raw);
             }
         }
         HttpURLConnection conn = (HttpURLConnection) raw;
@@ -246,9 +246,9 @@ public class Update {
         }
 
         URLConnection raw = new URL(url).openConnection();
-        if (raw instanceof HttpsURLConnection && Toggles.ignoreCertificates) {
+        if (raw instanceof HttpsURLConnection && Toggle.ignoreCertificates) {
             try {
-                Connection.trustAllCertificates((HttpsURLConnection) raw);
+                Connection.trustAll((HttpsURLConnection) raw);
             } catch (Exception e) {
                 e.printStackTrace();
             }

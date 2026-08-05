@@ -5,7 +5,7 @@ import com.konayuki.statflex.utils.api.Profile;
 import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.chat.Warn;
 import com.konayuki.statflex.utils.chat.Locraw;
-import com.konayuki.statflex.utils.hypixel.isBot;
+import com.konayuki.statflex.utils.hypixel.Bot;
 import com.konayuki.statflex.features.bedwars.BedwarsList;
 import com.konayuki.statflex.features.duels.Duels;
 import com.konayuki.statflex.features.skywars.Skywars;
@@ -57,7 +57,7 @@ public class Denick {
         if (mc.thePlayer == null || mc.theWorld == null) {
             return;
         }
-        if (!Toggles.isDenickEnabled())
+        if (!Toggle.isDenickEnabled())
             return;
 
         for (NetworkPlayerInfo npi : mc.getNetHandler().getPlayerInfoMap()) {
@@ -93,7 +93,7 @@ public class Denick {
 
         if (mc.theWorld != null) {
             EntityPlayer entity = mc.theWorld.getPlayerEntityByUUID(profile.getId());
-            if (entity != null && isBot.isBot(entity)) {
+            if (entity != null && Bot.isBot(entity)) {
                 return;
             }
         }
@@ -134,37 +134,21 @@ public class Denick {
                 String profileName = json.has("profileName") ? json.get("profileName").getAsString() : "";
 
                 if (nicks.contains(hash)) {
+                    final String checkName = name;
+
                     if (!profileName.isEmpty() && profileName.equalsIgnoreCase(name)) {
                         return;
                     }
 
                     if (!profileName.isEmpty()) {
-                        markNicked(name);
-                        Chat.send(Messages.PREFIX + Color.RED + " " + profileName + " " + Color.GRAY + "is nicked as "
-                                + Color.RED + name + Color.GRAY + "!");
-
-                        Locraw.getInstance().sendLocraw(new Locraw.LocrawCallback() {
-                            @Override
-                            public void onLocrawReceived(String gameType, String mode) {
-                                processStats(profileName, gameType, mode);
-                            }
-
-                            @Override
-                            public void onLocrawTimeout() {
-                                new Thread(() -> Warn.sendWarning(
-                                        profileName + " (nicked as " + name + ")")).start();
-                            }
-                        });
+                        markNicked(checkName);
+                        Chat.send(Messages.PREFIX + "Found a nicked player:"
+                                + Color.RED + " " + checkName);
                         return;
                     }
 
-                    final String checkName = name;
                     new Thread(() -> {
-                        Boolean exists = Profile.nameExists(checkName);
-                        if (Boolean.TRUE.equals(exists)) {
-                            return;
-                        }
-                        if (Boolean.FALSE.equals(exists)) {
+                        if (Boolean.FALSE.equals(Profile.exists(checkName))) {
                             markNicked(checkName);
                             Chat.send(Messages.PREFIX + "Found a nicked player:"
                                     + Color.RED + " " + checkName);
@@ -177,6 +161,7 @@ public class Denick {
                     markNicked(name);
                     Chat.send(Messages.PREFIX + Color.RED + " " + profileName + " " + Color.GRAY + "is nicked as "
                             + Color.RED + name + Color.GRAY + "!");
+                    Warn.warn(name + " is nicked as " + profileName + "!");
 
                     Locraw.getInstance().sendLocraw(new Locraw.LocrawCallback() {
                         @Override
@@ -186,7 +171,7 @@ public class Denick {
 
                         @Override
                         public void onLocrawTimeout() {
-                            new Thread(() -> Warn.sendWarning(
+                            new Thread(() -> Warn.warn(
                                     profileName + " (nicked as " + name + ")")).start();
                         }
                     });

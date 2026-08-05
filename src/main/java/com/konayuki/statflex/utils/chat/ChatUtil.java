@@ -15,13 +15,13 @@ public final class ChatUtil {
     private ChatUtil() {
     }
 
-    public static int newMessageId() {
+    public static int next() {
         return nextId++;
     }
 
-    public static void registerMessage(int id, IChatComponent message) {
+    public static void register(int id, IChatComponent message) {
         messages.put(Integer.valueOf(id), message);
-        Chat.runOnClientThread(() -> {
+        Chat.run(() -> {
             if (mc.thePlayer != null) {
                 mc.ingameGUI.getChatGUI()
                         .printChatMessageWithOptionalDeletion(message, id);
@@ -29,11 +29,11 @@ public final class ChatUtil {
         });
     }
 
-    public static void hideMessage(int id) {
+    public static void hide(int id) {
         if (messages.containsKey(Integer.valueOf(id))) {
             ChatComponentText empty = new ChatComponentText("");
             int messageId = id;
-            Chat.runOnClientThread(() -> {
+            Chat.run(() -> {
                 mc.ingameGUI.getChatGUI()
                         .printChatMessageWithOptionalDeletion(empty, messageId);
             });
@@ -41,9 +41,9 @@ public final class ChatUtil {
         }
     }
 
-    public static void updateMessage(int id, IChatComponent message) {
+    public static void update(int id, IChatComponent message) {
         messages.put(Integer.valueOf(id), message);
-        Chat.runOnClientThread(() -> {
+        Chat.run(() -> {
             mc.ingameGUI.getChatGUI()
                     .printChatMessageWithOptionalDeletion(message, id);
         });

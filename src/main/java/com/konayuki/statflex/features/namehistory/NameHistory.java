@@ -1,10 +1,10 @@
 package com.konayuki.statflex.features.namehistory;
 
+import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.hypixel.Ranks;
 import com.konayuki.statflex.utils.Color;
 import com.konayuki.statflex.utils.Connection;
-import com.konayuki.statflex.utils.Messages;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -22,7 +22,7 @@ public class NameHistory {
     public static void getNameHistory(String inputName) {
         new Thread(() -> {
             try {
-                Profile.PlayerInfo info = Profile.getPlayerInfo(inputName);
+                Profile.PlayerInfo info = Profile.info(inputName);
                 if (info == null) {
                     Chat.send(Messages.PLAYER_NOT_FOUND + inputName);
                     return;
@@ -42,7 +42,7 @@ public class NameHistory {
                 // conn.setRequestProperty("Accept-Language", "en-US,en;q=0.9");
                 // conn.setRequestProperty("Referer", "https://crafty.gg/");
 
-                Connection.applyIfIgnoringCertificates(conn);
+                Connection.trust(conn);
 
                 InputStreamReader reader = new InputStreamReader(conn.getInputStream());
                 JsonParser parser = new JsonParser();
@@ -66,7 +66,7 @@ public class NameHistory {
                 }
 
                 Chat.send(Messages.PREFIX + Color.AQUA + Color.BOLD + "Name History " + Color.GRAY + "for "
-                        + Ranks.getColoredPlayerName(data, inputName) + " " + Color.GRAY + "|");
+                        + Ranks.rank(data, inputName) + " " + Color.GRAY + "|");
 
                 DateTimeFormatter inputFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
                 DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");

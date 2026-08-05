@@ -3,9 +3,9 @@ package com.konayuki.statflex.utils.hypixel;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 
-public final class isBot {
+public final class Bot {
 
-    private isBot() {}
+    private Bot() {}
 
     public static boolean isBot(Entity entity) {
         if (entity == null || !(entity instanceof EntityPlayer)) {

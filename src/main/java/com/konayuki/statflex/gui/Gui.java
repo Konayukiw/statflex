@@ -12,9 +12,9 @@ import com.konayuki.statflex.gui.elements.Slider;
 import com.konayuki.statflex.gui.elements.Text;
 import com.konayuki.statflex.statflex;
 import com.konayuki.statflex.update.Update;
+import com.konayuki.statflex.utils.Setting;
+import com.konayuki.statflex.utils.Toggle;
 import com.konayuki.statflex.utils.api.HypixelApiUtil;
-import com.konayuki.statflex.utils.Settings;
-import com.konayuki.statflex.utils.Toggles;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiScreen;
@@ -225,7 +225,7 @@ public class Gui extends GuiScreen {
     }
 
     private void populateComponentsForTab(Tab tab) {
-        Settings settings = Settings.getInstance();
+        Setting setting = Setting.getInstance();
         int contentAreaWidth = panelWidth - (panelPadding * 2);
         int actualComponentWidth = Math.min(this.componentWidth, contentAreaWidth);
         int startX = panelX + panelPadding + (contentAreaWidth - actualComponentWidth) / 2;
@@ -234,17 +234,17 @@ public class Gui extends GuiScreen {
         logicalCurrentY += contentPaddingTopForComponents;
 
         if ("General".equals(tab.id)) {
-            populateGeneralTab(tab, startX, actualComponentWidth, settings);
+            populateGeneralTab(tab, startX, actualComponentWidth, setting);
         } else if ("Bedwars".equals(tab.id)) {
-            populateBedwarsTab(tab, startX, actualComponentWidth, settings);
+            populateBedwarsTab(tab, startX, actualComponentWidth, setting);
         } else if ("Skywars".equals(tab.id)) {
             populateSkywarsTab(tab, startX, actualComponentWidth);
         } else if ("Duels".equals(tab.id)) {
             populateDuelsTab(tab, startX, actualComponentWidth);
         } else if ("Hypixel API".equals(tab.id)) {
-            populateHypixelApiTab(tab, startX, actualComponentWidth, settings);
+            populateHypixelApiTab(tab, startX, actualComponentWidth, setting);
         } else if ("Skin".equals(tab.id)) {
-            populateSkinTab(tab, startX, actualComponentWidth, settings);
+            populateSkinTab(tab, startX, actualComponentWidth, setting);
         } else if ("System".equals(tab.id)) {
             populateSystemTab(tab, startX, actualComponentWidth);
         } else if ("Update".equals(tab.id)) {
@@ -255,37 +255,37 @@ public class Gui extends GuiScreen {
         calculateContentScrollingForTab(tab);
     }
 
-    private void populateGeneralTab(Tab tab, int startX, int actualComponentWidth, Settings settings) {
+    private void populateGeneralTab(Tab tab, int startX, int actualComponentWidth, Setting setting) {
         addSectionTitle(tab, startX, actualComponentWidth, "Denick");
         addCheckbox(tab, startX, "Denick",
                 "Detect and reveal nicked players when they join or chat.",
-                Toggles.denick, v -> {
-            Toggles.denick = v;
-            Settings.getInstance().denickEnabled = v;
-            Settings.save();
+                Toggle.denick, v -> {
+            Toggle.denick = v;
+            Setting.getInstance().denickEnabled = v;
+            Setting.save();
         });
 
         addSectionTitle(tab, startX, actualComponentWidth, "Connection");
         addCheckbox(tab, startX, "Secure Connection",
                 "Validate SSL certificates for API and update requests.",
-                !Toggles.ignoreCertificates, v -> {
-            Toggles.ignoreCertificates = !v;
-            Settings.getInstance().ignoreCertificates = !v;
-            Settings.save();
+                !Toggle.ignoreCertificates, v -> {
+            Toggle.ignoreCertificates = !v;
+            Setting.getInstance().ignoreCertificates = !v;
+            Setting.save();
         });
         addCheckbox(tab, startX, "Auto-off Outside Hypixel",
                 "Disable Auto Stats and Denick when not on Hypixel.",
-                Toggles.disableHypixelFeaturesOutsideHypixel, v -> {
-            Toggles.disableHypixelFeaturesOutsideHypixel = v;
-            Settings.getInstance().disableHypixelFeaturesOutsideHypixel = v;
-            Settings.save();
+                Toggle.disableHypixelFeaturesOutsideHypixel, v -> {
+            Toggle.disableHypixelFeaturesOutsideHypixel = v;
+            Setting.getInstance().disableHypixelFeaturesOutsideHypixel = v;
+            Setting.save();
         });
 
         addSectionTitle(tab, startX, actualComponentWidth, "AutoGG");
         autoGGTextFields.clear();
         List<String> messages = resolveAutoGGMessagesForDisplay();
         for (int i = 0; i < messages.size(); i++) {
-            String label = messages.size() == 1 ? "AutoGG Message" : "AutoGG Message " + (i + 1);
+            String label = messages.size() == 1 ? "AutoGG Messages" : "AutoGG Messages " + (i + 1);
             Text field = new Text(
                     getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
                     actualComponentWidth, label, messages.get(i),
@@ -327,9 +327,9 @@ public class Gui extends GuiScreen {
         Slider flagIntervalSlider = new Slider(
                 getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
                 actualComponentWidth, "Anticheat Flag Interval (seconds)",
-                (float) settings.flagInterval, 0f, 20f, 0.5f,
+                (float) setting.flagInterval, 0f, 20f, 0.5f,
                 v -> String.format(Locale.US, "%.1f s", v),
-                v -> Settings.getInstance().setFlagInterval(v)
+                v -> Setting.getInstance().setFlag(v)
         );
         tab.components.add(flagIntervalSlider);
         logicalCurrentY += labelHeightAboveComponent + flagIntervalSlider.height + interComponentSpacing;
@@ -337,19 +337,19 @@ public class Gui extends GuiScreen {
         addSectionTitle(tab, startX, actualComponentWidth, "Discord RPC");
         addCheckbox(tab, startX, "Discord Rich Presence",
                 "Show Minecraft activity on Discord.",
-                Toggles.discordRpc, v -> {
-            Toggles.discordRpc = v;
-            Settings.getInstance().discordRpcEnabled = v;
-            Settings.save();
+                Toggle.discordRpc, v -> {
+            Toggle.discordRpc = v;
+            Setting.getInstance().discordRpcEnabled = v;
+            Setting.save();
         });
-        String appId = settings.discordRpcApplicationId != null ? settings.discordRpcApplicationId : "";
+        String appId = setting.discordRpcApplicationId != null ? setting.discordRpcApplicationId : "";
         Text appIdField = new Text(
                 getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
                 actualComponentWidth, "Discord Application ID", appId,
-                t -> Settings.getInstance().discordRpcApplicationId = t != null ? t.trim() : "",
+                t -> Setting.getInstance().discordRpcApplicationId = t != null ? t.trim() : "",
                 focused -> {
                     if (!focused) {
-                        Settings.save();
+                        Setting.save();
                     }
                 }
         );
@@ -373,20 +373,20 @@ public class Gui extends GuiScreen {
         logicalCurrentY += section.height + 8;
     }
 
-    private void populateBedwarsTab(Tab tab, int startX, int actualComponentWidth, Settings settings) {
+    private void populateBedwarsTab(Tab tab, int startX, int actualComponentWidth, Setting setting) {
         addCheckbox(tab, startX, "Auto Stats",
                 "List Bedwars stats for players by /who.",
-                Toggles.listStats, v -> {
-            Toggles.listStats = v;
-            Settings.getInstance().listStatsEnabled = v;
-            Settings.save();
+                Toggle.listStats, v -> {
+            Toggle.listStats = v;
+            Setting.getInstance().listStatsEnabled = v;
+            Setting.save();
         });
         addCheckbox(tab, startX, "Keep Original /who",
                 "Keep original /who output in chat alongside the stats list.",
-                Toggles.keepWho, v -> {
-            Toggles.keepWho = v;
-            Settings.getInstance().keepWhoEnabled = v;
-            Settings.save();
+                Toggle.keepWho, v -> {
+            Toggle.keepWho = v;
+            Setting.getInstance().keepWhoEnabled = v;
+            Setting.save();
         });
         Label note = new Label(
                 getNextId(), startX, logicalCurrentY, actualComponentWidth,
@@ -398,11 +398,11 @@ public class Gui extends GuiScreen {
         Slider warnLevelSlider = new Slider(
                 getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
                 actualComponentWidth, "Warn by Level",
-                (float) settings.warnLevel, 0f, 3000f, 1f,
+                (float) setting.warnLevel, 0f, 3000f, 1f,
                 v -> v == 0f ? "Disabled" : String.format(Locale.US, "\u272B%.0f", v),
                 v -> {
-                    Settings.getInstance().warnLevel = Math.round(v);
-                    Settings.save();
+                    Setting.getInstance().warnLevel = Math.round(v);
+                    Setting.save();
                 }
         );
         tab.components.add(warnLevelSlider);
@@ -411,11 +411,11 @@ public class Gui extends GuiScreen {
         Slider warnFkdrSlider = new Slider(
                 getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
                 actualComponentWidth, "Warn by FKDR",
-                (float) settings.warnFKDR, 0f, 50f, 0.1f,
+                (float) setting.warnFKDR, 0f, 50f, 0.1f,
                 v -> v == 0f ? "Disabled" : String.format(Locale.US, "%.1f FKDR", v),
                 v -> {
-                    Settings.getInstance().warnFKDR = v;
-                    Settings.save();
+                    Setting.getInstance().warnFKDR = v;
+                    Setting.save();
                 }
         );
         tab.components.add(warnFkdrSlider);
@@ -425,17 +425,17 @@ public class Gui extends GuiScreen {
     private void populateSkywarsTab(Tab tab, int startX, int actualComponentWidth) {
         addCheckbox(tab, startX, "Auto Stats",
                 "List Skywars stats for players by /who.",
-                Toggles.skywarsListStats, v -> {
-            Toggles.skywarsListStats = v;
-            Settings.getInstance().skywarsListStatsEnabled = v;
-            Settings.save();
+                Toggle.skywarsListStats, v -> {
+            Toggle.skywarsListStats = v;
+            Setting.getInstance().skywarsListStatsEnabled = v;
+            Setting.save();
         });
         addCheckbox(tab, startX, "Keep Original /who",
                 "Keep original /who output in chat alongside the stats list.",
-                Toggles.keepWho, v -> {
-            Toggles.keepWho = v;
-            Settings.getInstance().keepWhoEnabled = v;
-            Settings.save();
+                Toggle.keepWho, v -> {
+            Toggle.keepWho = v;
+            Setting.getInstance().keepWhoEnabled = v;
+            Setting.save();
         });
         Label note = new Label(
                 getNextId(), startX, logicalCurrentY, actualComponentWidth,
@@ -448,17 +448,17 @@ public class Gui extends GuiScreen {
     private void populateDuelsTab(Tab tab, int startX, int actualComponentWidth) {
         addCheckbox(tab, startX, "Auto Stats",
                 "Automatically display opponents Duels stats when a match starts.",
-                Toggles.autoStats, v -> {
-            Toggles.autoStats = v;
-            Settings.getInstance().autoStatsEnabled = v;
-            Settings.save();
+                Toggle.autoStats, v -> {
+            Toggle.autoStats = v;
+            Setting.getInstance().autoStatsEnabled = v;
+            Setting.save();
         });
         addCheckbox(tab, startX, "Updated Titles",
                 "Use updated title formatting when displaying Duels stats.",
-                Toggles.duelsUpdated, v -> {
-            Toggles.duelsUpdated = v;
-            Settings.getInstance().duelsUpdated = v;
-            Settings.save();
+                Toggle.duelsUpdated, v -> {
+            Toggle.duelsUpdated = v;
+            Setting.getInstance().duelsUpdated = v;
+            Setting.save();
         });
         if (!tab.components.isEmpty()) {
             logicalCurrentY -= interComponentSpacing;
@@ -482,7 +482,7 @@ public class Gui extends GuiScreen {
                     key, displayName, color,
                     rgb -> {
                         GuiColors.setSystemColor(key, rgb);
-                        Settings.save();
+                        Setting.save();
                     }
             );
             tab.components.add(setting);
@@ -494,7 +494,7 @@ public class Gui extends GuiScreen {
                 "Reset Colors",
                 () -> {
                     GuiColors.applyDefaults();
-                    Settings.save();
+                    Setting.save();
                     rebuildTab("System");
                 }
         );
@@ -502,19 +502,19 @@ public class Gui extends GuiScreen {
         logicalCurrentY += resetButton.height;
     }
 
-    private void populateHypixelApiTab(Tab tab, int startX, int actualComponentWidth, Settings settings) {
-        String apiKey = settings.apiKey != null ? settings.apiKey : "";
+    private void populateHypixelApiTab(Tab tab, int startX, int actualComponentWidth, Setting setting) {
+        String apiKey = setting.apiKey != null ? setting.apiKey : "";
         Text apiKeyField = new Text(
                 getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
                 actualComponentWidth, "Hypixel API Key", apiKey,
-                t -> Settings.getInstance().apiKey = t,
+                t -> Setting.getInstance().apiKey = t,
                 focused -> {
                     if (!focused) {
-                        String key = Settings.getInstance().apiKey;
+                        String key = Setting.getInstance().apiKey;
                         if (key == null) {
                             key = "";
                         }
-                        HypixelApiUtil.setApiKey(key);
+                        HypixelApiUtil.set(key);
                     }
                 }
         );
@@ -529,7 +529,7 @@ public class Gui extends GuiScreen {
         logicalCurrentY += hint.height;
     }
 
-    private void populateSkinTab(Tab tab, int startX, int actualComponentWidth, Settings settings) {
+    private void populateSkinTab(Tab tab, int startX, int actualComponentWidth, Setting setting) {
         final Text[] playerHolder = new Text[1];
         playerHolder[0] = new Text(
                 getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
@@ -558,23 +558,23 @@ public class Gui extends GuiScreen {
         tab.components.add(saveSkinButton);
         logicalCurrentY += saveSkinButton.height + interComponentSpacing;
 
-        String skinDir = settings.skinSaveDir != null ? settings.skinSaveDir : "";
+        String skinDir = setting.skinSaveDir != null ? setting.skinSaveDir : "";
         Text skinDirField = new Text(
                 getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
                 actualComponentWidth, "Skin Save Path (absolute path)", skinDir,
-                t -> Settings.getInstance().skinSaveDir = t != null ? t : "",
+                t -> Setting.getInstance().skinSaveDir = t != null ? t : "",
                 focused -> {
                     if (!focused) {
-                        String path = Settings.getInstance().skinSaveDir;
+                        String path = Setting.getInstance().skinSaveDir;
                         if (path != null && !path.isEmpty()) {
                             File dir = new File(path);
                             if (dir.isAbsolute()) {
-                                Settings.getInstance().setSkinSaveDir(dir);
+                                Setting.getInstance().setDir(dir);
                             } else {
-                                Settings.save();
+                                Setting.save();
                             }
                         } else {
-                            Settings.save();
+                            Setting.save();
                         }
                     }
                 }
@@ -688,7 +688,7 @@ public class Gui extends GuiScreen {
         if (draftAutoGGMessages != null) {
             return new ArrayList<String>(draftAutoGGMessages);
         }
-        String[] saved = Settings.getInstance().gg;
+        String[] saved = Setting.getInstance().gg;
         List<String> list = new ArrayList<String>();
         if (saved != null) {
             for (String m : saved) {
@@ -721,8 +721,8 @@ public class Gui extends GuiScreen {
 
     private void saveAutoGGFromFields() {
         List<String> list = collectAutoGGMessages(false);
-        Settings.getInstance().gg = list.toArray(new String[0]);
-        Settings.save();
+        Setting.getInstance().gg = list.toArray(new String[0]);
+        Setting.save();
         draftAutoGGMessages = null;
     }
 
@@ -1248,7 +1248,7 @@ public class Gui extends GuiScreen {
         if (!autoGGTextFields.isEmpty()) {
             saveAutoGGFromFields();
         }
-        Settings.save();
+        Setting.save();
     }
 
     @Override

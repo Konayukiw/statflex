@@ -9,7 +9,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
-public class Settings {
+public class Setting {
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private static final File configFile = new File("config/sfsettings.json");
 
@@ -31,9 +31,9 @@ public class Settings {
     public String[] gg = new String[0];
     public int[] guiSystemColors = null;
 
-    private static Settings instance;
+    private static Setting instance;
 
-    public static Settings getInstance() {
+    public static Setting getInstance() {
         if (instance == null) {
             load();
         }
@@ -42,19 +42,19 @@ public class Settings {
 
     public static void load() {
         if (!configFile.exists()) {
-            instance = new Settings();
+            instance = new Setting();
             save();
             return;
         }
 
         try (FileReader reader = new FileReader(configFile)) {
-            instance = gson.fromJson(reader, Settings.class);
+            instance = gson.fromJson(reader, Setting.class);
             if (instance == null) {
-                instance = new Settings();
+                instance = new Setting();
             }
         } catch (IOException e) {
             e.printStackTrace();
-            instance = new Settings();
+            instance = new Setting();
         }
         GuiColors.loadFromSettings(instance);
     }
@@ -73,23 +73,23 @@ public class Settings {
         }
     }
 
-    public double getFlagInterval() {
+    public double flag() {
         return flagInterval;
     }
 
-    public void setFlagInterval(double seconds) {
+    public void setFlag(double seconds) {
         this.flagInterval = Math.max(0.0, Math.min(20.0, seconds));
         save();
     }
 
-    public File getSkinSaveDir() {
+    public File dir() {
         if (skinSaveDir == null || skinSaveDir.isEmpty()) {
             return new File(net.minecraft.client.Minecraft.getMinecraft().mcDataDir, "downloads");
         }
         return new File(skinSaveDir);
     }
 
-    public void setSkinSaveDir(File dir) {
+    public void setDir(File dir) {
         this.skinSaveDir = dir.getAbsolutePath();
         save();
     }

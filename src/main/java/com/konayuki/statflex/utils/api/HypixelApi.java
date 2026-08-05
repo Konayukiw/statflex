@@ -21,17 +21,17 @@ public final class HypixelApi {
     private HypixelApi() {
     }
 
-    public static result Fetch(String inputName) {
+    public static result fetch(String inputName) {
         if (inputName == null || inputName.isEmpty()) {
             return result.failure(NAME_NOT_FOUND, null, inputName);
         }
 
-        String apiKey = HypixelApiUtil.getApiKey();
+        String apiKey = HypixelApiUtil.get();
         if (apiKey.equals("N/A")) {
             return result.failure(INVALID_API, null, null);
         }
 
-        PlayerInfo info = Profile.getPlayerInfo(inputName.toLowerCase());
+        PlayerInfo info = Profile.info(inputName.toLowerCase());
         if (info == null) {
             return result.failure(NAME_NOT_FOUND, null, inputName);
         }
@@ -69,7 +69,7 @@ public final class HypixelApi {
         }
     }
 
-    public static void sendError(result result) {
+    public static void error(result result) {
         if (INVALID_API.equals(result.errorCode)) {
             Chat.send(Messages.INVALID_API);
         } else if (PLAYER_NOT_FOUND.equals(result.errorCode)
