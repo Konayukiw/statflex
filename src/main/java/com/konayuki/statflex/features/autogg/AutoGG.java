@@ -3,7 +3,7 @@ package com.konayuki.statflex.features.autogg;
 import com.konayuki.statflex.utils.Debug;
 import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.Settings;
-import com.konayuki.statflex.utils.packet.Messages;
+import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.utils.Strip;
 
 import com.google.gson.*;
