@@ -1,10 +1,12 @@
 package com.konayuki.statflex.features.duels;
 
+import com.konayuki.statflex.utils.Debug;
 import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.api.HypixelApi;
 import com.konayuki.statflex.utils.hypixel.Ranks;
 import com.konayuki.statflex.utils.Color;
+import com.konayuki.statflex.features.denick.Denick;
 
 import com.google.gson.JsonObject;
 
@@ -19,10 +21,21 @@ public class Duels {
     }
 
     public static void fetchStats(String inputName, String mode, boolean auto) {
+        if (auto && Denick.isNicked(inputName)) {
+            Debug.log("Skipping nicked player: " + inputName);
+            return;
+        }
+
         new Thread(() -> {
             try {
                 HypixelApi.result result = HypixelApi.fetch(inputName);
                 if (!result.success) {
+                    // Duels gives us no way to denick, so an opponent with no profile
+                    // is simply nicked: reporting that as a failure is just noise.
+                    if (auto && isUnknownPlayer(result)) {
+                        Debug.log("Skipping " + inputName + ", looks nicked: " + result.errorCode);
+                        return;
+                    }
                     HypixelApi.error(result);
                     return;
                 }
@@ -81,6 +94,12 @@ public class Duels {
                 Chat.send(Messages.FETCH_ERROR + e.getClass().getSimpleName());
             }
         }, "Duels").start();
+    }
+
+    /** True when the lookup failed because no such Hypixel player exists. */
+    private static boolean isUnknownPlayer(HypixelApi.result result) {
+        return HypixelApi.NAME_NOT_FOUND.equals(result.errorCode)
+                || HypixelApi.PLAYER_NOT_FOUND.equals(result.errorCode);
     }
 
     public static String detectMode(String mode) {

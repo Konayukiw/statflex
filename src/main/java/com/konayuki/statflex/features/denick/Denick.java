@@ -5,7 +5,6 @@ import com.konayuki.statflex.utils.api.Profile;
 import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.chat.Warn;
 import com.konayuki.statflex.utils.chat.Locraw;
-import com.konayuki.statflex.utils.hypixel.Bot;
 import com.konayuki.statflex.features.bedwars.BedwarsList;
 import com.konayuki.statflex.features.duels.Duels;
 import com.konayuki.statflex.features.skywars.Skywars;
@@ -15,7 +14,6 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.network.NetworkPlayerInfo;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.IChatComponent;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
@@ -65,8 +63,8 @@ public class Denick {
             if (parsed.contains(name))
                 continue;
 
-            parseSkinData(npi);
-            parsed.add(name);
+            if (parseSkinData(npi))
+                parsed.add(name);
         }
     }
 
@@ -78,9 +76,9 @@ public class Denick {
         }
     }
 
-    public void parseSkinData(NetworkPlayerInfo npi) {
+    public boolean parseSkinData(NetworkPlayerInfo npi) {
         if (npi == null || npi.getGameProfile() == null)
-            return;
+            return true;
 
         GameProfile profile = npi.getGameProfile();
         String name = profile.getName();
@@ -91,32 +89,20 @@ public class Denick {
         String clean = cleanName(displayNameText).trim();
         String normalized = clean.replaceAll("\\s+", "");
 
-        if (mc.theWorld != null) {
-            EntityPlayer entity = mc.theWorld.getPlayerEntityByUUID(profile.getId());
-            if (entity != null && Bot.isBot(entity)) {
-                return;
-            }
-        }
-
         if (normalized.contains("[NPC]") || name.contains("[NPC]")) {
-            return;
-        }
-
-        String pingText = String.valueOf(npi.getResponseTime());
-        pingText = pingText.replaceAll("§.", "").trim();
-
-        if (pingText.contains("?")) {
-            return;
+            return true;
         }
 
         int ping = npi.getResponseTime();
         if (ping <= 0) {
-            return;
+            return false;
         }
 
         if (profile.getId().version() == 2) {
-            return;
+            return true;
         }
+
+        boolean judged = false;
 
         for (Property prop : profile.getProperties().get("textures")) {
             try {
@@ -132,54 +118,68 @@ public class Denick {
 
                 String hash = skin.get("url").getAsString().split("/")[4];
                 String profileName = json.has("profileName") ? json.get("profileName").getAsString() : "";
+                judged = true;
+
+                Debug.log("Denick " + name + ": listed=" + nicks.contains(hash)
+                        + ", profileName=" + (profileName.isEmpty() ? "<none>" : profileName)
+                        + ", hash=" + hash);
 
                 if (nicks.contains(hash)) {
-                    final String checkName = name;
-
+                    // The texture is signed for the account that owns the skin, so a
+                    // matching profileName means this is the real owner wearing it.
                     if (!profileName.isEmpty() && profileName.equalsIgnoreCase(name)) {
-                        return;
+                        return true;
                     }
 
                     if (!profileName.isEmpty()) {
-                        markNicked(checkName);
-                        Chat.send(Messages.PREFIX + "Found a nicked player:"
-                                + Color.RED + " " + checkName);
-                        return;
+                        denick(profileName, name);
+                        return true;
                     }
 
+                    final String checkName = name;
                     new Thread(() -> {
-                        if (Boolean.FALSE.equals(Profile.exists(checkName))) {
+                        Boolean exists = Profile.exists(checkName);
+                        Debug.log("Denick " + checkName + ": no profileName, exists=" + exists);
+                        if (Boolean.FALSE.equals(exists)) {
                             markNicked(checkName);
                             Chat.send(Messages.PREFIX + "Found a nicked player:"
                                     + Color.RED + " " + checkName);
                         }
                     }, "Denick").start();
-                    return;
+                    return true;
                 }
 
                 if (!profileName.isEmpty() && !profileName.equalsIgnoreCase(name)) {
-                    markNicked(name);
-                    Chat.send(Messages.PREFIX + Color.RED + " " + profileName + " " + Color.GRAY + "is nicked as "
-                            + Color.RED + name + Color.GRAY + "!");
-                    Warn.warn(name + " is nicked as " + profileName + "!");
-
-                    Locraw.getInstance().sendLocraw(new Locraw.LocrawCallback() {
-                        @Override
-                        public void onLocrawReceived(String gameType, String mode) {
-                            processStats(profileName, gameType, mode);
-                        }
-
-                        @Override
-                        public void onLocrawTimeout() {
-                            new Thread(() -> Warn.warn(
-                                    profileName + " (nicked as " + name + ")")).start();
-                        }
-                    });
+                    denick(profileName, name);
+                    return true;
                 }
             } catch (Exception e) {
+                judged = true;
                 e.printStackTrace();
             }
         }
+
+        return judged;
+    }
+
+    private void denick(String profileName, String name) {
+        markNicked(name);
+        Chat.send(Messages.PREFIX + Color.RED + " " + profileName + " " + Color.GRAY + "is nicked as "
+                + Color.RED + name + Color.GRAY + "!");
+        new Thread(() -> Warn.warn(name + " is nicked as " + profileName + "!"), "Denick").start();
+
+        Locraw.getInstance().sendLocraw(new Locraw.LocrawCallback() {
+            @Override
+            public void onLocrawReceived(String gameType, String mode) {
+                processStats(profileName, gameType, mode);
+            }
+
+            @Override
+            public void onLocrawTimeout() {
+                new Thread(() -> Warn.warn(
+                        profileName + " (nicked as " + name + ")")).start();
+            }
+        });
     }
 
     private void processStats(String profileName, String gameType, String mode) {
