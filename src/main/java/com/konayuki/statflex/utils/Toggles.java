@@ -1,6 +1,7 @@
 package com.konayuki.statflex.utils;
 
 import com.konayuki.statflex.utils.chat.Chat;
+import com.konayuki.statflex.utils.hypixel.isHypixel;
 
 public final class Toggles {
     public static boolean listStats;
