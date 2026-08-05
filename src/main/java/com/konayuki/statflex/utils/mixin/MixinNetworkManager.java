@@ -20,7 +20,7 @@ public class MixinNetworkManager {
             method = "channelRead0(Lio/netty/channel/ChannelHandlerContext;Lnet/minecraft/network/Packet;)V",
             at = @At("HEAD")
     )
-    private void statflex$receivePacket(ChannelHandlerContext context, Packet<?> packet, CallbackInfo callbackInfo) {
+    private void statflex$receive(ChannelHandlerContext context, Packet<?> packet, CallbackInfo callbackInfo) {
         MinecraftForge.EVENT_BUS.post(new ReceivedPacketDetector(packet));
     }
 }

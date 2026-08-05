@@ -29,7 +29,7 @@ public class BedwarsList {
 
     @SubscribeEvent
     public void onChat(ClientChatReceivedEvent event) {
-        if (!Toggle.isListStats())
+        if (!Toggle.isBwList())
             return;
 
         String raw = event.message.getUnformattedText();
@@ -45,7 +45,7 @@ public class BedwarsList {
             Queue.clear();
             Party.clear();
 
-            extractPlayerNames(stripped, Queue);
+            names(stripped, Queue);
 
             waitingParty = true;
             mc.addScheduledTask(() -> {
@@ -61,57 +61,31 @@ public class BedwarsList {
             if (lower.contains("not currently in a party")) {
                 waitingParty = false;
                 inParty = false;
-                listBedwarsStats(new ArrayList<>(Queue));
+                list(new ArrayList<>(Queue));
                 return;
             }
 
             if (lower.startsWith("party leader") ||
                     lower.startsWith("party moderators")) {
                 inParty = true;
-                extractPlayerNames(stripped, Party);
+                names(stripped, Party);
                 return;
             }
 
             if (lower.startsWith("party members (")) {
                 inParty = true;
-                extractPlayerNames(stripped, Party);
+                names(stripped, Party);
                 waitingParty = false;
-                listBedwarsStats(new ArrayList<>(Queue));
+                list(new ArrayList<>(Queue));
             }
         }
     }
 
-    private void extractPlayerNames(String text, List<String> targetList) {
-        String stripped = EnumChatFormatting.getTextWithoutFormattingCodes(text).toLowerCase();
-
-        stripped = stripped
-                .replace("party leader", "")
-                .replace("party members", "")
-                .replace("party members:", "")
-                .replaceAll("\\[vip\\+\\+\\]|\\[vip\\+\\]|\\[vip\\]|\\[mvp\\+\\+\\]|\\[mvp\\+\\]|\\[mvp\\]|\\[youtube\\]", "");
-
-        stripped = stripped.replaceAll("[^a-z0-9_ ]", " ");
-
-        Matcher matcher = namePattern.matcher(stripped);
-        while (matcher.find()) {
-            String name = matcher.group();
-            if (name.equals("online")) {
-                continue;
-            }
-            if (Denick.check(name)) {
-                continue;
-            }
-            if (!targetList.contains(name)) {
-                targetList.add(name);
-            }
-        }
+    public static void list(List<String> playerNames) {
+        list(playerNames, false);
     }
 
-    public static void listBedwarsStats(List<String> playerNames) {
-        listBedwarsStats(playerNames, false);
-    }
-
-    public static void listBedwarsStats(List<String> rawPlayerNames, boolean forceWarn) {
+    public static void list(List<String> rawPlayerNames, boolean forceWarn) {
         if (rawPlayerNames.isEmpty()) return;
 
         List<String> playerNames = new ArrayList<>();
@@ -122,7 +96,7 @@ public class BedwarsList {
             if (name.equalsIgnoreCase("online")) {
                 continue;
             }
-            if (Denick.check(name)) {
+            if (Denick.isNick(name)) {
                 continue;
             }
             if (!playerNames.contains(name)) {
@@ -146,7 +120,7 @@ public class BedwarsList {
                     HypixelApi.result result = HypixelApi.fetch(name);
                     if (!result.success) {
                         if (HypixelApi.NAME_NOT_FOUND.equals(result.errorCode)) {
-                            Denick.markNicked(name);
+                            Denick.mark(name);
                         } else {
                             failedNames.add(name);
                         }
@@ -174,10 +148,10 @@ public class BedwarsList {
                     double fkdr = deaths == 0 ? finals : (double) finals / deaths;
 
                     PlayerData data = new PlayerData(
-                            Bedwars.getColoredLevel(level),
+                            Bedwars.level(level),
                             Ranks.rank(player, properName),
-                            Bedwars.getFormattedFinals(finals),
-                            Bedwars.getColoredFKDR(fkdr),
+                            Bedwars.finals(finals),
+                            Bedwars.fkdr(fkdr),
                             level * fkdr,
                             level,
                             fkdr,
@@ -221,8 +195,8 @@ public class BedwarsList {
     }
 
     public static void warn(List<PlayerData> playerDatas, boolean forceWarn) {
-        int warnLevel = Setting.getInstance().warnLevel;
-        double warnFKDR = Setting.getInstance().warnFKDR;
+        int warnLevel = Setting.get().warnLevel;
+        double warnFKDR = Setting.get().warnFKDR;
 
         boolean useLevel = warnLevel > 0;
         boolean useFKDR = warnFKDR > 0;
@@ -251,7 +225,33 @@ public class BedwarsList {
                 continue;
             }
 
-            Warn.warn(Warn.warnStars(data));
+            Warn.warn(Warn.format(data));
+        }
+    }
+
+    private void names(String text, List<String> targetList) {
+        String stripped = EnumChatFormatting.getTextWithoutFormattingCodes(text).toLowerCase();
+
+        stripped = stripped
+                .replace("party leader", "")
+                .replace("party members", "")
+                .replace("party members:", "")
+                .replaceAll("\\[vip\\+\\+\\]|\\[vip\\+\\]|\\[vip\\]|\\[mvp\\+\\+\\]|\\[mvp\\+\\]|\\[mvp\\]|\\[youtube\\]", "");
+
+        stripped = stripped.replaceAll("[^a-z0-9_ ]", " ");
+
+        Matcher matcher = namePattern.matcher(stripped);
+        while (matcher.find()) {
+            String name = matcher.group();
+            if (name.equals("online")) {
+                continue;
+            }
+            if (Denick.isNick(name)) {
+                continue;
+            }
+            if (!targetList.contains(name)) {
+                targetList.add(name);
+            }
         }
     }
 

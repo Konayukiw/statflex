@@ -13,8 +13,7 @@ import net.minecraft.util.EnumChatFormatting;
 import java.text.DecimalFormat;
 
 public class Bedwars {
-
-    public static void fetchStats(String inputName, String mode) {
+    public static void stats(String inputName, String mode) {
         new Thread(() -> {
             try {
                 HypixelApi.result result = HypixelApi.fetch(inputName);
@@ -37,7 +36,7 @@ public class Bedwars {
                 double fkdr;
 
                 if (mode != null && !mode.isEmpty()) {
-                    String key = getModeKey(mode);
+                    String key = keyOf(mode);
                     if (key == null) {
                         Chat.send(Messages.INVALID_MODE + mode);
                         return;
@@ -55,16 +54,16 @@ public class Bedwars {
                     fkdr = deaths == 0 ? finals : (double) finals / deaths;
                 }
 
-                String coloredLevel = getColoredLevel(level);
+                String coloredLevel = level(level);
                 String coloredPlayerName = Ranks.rank(player, properName);
-                String formattedFinals = getFormattedFinals(finals);
-                String coloredFKDR = getColoredFKDR(fkdr);
+                String formattedFinals = finals(finals);
+                String coloredFKDR = fkdr(fkdr);
 
                 String line = String.format(Color.RED + " || %s %s " + Color.GRAY + "| Finals: %s "
                         + Color.GRAY + "| FKDR: %s", coloredLevel, coloredPlayerName, formattedFinals, coloredFKDR);
 
                 if (mode != null && !mode.isEmpty()) {
-                    String displayMode = getModeDisplayName(mode.toLowerCase());
+                    String displayMode = nameOf(mode.toLowerCase());
                     if (displayMode == null) displayMode = mode;
                     Chat.send(String.format(Messages.BEDWARS_STATS + Color.GRAY + "[" + Color.YELLOW + "%s"
                             + Color.GRAY + "]", displayMode));
@@ -79,93 +78,7 @@ public class Bedwars {
         }, "Bedwars").start();
     }
 
-    public static String formatLevelPlain(int level) {
-        return String.valueOf(level);
-    }
-
-    public static String formatFinalsPlain(int finals) {
-        return new DecimalFormat("#,###").format(finals);
-    }
-
-    public static String formatFKDRPlain(double fkdr) {
-        return new DecimalFormat("#.##").format(fkdr);
-    }
-
-    private static String getModeKey(String input) {
-        switch (input.toLowerCase()) {
-            case "solo":
-            case "1s":
-                return "eight_one";
-            case "duos":
-            case "doubles":
-            case "2s":
-                return "eight_two";
-            case "threes":
-            case "3s":
-                return "four_three";
-            case "fours":
-            case "4s":
-                return "four_four";
-            case "4v4":
-                return "two_four";
-            case "castle":
-                return "castle";
-            case "armed":
-                return "armed";
-            case "swap":
-                return "swap";
-            case "ultimate":
-            case "ult":
-                return "ultimate";
-            case "rush":
-                return "rush";
-            case "voidless":
-                return "voidless";
-            case "lucky":
-                return "lucky_block";
-            default:
-                return null;
-        }
-    }
-
-    private static String getModeDisplayName(String input) {
-        switch (input.toLowerCase()) {
-            case "solo":
-            case "1s":
-                return "Solo";
-            case "duos":
-            case "doubles":
-            case "2s":
-                return "Doubles";
-            case "threes":
-            case "3s":
-                return "Threes";
-            case "fours":
-            case "4s":
-                return "Fours";
-            case "4v4":
-                return "4v4";
-            case "castle":
-                return "Castle";
-            case "armed":
-                return "Armed";
-            case "swap":
-                return "Swap";
-            case "ultimate":
-            case "ult":
-                return "Ultimate";
-            case "rush":
-                return "Rush";
-            case "voidless":
-                return "Voidless";
-            case "lucky":
-                return "Lucky";
-            default:
-                return null;
-        }
-    }
-
-    public static String getColoredLevel(int level) {
+    public static String level(int level) {
         if (level >= 1000) {
             String levelStr = String.format("%04d", level);
             char[] digits = levelStr.toCharArray();
@@ -267,7 +180,7 @@ public class Bedwars {
         return levelColor + "[" + level + "✫" + levelColor + "]";
     }
 
-    public static String getFormattedFinals(int finals) {
+    public static String finals(int finals) {
         DecimalFormat formatter = new DecimalFormat("#,###");
         EnumChatFormatting color;
         if (finals >= 50000) color = Color.DARK_PURPLE;
@@ -280,7 +193,7 @@ public class Bedwars {
         return color + formatter.format(finals);
     }
 
-    public static String getColoredFKDR(double fkdr) {
+    public static String fkdr(double fkdr) {
         DecimalFormat df = new DecimalFormat("#.##");
         EnumChatFormatting color;
         if (fkdr >= 30) color = Color.DARK_PURPLE;
@@ -291,5 +204,91 @@ public class Bedwars {
         else if (fkdr >= 1) color = Color.WHITE;
         else color = Color.GRAY;
         return color + df.format(fkdr);
+    }
+
+    public static String plainLevel(int level) {
+        return String.valueOf(level);
+    }
+
+    public static String plainFinals(int finals) {
+        return new DecimalFormat("#,###").format(finals);
+    }
+
+    public static String plainFKDR(double fkdr) {
+        return new DecimalFormat("#.##").format(fkdr);
+    }
+
+    private static String keyOf(String input) {
+        switch (input.toLowerCase()) {
+            case "solo":
+            case "1s":
+                return "eight_one";
+            case "duos":
+            case "doubles":
+            case "2s":
+                return "eight_two";
+            case "threes":
+            case "3s":
+                return "four_three";
+            case "fours":
+            case "4s":
+                return "four_four";
+            case "4v4":
+                return "two_four";
+            case "castle":
+                return "castle";
+            case "armed":
+                return "armed";
+            case "swap":
+                return "swap";
+            case "ultimate":
+            case "ult":
+                return "ultimate";
+            case "rush":
+                return "rush";
+            case "voidless":
+                return "voidless";
+            case "lucky":
+                return "lucky_block";
+            default:
+                return null;
+        }
+    }
+
+    private static String nameOf(String input) {
+        switch (input.toLowerCase()) {
+            case "solo":
+            case "1s":
+                return "Solo";
+            case "duos":
+            case "doubles":
+            case "2s":
+                return "Doubles";
+            case "threes":
+            case "3s":
+                return "Threes";
+            case "fours":
+            case "4s":
+                return "Fours";
+            case "4v4":
+                return "4v4";
+            case "castle":
+                return "Castle";
+            case "armed":
+                return "Armed";
+            case "swap":
+                return "Swap";
+            case "ultimate":
+            case "ult":
+                return "Ultimate";
+            case "rush":
+                return "Rush";
+            case "voidless":
+                return "Voidless";
+            case "lucky":
+                return "Lucky";
+            default:
+                return null;
+        }
     }
 }

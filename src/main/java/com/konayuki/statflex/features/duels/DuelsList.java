@@ -11,13 +11,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DuelsList {
-
     private static int tickDelay = 0;
     private static String pendingChatLine = null;
 
     @SubscribeEvent
-    public void onChatReceived(ClientChatReceivedEvent event) {
-        if (!Toggle.isAutoStats()) {
+    public void onChat(ClientChatReceivedEvent event) {
+        if (!Toggle.isAuto()) {
             return;
         }
 
@@ -32,8 +31,8 @@ public class DuelsList {
     }
 
     @SubscribeEvent
-    public void onClientTick(net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent event) {
-        if (!Toggle.isAutoStats() || pendingChatLine == null) {
+    public void onTick(net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent event) {
+        if (!Toggle.isAuto() || pendingChatLine == null) {
             return;
         }
 
@@ -42,25 +41,25 @@ public class DuelsList {
         }
 
         if (--tickDelay <= 0) {
-            processOpponents(pendingChatLine);
+            process(pendingChatLine);
             pendingChatLine = null;
         }
     }
 
-    private void processOpponents(String chatLine) {
-        List<String> opponents = parseOpponents(chatLine);
+    private void process(String chatLine) {
+        List<String> opponents = parse(chatLine);
         if (opponents.isEmpty()) {
             return;
         }
 
-        Locraw.getInstance().sendLocraw(new Locraw.LocrawCallback() {
+        Locraw.get().request(new Locraw.LocrawCallback() {
             @Override
-            public void onLocrawReceived(String gameType, String mode) {
+            public void onReceived(String gameType, String mode) {
                 if ("DUELS".equals(gameType)) {
-                    String detectedMode = Duels.detectMode(mode);
+                    String detectedMode = Duels.detect(mode);
                     for (String playerName : opponents) {
                         try {
-                            Duels.fetchStats(playerName, detectedMode, true);
+                            Duels.stats(playerName, detectedMode, true);
                         } catch (Exception e) {
                         }
                     }
@@ -69,12 +68,12 @@ public class DuelsList {
             }
 
             @Override
-            public void onLocrawTimeout() {
+            public void onTimeout() {
             }
         });
     }
 
-    private List<String> parseOpponents(String chatLine) {
+    private List<String> parse(String chatLine) {
         List<String> opponents = new ArrayList<>();
         try {
             if (!chatLine.contains("Opponent:") && !chatLine.contains("Opponents:")) {

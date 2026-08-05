@@ -13,9 +13,7 @@ import java.nio.ByteOrder;
 import java.util.UUID;
 
 public class DiscordRPC {
-
     private static DiscordRPC instance;
-
     private static final int VERSION = 1;
     private static final int OP_HANDSHAKE = 0;
     private static final int OP_FRAME = 1;
@@ -36,10 +34,9 @@ public class DiscordRPC {
             "\\\\.\\pipe\\discord-ipc-7",
             "\\\\.\\pipe\\discord-ipc-8",
             "\\\\.\\pipe\\discord-ipc-9",
-    };
-
+    }
+;
     private final JsonParser jsonParser = new JsonParser();
-
     private RandomAccessFile pipe;
     private boolean connected = false;
     private int updateTickCounter = 0;
@@ -51,7 +48,7 @@ public class DiscordRPC {
     private DiscordRPC() {
     }
 
-    public static synchronized DiscordRPC getInstance() {
+    public static synchronized DiscordRPC get() {
         if (instance == null) {
             instance = new DiscordRPC();
         }
@@ -95,7 +92,7 @@ public class DiscordRPC {
                 || forceRefreshCounter >= FORCE_REFRESH_TICKS;
 
         if (needUpdate) {
-            if (updatePresence(playerName, serverIP)) {
+            if (update(playerName, serverIP)) {
                 lastPlayerName = playerName;
                 lastServerIP = serverIP;
                 forceRefreshCounter = 0;
@@ -103,56 +100,7 @@ public class DiscordRPC {
         }
     }
 
-    public void connect() {
-        if (connected) {
-            return;
-        }
-
-        String appId = Setting.getInstance().discordRpcApplicationId;
-        if (appId == null || appId.isEmpty()) {
-            return;
-        }
-        appId = appId.trim();
-        if (!appId.matches("\\d{17,20}")) {
-            return;
-        }
-
-        for (String pipeName : PIPE_NAMES) {
-            try {
-                pipe = new RandomAccessFile(pipeName, "rw");
-                if (performHandshake(appId)) {
-                    connected = true;
-                    return;
-                }
-                closePipeQuietly();
-            } catch (Exception e) {
-                closePipeQuietly();
-            }
-        }
-    }
-
-    public void disconnect() {
-        if (!connected && pipe == null) {
-            return;
-        }
-        try {
-            if (pipe != null && connected) {
-                try {
-                    send(OP_FRAME, buildSetActivityJson(null));
-                } catch (Exception ignored) {
-                }
-            }
-        } finally {
-            closePipeQuietly();
-            connected = false;
-            lastServerIP = "";
-            lastPlayerName = "";
-            sessionStartSeconds = 0;
-            forceRefreshCounter = 0;
-        }
-    }
-
-    public boolean updatePresence(String playerName, String serverIP) {
+    public boolean update(String playerName, String serverIP) {
         if (!Toggle.discordRpc) {
             return false;
         }
@@ -188,29 +136,78 @@ public class DiscordRPC {
         activity.add("timestamps", timestamps);
 
         String nonce = UUID.randomUUID().toString();
-        String payload = buildSetActivityJson(activity, nonce);
+        String payload = payload(activity, nonce);
 
         try {
             send(OP_FRAME, payload);
-            if (!awaitCommandResult(nonce)) {
-                markBroken();
+            if (!await(nonce)) {
+                broken();
                 return false;
             }
             return true;
         } catch (IOException e) {
-            markBroken();
+            broken();
             return false;
         }
     }
 
-    private boolean performHandshake(String appId) throws IOException {
+    public void connect() {
+        if (connected) {
+            return;
+        }
+
+        String appId = Setting.get().discordRpcApplicationId;
+        if (appId == null || appId.isEmpty()) {
+            return;
+        }
+        appId = appId.trim();
+        if (!appId.matches("\\d{17,20}")) {
+            return;
+        }
+
+        for (String pipeName : PIPE_NAMES) {
+            try {
+                pipe = new RandomAccessFile(pipeName, "rw");
+                if (handshake(appId)) {
+                    connected = true;
+                    return;
+                }
+                closePipe();
+            } catch (Exception e) {
+                closePipe();
+            }
+        }
+    }
+
+    public void disconnect() {
+        if (!connected && pipe == null) {
+            return;
+        }
+        try {
+            if (pipe != null && connected) {
+                try {
+                    send(OP_FRAME, payload(null));
+                } catch (Exception ignored) {
+                }
+            }
+        } finally {
+            closePipe();
+            connected = false;
+            lastServerIP = "";
+            lastPlayerName = "";
+            sessionStartSeconds = 0;
+            forceRefreshCounter = 0;
+        }
+    }
+
+    private boolean handshake(String appId) throws IOException {
         JsonObject handshake = new JsonObject();
         handshake.addProperty("v", VERSION);
         handshake.addProperty("client_id", appId);
         send(OP_HANDSHAKE, handshake.toString());
 
         for (int i = 0; i < MAX_DRAIN_FRAMES; i++) {
-            Frame frame = readFrame();
+            Frame frame = read();
             if (frame == null) {
                 return false;
             }
@@ -228,7 +225,7 @@ public class DiscordRPC {
                 continue;
             }
 
-            JsonObject body = parseJson(frame.json);
+            JsonObject body = parse(frame.json);
             if (body == null) {
                 continue;
             }
@@ -251,9 +248,9 @@ public class DiscordRPC {
         return false;
     }
 
-    private boolean awaitCommandResult(String nonce) throws IOException {
+    private boolean await(String nonce) throws IOException {
         for (int i = 0; i < MAX_DRAIN_FRAMES; i++) {
-            Frame frame = readFrame();
+            Frame frame = read();
             if (frame == null) {
                 return false;
             }
@@ -271,7 +268,7 @@ public class DiscordRPC {
                 continue;
             }
 
-            JsonObject body = parseJson(frame.json);
+            JsonObject body = parse(frame.json);
             if (body == null) {
                 continue;
             }
@@ -307,17 +304,17 @@ public class DiscordRPC {
         return false;
     }
 
-    private String buildSetActivityJson(JsonObject activity) {
-        return buildSetActivityJson(activity, UUID.randomUUID().toString());
+    private String payload(JsonObject activity) {
+        return payload(activity, UUID.randomUUID().toString());
     }
 
-    private String buildSetActivityJson(JsonObject activity, String nonce) {
+    private String payload(JsonObject activity, String nonce) {
         JsonObject root = new JsonObject();
         root.addProperty("cmd", "SET_ACTIVITY");
         root.addProperty("nonce", nonce);
 
         JsonObject args = new JsonObject();
-        args.addProperty("pid", getPid());
+        args.addProperty("pid", pid());
         if (activity == null) {
             args.add("activity", com.google.gson.JsonNull.INSTANCE);
         } else {
@@ -341,7 +338,7 @@ public class DiscordRPC {
         pipe.write(jsonBytes);
     }
 
-    private Frame readFrame() throws IOException {
+    private Frame read() throws IOException {
         if (pipe == null) {
             return null;
         }
@@ -369,7 +366,7 @@ public class DiscordRPC {
         return new Frame(opcode, json);
     }
 
-    private JsonObject parseJson(String json) {
+    private JsonObject parse(String json) {
         try {
             return jsonParser.parse(json).getAsJsonObject();
         } catch (Exception e) {
@@ -377,12 +374,12 @@ public class DiscordRPC {
         }
     }
 
-    private void markBroken() {
+    private void broken() {
         connected = false;
-        closePipeQuietly();
+        closePipe();
     }
 
-    private void closePipeQuietly() {
+    private void closePipe() {
         if (pipe != null) {
             try {
                 pipe.close();
@@ -392,7 +389,7 @@ public class DiscordRPC {
         }
     }
 
-    private static int getPid() {
+    private static int pid() {
         try {
             String name = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
             int at = name.indexOf('@');

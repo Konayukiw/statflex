@@ -33,20 +33,14 @@ import java.util.Collections;
 import java.util.List;
 
 public class Commands implements ICommand {
-
     private static final String BULLET = Color.RED + " || " + Color.GRAY;
-
     private final List<String> aliases = Arrays.asList("s");
-
     private static final AutoGG AUTO_GG_HANDLER = new AutoGG();
     public static final Minecraft mc = Minecraft.getMinecraft();
     private static boolean registered;
     private static int openGuiTicks = -1;
     private static String openGuiTab;
-
-    public static void syncFromSettings(Setting setting) {
-        Toggle.syncFromSettings(setting);
-    }
+    private static final int SETTINGS_CHAT_ID = 99999;
 
     public static synchronized void register() {
         if (registered) {
@@ -59,47 +53,10 @@ public class Commands implements ICommand {
         registered = true;
     }
 
-    @SubscribeEvent
-    public void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
-            return;
-        }
-        if (openGuiTicks < 0) {
-            return;
-        }
-        openGuiTicks--;
-        if (openGuiTicks != 0) {
-            return;
-        }
-        String tab = openGuiTab;
-        openGuiTab = null;
-        mc.displayGuiScreen(new Gui(tab));
-    }
-
-    private static void openGui(String tabId) {
-        openGuiTab = tabId;
-        openGuiTicks = 1;
-    }
-
-    @Override
-    public String getCommandName() {
-        return "s";
-    }
-
-    @Override
-    public String getCommandUsage(ICommandSender sender) {
-        return Messages.USAGE;
-    }
-
-    @Override
-    public List<String> getCommandAliases() {
-        return aliases;
-    }
-
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
         if (args.length < 1) {
-            openGui(null);
+            open(null);
             return;
         }
 
@@ -112,14 +69,14 @@ public class Commands implements ICommand {
                 String key = args[1];
 
                 HypixelApiUtil.set(key);
-                Setting.getInstance().apiKey = key;
+                Setting.get().apiKey = key;
                 Setting.save();
                 Chat.send(Messages.API_SET);
                 break;
 
             case "flag":
             case "interval":
-                handleFlagCommand(sender, args);
+                flag(sender, args);
                 break;
 
             case "bw":
@@ -130,7 +87,7 @@ public class Commands implements ICommand {
                 }
                 String bwName = args[1];
                 String bwMode = (args.length >= 3 && args[2].startsWith("-")) ? args[2].substring(1) : null;
-                Bedwars.fetchStats(bwName, bwMode);
+                Bedwars.stats(bwName, bwMode);
                 break;
 
             case "sw":
@@ -142,7 +99,7 @@ public class Commands implements ICommand {
                 }
                 String swName = args[1];
                 String swMode = (args.length >= 3 && args[2].startsWith("-")) ? args[2].substring(1) : null;
-                Skywars.fetchStats(swName, swMode);
+                Skywars.stats(swName, swMode);
                 break;
 
             case "duels":
@@ -153,23 +110,23 @@ public class Commands implements ICommand {
                 String duelsName = args[1];
                 String duelsMode = (args.length >= 3 && args[2].startsWith("-")) ? args[2].substring(1) : null;
                 if (Toggle.duelsUpdated) {
-                    DuelsUpdated.fetchStats(duelsName, duelsMode);
+                    DuelsUpdated.stats(duelsName, duelsMode);
                 } else {
-                    Duels.fetchStats(duelsName, duelsMode);
+                    Duels.stats(duelsName, duelsMode);
                 }
                 break;
 
             case "duelsupdate":
-                Toggle.toggleDuelsUpdate(false);
+                Toggle.flipNewDuels(false);
                 break;
 
             case "list":
-                Toggle.toggleBedwarsListStats(false);
-                Toggle.toggleSkywarsListStats(false);
+                Toggle.flipBwList(false);
+                Toggle.flipSwList(false);
                 break;
 
             case "auto":
-                Toggle.toggleAutoStats(false);
+                Toggle.flipAuto(false);
                 break;
 
             case "nh":
@@ -177,7 +134,7 @@ public class Commands implements ICommand {
                 if (args.length >= 2) {
                     if (args[0].equalsIgnoreCase("nh") || args[0].equalsIgnoreCase("namehistory")) {
                         String targetName = args[1];
-                        NameHistory.getNameHistory(targetName);
+                        NameHistory.show(targetName);
                         return;
                     }
                 }
@@ -194,35 +151,35 @@ public class Commands implements ICommand {
                 if (args.length >= 3 && args[2].equalsIgnoreCase("-npcskin")) {
                     useNpcSkin = true;
                 }
-                Skin.savePlayerSkinAsync(skinPlayerName, useNpcSkin);
+                Skin.save(skinPlayerName, useNpcSkin);
                 break;
 
             case "autogg":
                 if (args.length == 1) {
-                    AUTO_GG_HANDLER.showMessages();
+                    AUTO_GG_HANDLER.show();
                 } else {
                     String[] messageArgs = Arrays.copyOfRange(args, 1, args.length);
-                    AUTO_GG_HANDLER.handleCommand(messageArgs);
+                    AUTO_GG_HANDLER.command(messageArgs);
                 }
                 break;
 
             case "secure":
             case "secureconnection":
-                Toggle.toggleIgnoreCertificates(false);
+                Toggle.flipInsecure(false);
                 break;
 
             case "denick":
             case "denickEnabled":
-                Toggle.toggleDenick(false);
+                Toggle.flipDenick(false);
                 break;
 
             case "rpc":
             case "discordrpc":
-                Toggle.toggleDiscordRpc(false);
+                Toggle.flipRpc(false);
                 break;
 
             case "keepwho":
-                Toggle.toggleKeepWho(false);
+                Toggle.flipKeepWho(false);
                 break;
 
             case "warn":
@@ -231,7 +188,7 @@ public class Commands implements ICommand {
                     return;
                 }
                 try {
-                    Setting setting = Setting.getInstance();
+                    Setting setting = Setting.get();
 
                     if (args.length == 2) {
                         if (args[1].contains(".")) {
@@ -260,7 +217,7 @@ public class Commands implements ICommand {
                 break;
 
             case "update":
-                openGui("Update");
+                open("Update");
                 break;
 
             case "dir":
@@ -292,7 +249,7 @@ public class Commands implements ICommand {
                         break;
                     }
 
-                    Setting.getInstance().setDir(dir);
+                    Setting.get().setDir(dir);
 
                     Chat.send(Messages.PREFIX + "Skin save directory set to:" + Color.YELLOW + dir.getAbsolutePath());
                     break;
@@ -307,38 +264,38 @@ public class Commands implements ICommand {
                     String setting = args[1].toLowerCase();
                     switch (setting) {
                         case "liststats":
-                            Toggle.toggleBedwarsListStats(true);
+                            Toggle.flipBwList(true);
                             break;
                         case "autoduels":
-                            Toggle.toggleAutoStats(true);
+                            Toggle.flipAuto(true);
                             break;
                         case "duelsupdate":
-                            Toggle.toggleDuelsUpdate(true);
+                            Toggle.flipNewDuels(true);
                             break;
                         case "denick":
                         case "denickEnabled":
-                            Toggle.toggleDenick(true);
+                            Toggle.flipDenick(true);
                             break;
                         case "autogg":
                             break;
                         case "secure":
-                            Toggle.toggleIgnoreCertificates(true);
+                            Toggle.flipInsecure(true);
                             break;
                         case "keepwho":
-                            Toggle.toggleKeepWho(true);
+                            Toggle.flipKeepWho(true);
                             break;
                         default:
                             Chat.send(Messages.USAGE);
                             return;
                     }
-                    sendSettings();
+                    settings();
                 } else {
                     Chat.send(Messages.INVALID_COMMAND);
                 }
                 break;
 
             case "settings":
-                sendSettings();
+                settings();
                 break;
 
             case "help":
@@ -378,11 +335,11 @@ public class Commands implements ICommand {
         }
     }
 
-    private void handleFlagCommand(ICommandSender sender, String[] args) {
+    private void flag(ICommandSender sender, String[] args) {
         if (args.length < 2) {
             Chat.send(Messages.USAGE);
             Chat.send(BULLET + "Current value: " + Color.YELLOW + Color.BOLD
-                    + Setting.getInstance().flag() + Color.GRAY + "s");
+                    + Setting.get().flag() + Color.GRAY + "s");
             return;
         }
 
@@ -391,7 +348,7 @@ public class Commands implements ICommand {
             if (value < 0) value = 0;
             if (value > 20) value = 20;
 
-            Setting.getInstance().setFlag(value);
+            Setting.get().setFlag(value);
 
             Chat.send(BULLET + "Set flag interval to " + Color.YELLOW + Color.BOLD + value + Color.GRAY + "s");
         } catch (NumberFormatException e) {
@@ -399,9 +356,7 @@ public class Commands implements ICommand {
         }
     }
 
-    private static final int SETTINGS_CHAT_ID = 99999;
-
-    private static void sendSettings() {
+    private static void settings() {
         try {
             IChatComponent root = new ChatComponentText(
                     Color.DARK_GRAY + "[" + Color.RED + "S" + Color.DARK_GRAY + "] " + Color.GRAY + "Setting:\n");
@@ -448,6 +403,47 @@ public class Commands implements ICommand {
             e.printStackTrace();
             Chat.send(Color.DARK_GRAY + "[" + Color.RED + "S" + Color.DARK_GRAY + "] " + Color.GRAY + "Failed to open settings.");
         }
+    }
+
+    private static void open(String tabId) {
+        openGuiTab = tabId;
+        openGuiTicks = 1;
+    }
+
+    @SubscribeEvent
+    public void onTick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) {
+            return;
+        }
+        if (openGuiTicks < 0) {
+            return;
+        }
+        openGuiTicks--;
+        if (openGuiTicks != 0) {
+            return;
+        }
+        String tab = openGuiTab;
+        openGuiTab = null;
+        mc.displayGuiScreen(new Gui(tab));
+    }
+
+    public static void sync(Setting setting) {
+        Toggle.sync(setting);
+    }
+
+    @Override
+    public String getCommandName() {
+        return "s";
+    }
+
+    @Override
+    public String getCommandUsage(ICommandSender sender) {
+        return Messages.USAGE;
+    }
+
+    @Override
+    public List<String> getCommandAliases() {
+        return aliases;
     }
 
     @Override

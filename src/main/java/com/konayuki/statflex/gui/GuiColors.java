@@ -7,10 +7,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class GuiColors {
-
-    private GuiColors() {
-    }
-
     public static final int DEFAULT_PRIMARY_BLUE = new Color(40, 120, 200).getRGB();
     public static final int DEFAULT_PRIMARY_BLUE_BRIGHT = new Color(80, 160, 255).getRGB();
     public static final int DEFAULT_PRIMARY_BLUE_DARK = new Color(20, 90, 150).getRGB();
@@ -45,7 +41,8 @@ public final class GuiColors {
             "TEXT_ACCENT",
             "TEXT_DISABLED",
             "TEXT_ON_BLUE_BACKGROUND"
-    };
+    }
+;
 
     public static final String[] SYSTEM_COLOR_LABELS = {
             "Primary Blue",
@@ -64,8 +61,8 @@ public final class GuiColors {
             "Text Accent",
             "Text Disabled",
             "Text On Blue"
-    };
-
+    }
+;
     public static int PRIMARY_BLUE = DEFAULT_PRIMARY_BLUE;
     public static int PRIMARY_BLUE_BRIGHT = DEFAULT_PRIMARY_BLUE_BRIGHT;
     public static int PRIMARY_BLUE_DARK = DEFAULT_PRIMARY_BLUE_DARK;
@@ -143,30 +140,108 @@ public final class GuiColors {
     public static int SUBTLE_SHADOW_COLOR;
 
     static {
-        refreshDerived();
+        derive();
     }
 
-    public static void applyDefaults() {
-        PRIMARY_BLUE = DEFAULT_PRIMARY_BLUE;
-        PRIMARY_BLUE_BRIGHT = DEFAULT_PRIMARY_BLUE_BRIGHT;
-        PRIMARY_BLUE_DARK = DEFAULT_PRIMARY_BLUE_DARK;
-        LIGHT_BLUE = DEFAULT_LIGHT_BLUE;
-        SCREEN_BACKGROUND = DEFAULT_SCREEN_BACKGROUND;
-        COMPONENT_BACKGROUND = DEFAULT_COMPONENT_BACKGROUND;
-        COMPONENT_BACKGROUND_HOVER = DEFAULT_COMPONENT_BACKGROUND_HOVER;
-        COMPONENT_BACKGROUND_DISABLED = DEFAULT_COMPONENT_BACKGROUND_DISABLED;
-        COMPONENT_BORDER = DEFAULT_COMPONENT_BORDER;
-        COMPONENT_BORDER_BLUE = DEFAULT_COMPONENT_BORDER_BLUE;
-        COMPONENT_BORDER_FOCUSED_BLUE = DEFAULT_COMPONENT_BORDER_FOCUSED_BLUE;
-        TEXT_PRIMARY = DEFAULT_TEXT_PRIMARY;
-        TEXT_SECONDARY = DEFAULT_TEXT_SECONDARY;
-        TEXT_ACCENT = DEFAULT_TEXT_ACCENT;
-        TEXT_DISABLED = DEFAULT_TEXT_DISABLED;
-        TEXT_ON_BLUE_BACKGROUND = DEFAULT_TEXT_ON_BLUE_BACKGROUND;
-        refreshDerived();
+    private GuiColors() {
     }
 
-    public static void refreshDerived() {
+    public static int color(String key) {
+        switch (key) {
+            case "PRIMARY_BLUE":
+                return PRIMARY_BLUE;
+            case "PRIMARY_BLUE_BRIGHT":
+                return PRIMARY_BLUE_BRIGHT;
+            case "PRIMARY_BLUE_DARK":
+                return PRIMARY_BLUE_DARK;
+            case "LIGHT_BLUE":
+                return LIGHT_BLUE;
+            case "SCREEN_BACKGROUND":
+                return SCREEN_BACKGROUND;
+            case "COMPONENT_BACKGROUND":
+                return COMPONENT_BACKGROUND;
+            case "COMPONENT_BACKGROUND_HOVER":
+                return COMPONENT_BACKGROUND_HOVER;
+            case "COMPONENT_BACKGROUND_DISABLED":
+                return COMPONENT_BACKGROUND_DISABLED;
+            case "COMPONENT_BORDER":
+                return COMPONENT_BORDER;
+            case "COMPONENT_BORDER_BLUE":
+                return COMPONENT_BORDER_BLUE;
+            case "COMPONENT_BORDER_FOCUSED_BLUE":
+                return COMPONENT_BORDER_FOCUSED_BLUE;
+            case "TEXT_PRIMARY":
+                return TEXT_PRIMARY;
+            case "TEXT_SECONDARY":
+                return TEXT_SECONDARY;
+            case "TEXT_ACCENT":
+                return TEXT_ACCENT;
+            case "TEXT_DISABLED":
+                return TEXT_DISABLED;
+            case "TEXT_ON_BLUE_BACKGROUND":
+                return TEXT_ON_BLUE_BACKGROUND;
+            default:
+                return 0;
+        }
+    }
+
+    public static void set(String key, int rgb) {
+        switch (key) {
+            case "PRIMARY_BLUE":
+                PRIMARY_BLUE = rgb;
+                break;
+            case "PRIMARY_BLUE_BRIGHT":
+                PRIMARY_BLUE_BRIGHT = rgb;
+                break;
+            case "PRIMARY_BLUE_DARK":
+                PRIMARY_BLUE_DARK = rgb;
+                break;
+            case "LIGHT_BLUE":
+                LIGHT_BLUE = rgb;
+                break;
+            case "SCREEN_BACKGROUND":
+                SCREEN_BACKGROUND = rgb;
+                break;
+            case "COMPONENT_BACKGROUND":
+                COMPONENT_BACKGROUND = rgb;
+                break;
+            case "COMPONENT_BACKGROUND_HOVER":
+                COMPONENT_BACKGROUND_HOVER = rgb;
+                break;
+            case "COMPONENT_BACKGROUND_DISABLED":
+                COMPONENT_BACKGROUND_DISABLED = rgb;
+                break;
+            case "COMPONENT_BORDER":
+                COMPONENT_BORDER = rgb;
+                break;
+            case "COMPONENT_BORDER_BLUE":
+                COMPONENT_BORDER_BLUE = rgb;
+                break;
+            case "COMPONENT_BORDER_FOCUSED_BLUE":
+                COMPONENT_BORDER_FOCUSED_BLUE = rgb;
+                break;
+            case "TEXT_PRIMARY":
+                TEXT_PRIMARY = rgb;
+                break;
+            case "TEXT_SECONDARY":
+                TEXT_SECONDARY = rgb;
+                break;
+            case "TEXT_ACCENT":
+                TEXT_ACCENT = rgb;
+                break;
+            case "TEXT_DISABLED":
+                TEXT_DISABLED = rgb;
+                break;
+            case "TEXT_ON_BLUE_BACKGROUND":
+                TEXT_ON_BLUE_BACKGROUND = rgb;
+                break;
+            default:
+                return;
+        }
+        derive();
+    }
+
+    public static void derive() {
         Color textPrimaryAwt = new Color(TEXT_PRIMARY, true);
         TRANSPARENT_TEXT_PRIMARY_VERY_LIGHT = new Color(
                 textPrimaryAwt.getRed(), textPrimaryAwt.getGreen(), textPrimaryAwt.getBlue(), 20).getRGB();
@@ -245,102 +320,49 @@ public final class GuiColors {
         ).getRGB();
     }
 
-    public static int getSystemColor(String key) {
-        switch (key) {
-            case "PRIMARY_BLUE":
-                return PRIMARY_BLUE;
-            case "PRIMARY_BLUE_BRIGHT":
-                return PRIMARY_BLUE_BRIGHT;
-            case "PRIMARY_BLUE_DARK":
-                return PRIMARY_BLUE_DARK;
-            case "LIGHT_BLUE":
-                return LIGHT_BLUE;
-            case "SCREEN_BACKGROUND":
-                return SCREEN_BACKGROUND;
-            case "COMPONENT_BACKGROUND":
-                return COMPONENT_BACKGROUND;
-            case "COMPONENT_BACKGROUND_HOVER":
-                return COMPONENT_BACKGROUND_HOVER;
-            case "COMPONENT_BACKGROUND_DISABLED":
-                return COMPONENT_BACKGROUND_DISABLED;
-            case "COMPONENT_BORDER":
-                return COMPONENT_BORDER;
-            case "COMPONENT_BORDER_BLUE":
-                return COMPONENT_BORDER_BLUE;
-            case "COMPONENT_BORDER_FOCUSED_BLUE":
-                return COMPONENT_BORDER_FOCUSED_BLUE;
-            case "TEXT_PRIMARY":
-                return TEXT_PRIMARY;
-            case "TEXT_SECONDARY":
-                return TEXT_SECONDARY;
-            case "TEXT_ACCENT":
-                return TEXT_ACCENT;
-            case "TEXT_DISABLED":
-                return TEXT_DISABLED;
-            case "TEXT_ON_BLUE_BACKGROUND":
-                return TEXT_ON_BLUE_BACKGROUND;
-            default:
-                return 0;
-        }
+    public static void reset() {
+        PRIMARY_BLUE = DEFAULT_PRIMARY_BLUE;
+        PRIMARY_BLUE_BRIGHT = DEFAULT_PRIMARY_BLUE_BRIGHT;
+        PRIMARY_BLUE_DARK = DEFAULT_PRIMARY_BLUE_DARK;
+        LIGHT_BLUE = DEFAULT_LIGHT_BLUE;
+        SCREEN_BACKGROUND = DEFAULT_SCREEN_BACKGROUND;
+        COMPONENT_BACKGROUND = DEFAULT_COMPONENT_BACKGROUND;
+        COMPONENT_BACKGROUND_HOVER = DEFAULT_COMPONENT_BACKGROUND_HOVER;
+        COMPONENT_BACKGROUND_DISABLED = DEFAULT_COMPONENT_BACKGROUND_DISABLED;
+        COMPONENT_BORDER = DEFAULT_COMPONENT_BORDER;
+        COMPONENT_BORDER_BLUE = DEFAULT_COMPONENT_BORDER_BLUE;
+        COMPONENT_BORDER_FOCUSED_BLUE = DEFAULT_COMPONENT_BORDER_FOCUSED_BLUE;
+        TEXT_PRIMARY = DEFAULT_TEXT_PRIMARY;
+        TEXT_SECONDARY = DEFAULT_TEXT_SECONDARY;
+        TEXT_ACCENT = DEFAULT_TEXT_ACCENT;
+        TEXT_DISABLED = DEFAULT_TEXT_DISABLED;
+        TEXT_ON_BLUE_BACKGROUND = DEFAULT_TEXT_ON_BLUE_BACKGROUND;
+        derive();
     }
 
-    public static void setSystemColor(String key, int rgb) {
-        switch (key) {
-            case "PRIMARY_BLUE":
-                PRIMARY_BLUE = rgb;
-                break;
-            case "PRIMARY_BLUE_BRIGHT":
-                PRIMARY_BLUE_BRIGHT = rgb;
-                break;
-            case "PRIMARY_BLUE_DARK":
-                PRIMARY_BLUE_DARK = rgb;
-                break;
-            case "LIGHT_BLUE":
-                LIGHT_BLUE = rgb;
-                break;
-            case "SCREEN_BACKGROUND":
-                SCREEN_BACKGROUND = rgb;
-                break;
-            case "COMPONENT_BACKGROUND":
-                COMPONENT_BACKGROUND = rgb;
-                break;
-            case "COMPONENT_BACKGROUND_HOVER":
-                COMPONENT_BACKGROUND_HOVER = rgb;
-                break;
-            case "COMPONENT_BACKGROUND_DISABLED":
-                COMPONENT_BACKGROUND_DISABLED = rgb;
-                break;
-            case "COMPONENT_BORDER":
-                COMPONENT_BORDER = rgb;
-                break;
-            case "COMPONENT_BORDER_BLUE":
-                COMPONENT_BORDER_BLUE = rgb;
-                break;
-            case "COMPONENT_BORDER_FOCUSED_BLUE":
-                COMPONENT_BORDER_FOCUSED_BLUE = rgb;
-                break;
-            case "TEXT_PRIMARY":
-                TEXT_PRIMARY = rgb;
-                break;
-            case "TEXT_SECONDARY":
-                TEXT_SECONDARY = rgb;
-                break;
-            case "TEXT_ACCENT":
-                TEXT_ACCENT = rgb;
-                break;
-            case "TEXT_DISABLED":
-                TEXT_DISABLED = rgb;
-                break;
-            case "TEXT_ON_BLUE_BACKGROUND":
-                TEXT_ON_BLUE_BACKGROUND = rgb;
-                break;
-            default:
-                return;
+    public static void load(Setting setting) {
+        if (setting == null || setting.guiSystemColors == null || setting.guiSystemColors.length != SYSTEM_COLOR_KEYS.length) {
+            reset();
+            return;
         }
-        refreshDerived();
+        for (int i = 0; i < SYSTEM_COLOR_KEYS.length; i++) {
+            put(SYSTEM_COLOR_KEYS[i], setting.guiSystemColors[i]);
+        }
+        derive();
     }
 
-    public static int getDefaultSystemColor(String key) {
+    public static void store(Setting setting) {
+        if (setting == null) {
+            return;
+        }
+        int[] colors = new int[SYSTEM_COLOR_KEYS.length];
+        for (int i = 0; i < SYSTEM_COLOR_KEYS.length; i++) {
+            colors[i] = color(SYSTEM_COLOR_KEYS[i]);
+        }
+        setting.guiSystemColors = colors;
+    }
+
+    public static int defaultColor(String key) {
         switch (key) {
             case "PRIMARY_BLUE":
                 return DEFAULT_PRIMARY_BLUE;
@@ -379,42 +401,20 @@ public final class GuiColors {
         }
     }
 
-    public static void loadFromSettings(Setting setting) {
-        if (setting == null || setting.guiSystemColors == null || setting.guiSystemColors.length != SYSTEM_COLOR_KEYS.length) {
-            applyDefaults();
-            return;
-        }
-        for (int i = 0; i < SYSTEM_COLOR_KEYS.length; i++) {
-            setSystemColorWithoutRefresh(SYSTEM_COLOR_KEYS[i], setting.guiSystemColors[i]);
-        }
-        refreshDerived();
-    }
-
-    public static void saveToSettings(Setting setting) {
-        if (setting == null) {
-            return;
-        }
-        int[] colors = new int[SYSTEM_COLOR_KEYS.length];
-        for (int i = 0; i < SYSTEM_COLOR_KEYS.length; i++) {
-            colors[i] = getSystemColor(SYSTEM_COLOR_KEYS[i]);
-        }
-        setting.guiSystemColors = colors;
-    }
-
-    public static Map<String, Integer> snapshotSystemColors() {
+    public static Map<String, Integer> snapshot() {
         Map<String, Integer> map = new LinkedHashMap<String, Integer>();
         for (String key : SYSTEM_COLOR_KEYS) {
-            map.put(key, getSystemColor(key));
+            map.put(key, color(key));
         }
         return map;
     }
 
-    public static String toHexRgb(int argb) {
+    public static String hex(int argb) {
         Color c = new Color(argb, true);
         return String.format("%02X%02X%02X", c.getRed(), c.getGreen(), c.getBlue());
     }
 
-    public static Integer parseHexRgb(String hex) {
+    public static Integer parse(String hex) {
         if (hex == null) {
             return null;
         }
@@ -435,7 +435,7 @@ public final class GuiColors {
         }
     }
 
-    private static void setSystemColorWithoutRefresh(String key, int rgb) {
+    private static void put(String key, int rgb) {
         switch (key) {
             case "PRIMARY_BLUE":
                 PRIMARY_BLUE = rgb;

@@ -37,71 +37,29 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Spots nicked players in the tab list.
- *
- * <p>Server forwards a signed skin blob for every entry, and that blob still names
- * the account the skin belongs to. So a nick lands in one of two states:
- *
- * <ul>
- *   <li>the blob names somebody other than the tab name, which denicks the player;</li>
- *   <li>the blob names nobody and the skin comes from Server's nick pool, which only
- *       says a nick is present.</li>
- * </ul>
- *
- * <p>Either way the nick name is recorded through {@link #check(String)} so the
- * stat lists skip it instead of reporting it as a failed lookup, it is announced
- * locally, and it is reported in party chat when we are in a party. Only a denicked
- * player gets a stat lookup, since only then is there an account to look up.
- */
 public class Denick {
 
-    /** Tab entries already judged in this world; cleared whenever the world changes. */
     private final Set<String> parsed = new HashSet<>();
 
-    /** Names known to be nicks, so stat lookups skip them instead of failing on them. */
     private static final Set<String> nickedPlayers = ConcurrentHashMap.newKeySet();
 
-    /** Nicks already announced, so the same one is not reported twice in a world. */
     private static final Set<String> reported = ConcurrentHashMap.newKeySet();
 
     private static final Gson gson = new Gson();
 
-    /** The skin hashes Server hands out to nicked players. */
-    private static final Set<String> nicks = loadHashesFromJson();
+    private static final Set<String> nicks = hashes();
 
-    /** Every nick found in one world is in the same game, so /locraw is asked once. */
     private volatile String gameType;
     private volatile String gameMode;
     private boolean locrawSent;
     private final List<String> awaitingGame = new ArrayList<>();
-
-    /** Records a name as a nick so stat lookups can skip it. */
-    public static void markNicked(String name) {
-        if (name == null || name.isEmpty()) {
-            return;
-        }
-        nickedPlayers.add(name.toLowerCase());
-    }
-
-    /**
-     * True when the name belongs to a nick we spotted. Server has no profile for a
-     * nick, so a lookup would only fail: callers use this to drop the name quietly.
-     */
-    public static boolean check(String name) {
-        return name != null && nickedPlayers.contains(name.toLowerCase());
-    }
-
-    public static void clearNicked() {
-        nickedPlayers.clear();
-    }
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) {
             return;
         }
-        if (!Toggle.isDenickEnabled()) {
+        if (!Toggle.isDenick()) {
             return;
         }
 
@@ -120,28 +78,39 @@ public class Denick {
                 continue;
             }
 
-            if (check(npi, name)) {
+            if (judge(npi, name)) {
                 parsed.add(name);
             }
         }
     }
 
     @SubscribeEvent
-    public void onWorldJoin(EntityJoinWorldEvent event) {
+    public void onJoin(EntityJoinWorldEvent event) {
         if (event.entity != Minecraft.getMinecraft().thePlayer) {
             return;
         }
 
         parsed.clear();
         reported.clear();
-        clearNicked();
+        clear();
         gameType = null;
         gameMode = null;
         locrawSent = false;
         awaitingGame.clear();
     }
 
-    private boolean check(NetworkPlayerInfo npi, String name) {
+    public static void mark(String name) {
+        if (name == null || name.isEmpty()) {
+            return;
+        }
+        nickedPlayers.add(name.toLowerCase());
+    }
+
+    public static void clear() {
+        nickedPlayers.clear();
+    }
+
+    private boolean judge(NetworkPlayerInfo npi, String name) {
         GameProfile profile = npi.getGameProfile();
 
         if (isNpc(npi, name)) {
@@ -163,7 +132,7 @@ public class Denick {
                 if (texture == null) {
                     continue;
                 }
-                String hash = skinHash(texture);
+                String hash = hash(texture);
                 if (hash == null) {
                     continue;
                 }
@@ -174,15 +143,13 @@ public class Denick {
                         + ", profileName=" + (owner.isEmpty() ? "<none>" : owner)
                         + ", hash=" + hash);
 
-                if (!owner.isEmpty()) {
-                    if (!owner.equalsIgnoreCase(name)) {
-                        denicked(owner, name);
-                    }
+                if (nicks.contains(hash)) {
+                    confirm(name);
                     return true;
                 }
 
-                if (nicks.contains(hash)) {
-                    confirmNicked(name);
+                if (!owner.isEmpty() && !owner.equalsIgnoreCase(name)) {
+                    reveal(owner, name);
                 }
                 return true;
             } catch (Exception e) {
@@ -193,8 +160,8 @@ public class Denick {
         return judged;
     }
 
-    private void denicked(String owner, String nick) {
-        markNicked(nick);
+    private void reveal(String owner, String nick) {
+        mark(nick);
         if (!reported.add(nick.toLowerCase())) {
             return;
         }
@@ -202,20 +169,20 @@ public class Denick {
         Chat.send(Messages.PREFIX + Color.RED + owner + Color.GRAY + " is nicked as "
                 + Color.RED + nick + Color.GRAY + "!");
         warn(owner + " is nicked as " + nick + "!");
-        requestStats(owner);
+        stats(owner);
     }
 
-    private void confirmNicked(String nick) {
+    private void confirm(String nick) {
         new Thread(() -> {
             Boolean exists = Profile.exists(nick);
             if (Boolean.FALSE.equals(exists)) {
-                nicked(nick);
+                report(nick);
             }
         }, "Denick").start();
     }
 
-    private void nicked(String nick) {
-        markNicked(nick);
+    private void report(String nick) {
+        mark(nick);
         if (!reported.add(nick.toLowerCase())) {
             return;
         }
@@ -233,10 +200,10 @@ public class Denick {
         });
     }
 
-    private void requestStats(String realName) {
+    private void stats(String realName) {
         String type = gameType;
         if (type != null) {
-            processStats(realName, type, gameMode);
+            dispatch(realName, type, gameMode);
             return;
         }
 
@@ -246,17 +213,17 @@ public class Denick {
         }
         locrawSent = true;
 
-        Locraw.getInstance().sendLocraw(new Locraw.LocrawCallback() {
+        Locraw.get().request(new Locraw.LocrawCallback() {
             @Override
-            public void onLocrawReceived(String type, String mode) {
+            public void onReceived(String type, String mode) {
                 gameType = type;
                 gameMode = mode;
                 locrawSent = type != null;
-                flushAwaitingGame(type, mode);
+                flush(type, mode);
             }
 
             @Override
-            public void onLocrawTimeout() {
+            public void onTimeout() {
                 locrawSent = false;
                 awaitingGame.clear();
                 Debug.log("Denick: /locraw timed out.");
@@ -264,15 +231,15 @@ public class Denick {
         });
     }
 
-    private void flushAwaitingGame(String type, String mode) {
+    private void flush(String type, String mode) {
         List<String> names = new ArrayList<>(awaitingGame);
         awaitingGame.clear();
         for (String name : names) {
-            processStats(name, type, mode);
+            dispatch(name, type, mode);
         }
     }
 
-    private void processStats(String profileName, String gameType, String mode) {
+    private void dispatch(String profileName, String gameType, String mode) {
         if (gameType == null) {
             Chat.send(Messages.UNKNOWN_GAMEMODE);
             return;
@@ -280,13 +247,13 @@ public class Denick {
 
         switch (gameType) {
             case "BEDWARS":
-                BedwarsList.listBedwarsStats(Arrays.asList(profileName), true);
+                BedwarsList.list(Arrays.asList(profileName), true);
                 break;
             case "DUELS":
-                Duels.fetchStats(profileName, Duels.detectMode(mode == null ? null : mode.toLowerCase()), true);
+                Duels.stats(profileName, Duels.detect(mode == null ? null : mode.toLowerCase()), true);
                 break;
             case "SKYWARS":
-                Skywars.fetchStats(profileName, null);
+                Skywars.stats(profileName, null);
                 break;
             default:
                 Chat.send(Messages.UNKNOWN_GAMEMODE);
@@ -296,7 +263,11 @@ public class Denick {
     private static boolean isNpc(NetworkPlayerInfo npi, String name) {
         IChatComponent displayName = npi.getDisplayName();
         String shown = displayName != null ? displayName.getFormattedText() : name;
-        return cleanName(shown).replaceAll("\\s+", "").contains("[NPC]") || name.contains("[NPC]");
+        return clean(shown).replaceAll("\\s+", "").contains("[NPC]") || name.contains("[NPC]");
+    }
+
+    public static boolean isNick(String name) {
+        return name != null && nickedPlayers.contains(name.toLowerCase());
     }
 
     private static JsonObject decode(String value) {
@@ -307,7 +278,7 @@ public class Denick {
         return gson.fromJson(decoded, JsonObject.class);
     }
 
-    private static String skinHash(JsonObject texture) {
+    private static String hash(JsonObject texture) {
         if (!texture.has("textures")) {
             return null;
         }
@@ -325,11 +296,11 @@ public class Denick {
         return parts.length > 4 ? parts[4] : null;
     }
 
-    private static String cleanName(String name) {
+    private static String clean(String name) {
         return name.replaceAll("§[0-9a-frk-o]", "").trim();
     }
 
-    private static Set<String> loadHashesFromJson() {
+    private static Set<String> hashes() {
         try {
             InputStream inputStream = Denick.class.getResourceAsStream("/hashset.json");
             if (inputStream == null) {

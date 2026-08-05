@@ -20,11 +20,7 @@ public final class Toggle {
     private Toggle() {
     }
 
-    private static void announce(String label, boolean enabled) {
-        Chat.send(Messages.PREFIX + label + " has been " + (enabled ? ENABLED : DISABLED));
-    }
-
-    public static void syncFromSettings(Setting setting) {
+    public static void sync(Setting setting) {
         listStats = setting.listStatsEnabled;
         skywarsListStats = setting.skywarsListStatsEnabled;
         autoStats = setting.autoStatsEnabled;
@@ -36,124 +32,128 @@ public final class Toggle {
         discordRpc = setting.discordRpcEnabled;
     }
 
-    public static boolean isListStats() {
-        return listStats && isHypixelFeatureAllowed();
+    public static boolean isAllowed() {
+        return !disableHypixelFeaturesOutsideHypixel || Server.isHypixel();
     }
 
-    public static boolean isSkywarsListStats() {
-        return skywarsListStats && isHypixelFeatureAllowed();
+    public static boolean isBwList() {
+        return listStats && isAllowed();
     }
 
-    public static boolean isAutoStats() {
-        return autoStats && isHypixelFeatureAllowed();
+    public static boolean isSwList() {
+        return skywarsListStats && isAllowed();
     }
 
-    public static boolean isIgnoreCertificatesEnabled() {
-        return ignoreCertificates;
+    public static boolean isAuto() {
+        return autoStats && isAllowed();
+    }
+
+    public static boolean isDenick() {
+        return denick && isAllowed();
+    }
+
+    public static boolean isNewDuels() {
+        return duelsUpdated;
     }
 
     public static boolean isKeepWho() {
         return keepWho;
     }
 
-    public static boolean isDuelsUpdateEnabled() {
-        return duelsUpdated;
-    }
-
-    public static boolean isDenickEnabled() {
-        return denick && isHypixelFeatureAllowed();
-    }
-
-    public static boolean isDiscordRpcEnabled() {
+    public static boolean isRpc() {
         return discordRpc;
     }
 
-    public static boolean isHypixelFeatureAllowed() {
-        return !disableHypixelFeaturesOutsideHypixel || Server.isHypixel();
+    public static boolean isInsecure() {
+        return ignoreCertificates;
     }
 
-    public static void setIgnoreCertificates(boolean ignore) {
-        ignoreCertificates = ignore;
-    }
-
-    public static void toggleBedwarsListStats(boolean silent) {
+    public static void flipBwList(boolean silent) {
         listStats = !listStats;
-        Setting.getInstance().listStatsEnabled = listStats;
+        Setting.get().listStatsEnabled = listStats;
         Setting.save();
         if (!silent) {
             announce("Stats list", listStats);
         }
     }
 
-    public static void toggleSkywarsListStats(boolean silent) {
+    public static void flipSwList(boolean silent) {
         skywarsListStats = !skywarsListStats;
-        Setting.getInstance().skywarsListStatsEnabled = skywarsListStats;
+        Setting.get().skywarsListStatsEnabled = skywarsListStats;
         Setting.save();
         if (!silent) {
             announce("Skywars stats list", skywarsListStats);
         }
     }
 
-    public static void toggleAutoStats(boolean silent) {
+    public static void flipAuto(boolean silent) {
         autoStats = !autoStats;
-        Setting.getInstance().autoStatsEnabled = autoStats;
+        Setting.get().autoStatsEnabled = autoStats;
         Setting.save();
         if (!silent) {
             announce("Duels Auto-Stats", autoStats);
         }
     }
 
-    public static void toggleDenick(boolean silent) {
+    public static void flipDenick(boolean silent) {
         denick = !denick;
-        Setting.getInstance().denickEnabled = denick;
+        Setting.get().denickEnabled = denick;
         Setting.save();
         if (!silent) {
             announce("Denick", denick);
         }
     }
 
-    public static void toggleDuelsUpdate(boolean silent) {
+    public static void flipNewDuels(boolean silent) {
         duelsUpdated = !duelsUpdated;
-        Setting.getInstance().duelsUpdated = duelsUpdated;
+        Setting.get().duelsUpdated = duelsUpdated;
         Setting.save();
         if (!silent) {
             announce("Updated Duels Titles", duelsUpdated);
         }
     }
 
-    public static void toggleIgnoreCertificates(boolean silent) {
-        ignoreCertificates = !ignoreCertificates;
-        Setting.getInstance().ignoreCertificates = ignoreCertificates;
-        Setting.save();
-        if (!silent) {
-            announce("Secure connection", !ignoreCertificates);
-        }
-    }
-
-    public static void toggleKeepWho(boolean silent) {
+    public static void flipKeepWho(boolean silent) {
         keepWho = !keepWho;
-        Setting.getInstance().keepWhoEnabled = keepWho;
+        Setting.get().keepWhoEnabled = keepWho;
         Setting.save();
         if (!silent) {
             announce("Original /who keeper", keepWho);
         }
     }
 
-    public static void toggleDiscordRpc(boolean silent) {
+    public static void flipRpc(boolean silent) {
         discordRpc = !discordRpc;
-        Setting.getInstance().discordRpcEnabled = discordRpc;
+        Setting.get().discordRpcEnabled = discordRpc;
         Setting.save();
         if (!silent) {
             announce("Discord RPC", discordRpc);
         }
     }
 
-    public static void toggleDisableHypixelFeatures(boolean silent) {
+    public static void flipInsecure(boolean silent) {
+        ignoreCertificates = !ignoreCertificates;
+        Setting.get().ignoreCertificates = ignoreCertificates;
+        Setting.save();
+        if (!silent) {
+            announce("Secure connection", !ignoreCertificates);
+        }
+    }
+
+    public static void flipGate(boolean silent) {
         disableHypixelFeaturesOutsideHypixel = !disableHypixelFeaturesOutsideHypixel;
-        Setting.getInstance().disableHypixelFeaturesOutsideHypixel = disableHypixelFeaturesOutsideHypixel;
+        Setting.get().disableHypixelFeaturesOutsideHypixel = disableHypixelFeaturesOutsideHypixel;
         Setting.save();
         if (!silent) {
             announce("Auto-off outside Server", disableHypixelFeaturesOutsideHypixel);
         }
+    }
+
+    public static void setInsecure(boolean ignore) {
+        ignoreCertificates = ignore;
+    }
+
+    private static void announce(String label, boolean enabled) {
+        Chat.send(Messages.PREFIX + label + " has been " + (enabled ? ENABLED : DISABLED));
     }
 }

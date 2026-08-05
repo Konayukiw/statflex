@@ -6,15 +6,6 @@ import net.minecraft.client.gui.GuiTextField;
 import java.util.function.Predicate;
 
 public class Text extends GuiComponentBase {
-
-    public interface OnTextChanged {
-        void accept(String text);
-    }
-
-    public interface OnFocusChanged {
-        void accept(boolean focused);
-    }
-
     private final int horizontalTextPadding = MODERN_ELEMENT_PADDING_X;
     private final int verticalTextPadding;
     public final GuiTextField textField;
@@ -60,24 +51,9 @@ public class Text extends GuiComponentBase {
         this(id, x, y, width, label, initialText, onTextChanged, f -> {});
     }
 
-    public String getText() {
-        return textField.getText();
-    }
-
-    public void setText(String newText, boolean notify) {
-        String oldText = textField.getText();
-        if (validator.test(newText)) {
-            textField.setText(newText);
-            if (notify && !newText.equals(oldText) && onTextChanged != null) {
-                onTextChanged.accept(newText);
-            }
-            lastText = newText;
-        }
-    }
-
     @Override
-    public void drawComponent(int mouseX, int mouseY, float partialTicks) {
-        super.drawComponent(mouseX, mouseY, partialTicks);
+    public void draw(int mouseX, int mouseY, float partialTicks) {
+        super.draw(mouseX, mouseY, partialTicks);
         if (!visible) {
             return;
         }
@@ -102,7 +78,7 @@ public class Text extends GuiComponentBase {
         }
 
         if (textField.isFocused() && enabled) {
-            drawRoundedRectUsingGL(
+            roundRect(
                     x - 1f, y - 1f,
                     width + 2f, height + 2f,
                     cornerRadius + 1f,
@@ -112,8 +88,8 @@ public class Text extends GuiComponentBase {
 
         float borderThickness = MODERN_BORDER_THICKNESS;
 
-        drawRoundedRectUsingGL(x, y, width, height, cornerRadius, currentOuterBorderColor);
-        drawRoundedRectUsingGL(
+        roundRect(x, y, width, height, cornerRadius, currentOuterBorderColor);
+        roundRect(
                 x + borderThickness, y + borderThickness,
                 width - 2 * borderThickness, height - 2 * borderThickness,
                 Math.max(0f, cornerRadius - borderThickness),
@@ -122,11 +98,11 @@ public class Text extends GuiComponentBase {
         textField.setTextColor(enabled ? GuiColors.TEXTFIELD_TEXT : GuiColors.TEXT_DISABLED);
         textField.drawTextBox();
 
-        drawTopLabel(-3);
+        topLabel(-3);
     }
 
     @Override
-    public boolean mouseClicked(int mouseX, int mouseY, int mouseButton) {
+    public boolean click(int mouseX, int mouseY, int mouseButton) {
         if (!visible) {
             if (textField.isFocused()) {
                 setFocused(false);
@@ -156,7 +132,7 @@ public class Text extends GuiComponentBase {
     }
 
     @Override
-    public boolean keyTyped(char typedChar, int keyCode) {
+    public boolean key(char typedChar, int keyCode) {
         if (!enabled || !visible || !textField.isFocused()) {
             return false;
         }
@@ -177,6 +153,21 @@ public class Text extends GuiComponentBase {
         return handled;
     }
 
+    public String getText() {
+        return textField.getText();
+    }
+
+    public void setText(String newText, boolean notify) {
+        String oldText = textField.getText();
+        if (validator.test(newText)) {
+            textField.setText(newText);
+            if (notify && !newText.equals(oldText) && onTextChanged != null) {
+                onTextChanged.accept(newText);
+            }
+            lastText = newText;
+        }
+    }
+
     public void setFocused(boolean isFocused) {
         if (!enabled && isFocused) {
             return;
@@ -191,13 +182,21 @@ public class Text extends GuiComponentBase {
         }
     }
 
-    public void unfocusIfNeeded() {
+    public boolean isFocused() {
+        return textField.isFocused();
+    }
+
+    public void unfocus() {
         if (textField.isFocused()) {
             setFocused(false);
         }
     }
 
-    public boolean isFocused() {
-        return textField.isFocused();
+    public interface OnTextChanged {
+        void accept(String text);
+    }
+
+    public interface OnFocusChanged {
+        void accept(boolean focused);
     }
 }

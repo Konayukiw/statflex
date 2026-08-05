@@ -1,6 +1,5 @@
 package com.konayuki.statflex.utils.hypixel;
 
-import com.konayuki.statflex.utils.Debug;
 import com.konayuki.statflex.utils.chat.Chat;
 
 import net.minecraft.client.Minecraft;
@@ -15,7 +14,7 @@ import java.util.List;
 public final class Party {
 
     public interface Callback {
-        void onPartyState(boolean inParty);
+        void onState(boolean inParty);
     }
 
     private static final Party INSTANCE = new Party();
@@ -35,16 +34,8 @@ public final class Party {
     private Party() {
     }
 
-    public static Party getInstance() {
+    public static Party get() {
         return INSTANCE;
-    }
-
-    public static boolean isInParty() {
-        return Boolean.TRUE.equals(INSTANCE.inParty);
-    }
-
-    public static boolean isKnown() {
-        return INSTANCE.inParty != null && !INSTANCE.isStale();
     }
 
     public static void resolve(Callback callback) {
@@ -52,6 +43,14 @@ public final class Party {
             return;
         }
         Chat.run(() -> INSTANCE.request(callback));
+    }
+
+    public static boolean isIn() {
+        return Boolean.TRUE.equals(INSTANCE.inParty);
+    }
+
+    public static boolean isKnown() {
+        return INSTANCE.inParty != null && !INSTANCE.isStale();
     }
 
     public static void forget() {
@@ -86,13 +85,13 @@ public final class Party {
 
     private void request(Callback callback) {
         if (inParty != null && !isStale()) {
-            callback.onPartyState(inParty);
+            callback.onState(inParty);
             return;
         }
 
         Minecraft mc = Minecraft.getMinecraft();
         if (mc.thePlayer == null) {
-            callback.onPartyState(false);
+            callback.onState(false);
             return;
         }
 
@@ -103,7 +102,7 @@ public final class Party {
 
         long now = System.currentTimeMillis();
         if (now - requestedAt < REQUEST_COOLDOWN_MS) {
-            callback.onPartyState(Boolean.TRUE.equals(inParty));
+            callback.onState(Boolean.TRUE.equals(inParty));
             return;
         }
 
@@ -123,7 +122,7 @@ public final class Party {
                 || lower.startsWith("party members:")
                 || lower.startsWith("you'll be partying with:")
                 || (lower.startsWith("you have joined") && lower.contains("party!"))
-                || (lower.endsWith("joined the party.") && !isPlayerMessage(lower))) {
+                || (lower.endsWith("joined the party.") && !isChat(lower))) {
             set(true);
             return;
         }
@@ -134,18 +133,12 @@ public final class Party {
                 || lower.startsWith("you have been kicked from the party")
                 || lower.startsWith("you have been removed from the party")
                 || lower.startsWith("you disbanded the party")
-                || (lower.contains("has disbanded the party") && !isPlayerMessage(lower))) {
+                || (lower.contains("has disbanded the party") && !isChat(lower))) {
             set(false);
         }
     }
 
-    private static boolean isPlayerMessage(String lower) {
-        return lower.indexOf(':') >= 0;
-    }
-
     private void set(boolean state) {
-        if (!Boolean.valueOf(state).equals(inParty)) {
-        }
         inParty = state;
         updatedAt = System.currentTimeMillis();
         if (awaiting) {
@@ -164,7 +157,7 @@ public final class Party {
         waiting.clear();
         for (Callback callback : callbacks) {
             try {
-                callback.onPartyState(state);
+                callback.onState(state);
             } catch (Exception e) {
             }
         }
@@ -172,6 +165,10 @@ public final class Party {
 
     private boolean isStale() {
         return System.currentTimeMillis() - updatedAt > STATE_TTL_MS;
+    }
+
+    private static boolean isChat(String lower) {
+        return lower.indexOf(':') >= 0;
     }
 
     private static String describe(Boolean state) {

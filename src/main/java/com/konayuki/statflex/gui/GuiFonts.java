@@ -19,47 +19,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class GuiFonts extends FontRenderer {
-
     public static final float DEFAULT_FONT_SIZE = 11f;
     public static final float TITLE_FONT_SIZE = 15f;
     private static final int RASTER_SCALE = 2;
     private static final int LETTER_SPACING = 1;
-
     private static GuiFonts instance;
     private static GuiFonts titleInstance;
-
-    public static GuiFonts getInstance() {
-        if (instance == null) {
-            instance = new GuiFonts("/assets/fonts/Celik-Display-Pro-Black.ttf", DEFAULT_FONT_SIZE);
-        }
-        return instance;
-    }
-
-    public static GuiFonts getTitle() {
-        if (titleInstance == null) {
-            titleInstance = new GuiFonts("/assets/fonts/D-DIN-PRO-800.ttf", TITLE_FONT_SIZE);
-        }
-        return titleInstance;
-    }
-
-    private static final class Glyph {
-        final int textureId;
-        final float width;
-        final float offsetX;
-        final float offsetY;
-        final float texWidth;
-        final float texHeight;
-
-        Glyph(int textureId, float width, float offsetX, float offsetY, float texWidth, float texHeight) {
-            this.textureId = textureId;
-            this.width = width;
-            this.offsetX = offsetX;
-            this.offsetY = offsetY;
-            this.texWidth = texWidth;
-            this.texHeight = texHeight;
-        }
-    }
-
     private final Font font;
     private final float fontSize;
     private final FontMetrics metrics;
@@ -68,6 +33,20 @@ public class GuiFonts extends FontRenderer {
     private final int ascent;
     private final int descent;
     private final Map<Character, Glyph> glyphCache = new HashMap<Character, Glyph>();
+
+    public static GuiFonts get() {
+        if (instance == null) {
+            instance = new GuiFonts("/assets/fonts/Celik-Display-Pro-Black.ttf", DEFAULT_FONT_SIZE);
+        }
+        return instance;
+    }
+
+    public static GuiFonts title() {
+        if (titleInstance == null) {
+            titleInstance = new GuiFonts("/assets/fonts/D-DIN-PRO-800.ttf", TITLE_FONT_SIZE);
+        }
+        return titleInstance;
+    }
 
     public GuiFonts(String fontResource, float fontSize) {
         super(
@@ -121,9 +100,9 @@ public class GuiFonts extends FontRenderer {
             text = "";
         }
         if (dropShadow) {
-            renderText(text, x + 1f, y + 1f, (color & 0x3F3F3F) | 0xFF000000);
+            render(text, x + 1f, y + 1f, (color & 0x3F3F3F) | 0xFF000000);
         }
-        return renderText(text, x, y, color);
+        return render(text, x, y, color);
     }
 
     @Override
@@ -145,7 +124,7 @@ public class GuiFonts extends FontRenderer {
             } else if (skipNext) {
                 skipNext = false;
             } else if (ch != '\n' && ch != '\r') {
-                width += getGlyph(ch).width;
+                width += glyph(ch).width;
             }
         }
         return Math.round(width);
@@ -153,7 +132,7 @@ public class GuiFonts extends FontRenderer {
 
     @Override
     public int getCharWidth(char character) {
-        return Math.round(getGlyph(character).width);
+        return Math.round(glyph(character).width);
     }
 
     @Override
@@ -182,7 +161,7 @@ public class GuiFonts extends FontRenderer {
                 skipNext = false;
                 continue;
             }
-            int charWidth = Math.round(getGlyph(ch).width);
+            int charWidth = Math.round(glyph(ch).width);
             if (currentWidth + charWidth > width) {
                 break;
             }
@@ -196,7 +175,7 @@ public class GuiFonts extends FontRenderer {
         return result.toString();
     }
 
-    private int renderText(String text, float x, float y, int color) {
+    private int render(String text, float x, float y, int color) {
         if (text.length() == 0) {
             return (int) x;
         }
@@ -232,7 +211,7 @@ public class GuiFonts extends FontRenderer {
             if (ch == '\n' || ch == '\r') {
                 continue;
             }
-            Glyph glyph = getGlyph(ch);
+            Glyph glyph = glyph(ch);
             if (glyph.textureId >= 0) {
                 float gx = penX + glyph.offsetX;
                 float gy = baseline + glyph.offsetY;
@@ -262,7 +241,7 @@ public class GuiFonts extends FontRenderer {
         return (int) penX;
     }
 
-    private Glyph getGlyph(char character) {
+    private Glyph glyph(char character) {
         Glyph glyph = glyphCache.get(Character.valueOf(character));
         if (glyph == null) {
             glyph = rasterize(character);
@@ -355,5 +334,23 @@ public class GuiFonts extends FontRenderer {
         float offsetX = (cropLeft - RASTER_SCALE * 2) / (float) RASTER_SCALE;
         float offsetY = (cropTop - baseline) / (float) RASTER_SCALE;
         return new Glyph(textureId, advance, offsetX, offsetY, texWidth, texHeight);
+    }
+
+    private static final class Glyph {
+        final int textureId;
+        final float width;
+        final float offsetX;
+        final float offsetY;
+        final float texWidth;
+        final float texHeight;
+
+        Glyph(int textureId, float width, float offsetX, float offsetY, float texWidth, float texHeight) {
+            this.textureId = textureId;
+            this.width = width;
+            this.offsetX = offsetX;
+            this.offsetY = offsetY;
+            this.texWidth = texWidth;
+            this.texHeight = texHeight;
+        }
     }
 }

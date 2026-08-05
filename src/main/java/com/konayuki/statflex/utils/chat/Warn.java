@@ -15,8 +15,8 @@ public class Warn {
         if (playerName == null || playerName.isEmpty()) {
             return;
         }
-        int warnLevel = Setting.getInstance().warnLevel;
-        double warnFKDR = Setting.getInstance().warnFKDR;
+        int warnLevel = Setting.get().warnLevel;
+        double warnFKDR = Setting.get().warnFKDR;
         if (warnLevel <= 0 && warnFKDR <= 0) {
             return;
         }
@@ -54,28 +54,20 @@ public class Warn {
                 }
 
                 BedwarsList.PlayerData data = new BedwarsList.PlayerData(
-                        Bedwars.getColoredLevel(level),
+                        Bedwars.level(level),
                         Ranks.rank(player, result.properName),
-                        Bedwars.getFormattedFinals(finals),
-                        Bedwars.getColoredFKDR(fkdr),
+                        Bedwars.finals(finals),
+                        Bedwars.fkdr(fkdr),
                         level * fkdr,
                         level,
                         fkdr,
                         finals,
                         result.properName
                 );
-                warn(warnStars(data));
+                warn(format(data));
             } catch (Exception ignored) {
             }
         }, "Warn").start();
-    }
-
-    public static String warnStars(BedwarsList.PlayerData data) {
-        String starIcon = data.level <= 1099 ? "✫" : "✪";
-        String plainLevel = Bedwars.formatLevelPlain(data.level);
-        String plainFinals = Bedwars.formatFinalsPlain(data.finals);
-        String plainFKDR = Bedwars.formatFKDRPlain(data.fkdr);
-        return starIcon + plainLevel + " " + data.plainName + " | Finals: " + plainFinals + " | FKDR: " + plainFKDR;
     }
 
     public static void warn(String warning) {
@@ -94,5 +86,13 @@ public class Warn {
             Thread.sleep(150);
         } catch (InterruptedException ignored) {
         }
+    }
+
+    public static String format(BedwarsList.PlayerData data) {
+        String starIcon = data.level <= 1099 ? "✫" : "✪";
+        String plainLevel = Bedwars.plainLevel(data.level);
+        String plainFinals = Bedwars.plainFinals(data.finals);
+        String plainFKDR = Bedwars.plainFKDR(data.fkdr);
+        return starIcon + plainLevel + " " + data.plainName + " | Finals: " + plainFinals + " | FKDR: " + plainFKDR;
     }
 }

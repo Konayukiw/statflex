@@ -32,19 +32,8 @@ import java.util.Locale;
 import java.util.Map;
 
 public class Gui extends GuiScreen {
-
     private final String initialTabId;
-
-    private final FontRenderer guiFont = GuiFonts.getInstance();
-
-    public Gui() {
-        this(null);
-    }
-
-    public Gui(String initialTabId) {
-        this.initialTabId = initialTabId;
-    }
-
+    private final FontRenderer guiFont = GuiFonts.get();
     private int panelX;
     private int panelY;
     private int panelWidth;
@@ -55,38 +44,10 @@ public class Gui extends GuiScreen {
     private final int panelPadding = 15;
     private final int closeButtonSize = 18;
     private boolean isCloseButtonHovered;
-
-    private static class Tab {
-        final String name;
-        final String id;
-        final List<GuiComponentBase> components = new ArrayList<GuiComponentBase>();
-        float scrollY;
-        int targetScrollY;
-        int contentHeight;
-        int maxScrollY;
-
-        Tab(String name, String id) {
-            this.name = name;
-            this.id = id;
-        }
-    }
-
     private final List<Tab> tabs = new ArrayList<Tab>();
     private int currentTabIndex = 0;
-
-    private Tab currentTab() {
-        if (tabs.isEmpty()) {
-            return new Tab("Error", "error_no_tabs");
-        }
-        if (currentTabIndex < 0 || currentTabIndex >= tabs.size()) {
-            return tabs.get(0);
-        }
-        return tabs.get(currentTabIndex);
-    }
-
     private final String guiTitle = "statflex";
     private final int tabButtonWidth = 100;
-
     private float tabScrollX;
     private int targetTabScrollX;
     private int totalTabsWidthUnscrolled;
@@ -94,16 +55,13 @@ public class Gui extends GuiScreen {
     private int maxTabScrollX;
     private final int tabButtonSpacing = 4;
     private final int tabBarScrollButtonWidth = 20;
-
     private final int scrollbarWidth = 8;
     private final int scrollbarMargin = 5;
     private static final float SCROLL_SMOOTHING_FACTOR = 0.28f;
-
     private boolean isDraggingContentScrollbar;
     private float contentScrollbarMouseDragStartY;
     private float contentScrollbarInitialScrollY;
     private Dropdown openDropdown;
-
     private int logicalCurrentY;
     private final int interComponentSpacing = 12;
     private final int componentWidth = 240;
@@ -111,18 +69,20 @@ public class Gui extends GuiScreen {
     private final int contentPaddingTopForComponents = 15;
     private final int contentPaddingBottomForComponents = 15;
     private final Map<String, Tab> allPossibleTabsMap = new LinkedHashMap<String, Tab>();
-
     private int nextComponentId = 1;
-
     private List<String> draftAutoGGMessages;
     private final List<Text> autoGGTextFields = new ArrayList<Text>();
-
     private Button updateInstallButton;
     private Label updateStatusLabel;
     private boolean updateCheckInProgress;
+    private boolean loggedFirstDraw;
 
-    private int getNextId() {
-        return nextComponentId++;
+    public Gui() {
+        this(null);
+    }
+
+    public Gui(String initialTabId) {
+        this.initialTabId = initialTabId;
     }
 
     @Override
@@ -143,8 +103,8 @@ public class Gui extends GuiScreen {
         updateCheckInProgress = false;
 
         try {
-            defineAllPossibleTabs();
-            orderAndPopulateTabs();
+            defineTabs();
+            buildTabs();
 
             if (this.tabs.isEmpty()) {
                 return;
@@ -163,10 +123,10 @@ public class Gui extends GuiScreen {
                 currentTabIndex = 0;
             }
 
-            calculateTabScrolling();
-            ensureSelectedTabVisible();
+            tabScroll();
+            showTab();
             for (Tab tab : tabs) {
-                calculateContentScrollingForTab(tab);
+                contentScroll(tab);
                 tab.scrollY = 0f;
                 tab.targetScrollY = 0;
             }
@@ -175,621 +135,12 @@ public class Gui extends GuiScreen {
         }
     }
 
-    private void defineAllPossibleTabs() {
-        allPossibleTabsMap.clear();
-        allPossibleTabsMap.put("General", new Tab("General", "General"));
-        allPossibleTabsMap.put("Bedwars", new Tab("Bedwars", "Bedwars"));
-        allPossibleTabsMap.put("Skywars", new Tab("Skywars", "Skywars"));
-        allPossibleTabsMap.put("Duels", new Tab("Duels", "Duels"));
-        allPossibleTabsMap.put("Server API", new Tab("Server API", "Server API"));
-        allPossibleTabsMap.put("Skin", new Tab("Skin", "Skin"));
-        allPossibleTabsMap.put("System", new Tab("System", "System"));
-        allPossibleTabsMap.put("Update", new Tab("Update", "Update"));
-    }
-
-    private void orderAndPopulateTabs() {
-        tabs.clear();
-        String[] order = {
-                "General", "Bedwars", "Skywars", "Duels", "Server API", "Skin", "System", "Update"
-        };
-        for (String tabId : order) {
-            Tab tab = allPossibleTabsMap.get(tabId);
-            if (tab != null) {
-                tab.components.clear();
-                populateComponentsForTab(tab);
-                tabs.add(tab);
-            }
-        }
-        for (Tab tab : allPossibleTabsMap.values()) {
-            if (!tabs.contains(tab)) {
-                tab.components.clear();
-                populateComponentsForTab(tab);
-                tabs.add(tab);
-            }
-        }
-    }
-
-    private void rebuildTab(String tabId) {
-        for (Tab tab : tabs) {
-            if (tabId.equals(tab.id)) {
-                float savedScroll = tab.scrollY;
-                int savedTarget = tab.targetScrollY;
-                tab.components.clear();
-                populateComponentsForTab(tab);
-                calculateContentScrollingForTab(tab);
-                tab.targetScrollY = Math.max(0, Math.min(tab.maxScrollY, savedTarget));
-                tab.scrollY = Math.max(0f, Math.min((float) tab.maxScrollY, savedScroll));
-                return;
-            }
-        }
-    }
-
-    private void populateComponentsForTab(Tab tab) {
-        Setting setting = Setting.getInstance();
-        int contentAreaWidth = panelWidth - (panelPadding * 2);
-        int actualComponentWidth = Math.min(this.componentWidth, contentAreaWidth);
-        int startX = panelX + panelPadding + (contentAreaWidth - actualComponentWidth) / 2;
-
-        logicalCurrentY = 0;
-        logicalCurrentY += contentPaddingTopForComponents;
-
-        if ("General".equals(tab.id)) {
-            populateGeneralTab(tab, startX, actualComponentWidth, setting);
-        } else if ("Bedwars".equals(tab.id)) {
-            populateBedwarsTab(tab, startX, actualComponentWidth, setting);
-        } else if ("Skywars".equals(tab.id)) {
-            populateSkywarsTab(tab, startX, actualComponentWidth);
-        } else if ("Duels".equals(tab.id)) {
-            populateDuelsTab(tab, startX, actualComponentWidth);
-        } else if ("Server API".equals(tab.id)) {
-            populateHypixelApiTab(tab, startX, actualComponentWidth, setting);
-        } else if ("Skin".equals(tab.id)) {
-            populateSkinTab(tab, startX, actualComponentWidth, setting);
-        } else if ("System".equals(tab.id)) {
-            populateSystemTab(tab, startX, actualComponentWidth);
-        } else if ("Update".equals(tab.id)) {
-            populateUpdateTab(tab, startX, actualComponentWidth);
-        }
-
-        tab.contentHeight = (logicalCurrentY - contentPaddingTopForComponents) + contentPaddingBottomForComponents;
-        calculateContentScrollingForTab(tab);
-    }
-
-    private void populateGeneralTab(Tab tab, int startX, int actualComponentWidth, Setting setting) {
-        addSectionTitle(tab, startX, actualComponentWidth, "Denick");
-        addCheckbox(tab, startX, "Denick",
-                "Detect and reveal nicked players when they join or chat.",
-                Toggle.denick, v -> {
-            Toggle.denick = v;
-            Setting.getInstance().denickEnabled = v;
-            Setting.save();
-        });
-
-        addSectionTitle(tab, startX, actualComponentWidth, "Connection");
-        addCheckbox(tab, startX, "Secure Connection",
-                "Validate SSL certificates for API and update requests.",
-                !Toggle.ignoreCertificates, v -> {
-            Toggle.ignoreCertificates = !v;
-            Setting.getInstance().ignoreCertificates = !v;
-            Setting.save();
-        });
-        addCheckbox(tab, startX, "Auto-off Outside Server",
-                "Disable Auto Stats and Denick when not on Server.",
-                Toggle.disableHypixelFeaturesOutsideHypixel, v -> {
-            Toggle.disableHypixelFeaturesOutsideHypixel = v;
-            Setting.getInstance().disableHypixelFeaturesOutsideHypixel = v;
-            Setting.save();
-        });
-
-        addSectionTitle(tab, startX, actualComponentWidth, "AutoGG");
-        autoGGTextFields.clear();
-        List<String> messages = resolveAutoGGMessagesForDisplay();
-        for (int i = 0; i < messages.size(); i++) {
-            String label = messages.size() == 1 ? "AutoGG Messages" : "AutoGG Messages " + (i + 1);
-            Text field = new Text(
-                    getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
-                    actualComponentWidth, label, messages.get(i),
-                    t -> {
-                    },
-                    focused -> {
-                        if (!focused) {
-                            saveAutoGGFromFields();
-                        }
-                    }
-            );
-            autoGGTextFields.add(field);
-            tab.components.add(field);
-            logicalCurrentY += labelHeightAboveComponent + field.height + interComponentSpacing;
-        }
-
-        Button addMessageButton = new Button(
-                getNextId(), startX, logicalCurrentY, actualComponentWidth,
-                "Add message",
-                () -> {
-                    List<String> current = collectAutoGGMessages(true);
-                    current.add("");
-                    draftAutoGGMessages = current;
-                    rebuildTab("General");
-                }
-        );
-        tab.components.add(addMessageButton);
-        logicalCurrentY += addMessageButton.height + interComponentSpacing;
-
-        Button saveAutoGGButton = new Button(
-                getNextId(), startX, logicalCurrentY, actualComponentWidth,
-                "Save AutoGG Messages",
-                this::saveAutoGGFromFields
-        );
-        tab.components.add(saveAutoGGButton);
-        logicalCurrentY += saveAutoGGButton.height + interComponentSpacing;
-
-        addSectionTitle(tab, startX, actualComponentWidth, "Anticheat");
-        Slider flagIntervalSlider = new Slider(
-                getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
-                actualComponentWidth, "Anticheat Flag Interval (seconds)",
-                (float) setting.flagInterval, 0f, 20f, 0.5f,
-                v -> String.format(Locale.US, "%.1f s", v),
-                v -> Setting.getInstance().setFlag(v)
-        );
-        tab.components.add(flagIntervalSlider);
-        logicalCurrentY += labelHeightAboveComponent + flagIntervalSlider.height + interComponentSpacing;
-
-        addSectionTitle(tab, startX, actualComponentWidth, "Discord RPC");
-        addCheckbox(tab, startX, "Discord Rich Presence",
-                "Show Minecraft activity on Discord.",
-                Toggle.discordRpc, v -> {
-            Toggle.discordRpc = v;
-            Setting.getInstance().discordRpcEnabled = v;
-            Setting.save();
-        });
-        String appId = setting.discordRpcApplicationId != null ? setting.discordRpcApplicationId : "";
-        Text appIdField = new Text(
-                getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
-                actualComponentWidth, "Discord Application ID", appId,
-                t -> Setting.getInstance().discordRpcApplicationId = t != null ? t.trim() : "",
-                focused -> {
-                    if (!focused) {
-                        Setting.save();
-                    }
-                }
-        );
-        tab.components.add(appIdField);
-        logicalCurrentY += labelHeightAboveComponent + appIdField.height + interComponentSpacing;
-
-        Label rpcHint = new Label(
-                getNextId(), startX, logicalCurrentY, actualComponentWidth,
-                "Upload an image named \"minecraft\" in the Discord Developer Portal."
-        );
-        tab.components.add(rpcHint);
-        logicalCurrentY += rpcHint.height;
-    }
-
-    private void addSectionTitle(Tab tab, int startX, int width, String title) {
-        if (logicalCurrentY > contentPaddingTopForComponents + 4) {
-            logicalCurrentY += 6;
-        }
-        Title section = new Title(getNextId(), startX, logicalCurrentY, width, title);
-        tab.components.add(section);
-        logicalCurrentY += section.height + 8;
-    }
-
-    private void populateBedwarsTab(Tab tab, int startX, int actualComponentWidth, Setting setting) {
-        addCheckbox(tab, startX, "Auto Stats",
-                "List Bedwars stats for players by /who.",
-                Toggle.listStats, v -> {
-            Toggle.listStats = v;
-            Setting.getInstance().listStatsEnabled = v;
-            Setting.save();
-        });
-        addCheckbox(tab, startX, "Keep Original /who",
-                "Keep original /who output in chat alongside the stats list.",
-                Toggle.keepWho, v -> {
-            Toggle.keepWho = v;
-            Setting.getInstance().keepWhoEnabled = v;
-            Setting.save();
-        });
-        Label note = new Label(
-                getNextId(), startX, logicalCurrentY, actualComponentWidth,
-                "Manual lookup: /s bw [Player] -[Mode]"
-        );
-        tab.components.add(note);
-        logicalCurrentY += note.height;
-
-        Slider warnLevelSlider = new Slider(
-                getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
-                actualComponentWidth, "Warn by Level",
-                (float) setting.warnLevel, 0f, 3000f, 1f,
-                v -> v == 0f ? "Disabled" : String.format(Locale.US, "\u272B%.0f", v),
-                v -> {
-                    Setting.getInstance().warnLevel = Math.round(v);
-                    Setting.save();
-                }
-        );
-        tab.components.add(warnLevelSlider);
-        logicalCurrentY += labelHeightAboveComponent + warnLevelSlider.height + interComponentSpacing;
-
-        Slider warnFkdrSlider = new Slider(
-                getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
-                actualComponentWidth, "Warn by FKDR",
-                (float) setting.warnFKDR, 0f, 50f, 0.1f,
-                v -> v == 0f ? "Disabled" : String.format(Locale.US, "%.1f FKDR", v),
-                v -> {
-                    Setting.getInstance().warnFKDR = v;
-                    Setting.save();
-                }
-        );
-        tab.components.add(warnFkdrSlider);
-        logicalCurrentY += labelHeightAboveComponent + warnFkdrSlider.height;
-    }
-
-    private void populateSkywarsTab(Tab tab, int startX, int actualComponentWidth) {
-        addCheckbox(tab, startX, "Auto Stats",
-                "List Skywars stats for players by /who.",
-                Toggle.skywarsListStats, v -> {
-            Toggle.skywarsListStats = v;
-            Setting.getInstance().skywarsListStatsEnabled = v;
-            Setting.save();
-        });
-        addCheckbox(tab, startX, "Keep Original /who",
-                "Keep original /who output in chat alongside the stats list.",
-                Toggle.keepWho, v -> {
-            Toggle.keepWho = v;
-            Setting.getInstance().keepWhoEnabled = v;
-            Setting.save();
-        });
-        Label note = new Label(
-                getNextId(), startX, logicalCurrentY, actualComponentWidth,
-                "Manual lookup: /s sw [Player] -[Mode]"
-        );
-        tab.components.add(note);
-        logicalCurrentY += note.height;
-    }
-
-    private void populateDuelsTab(Tab tab, int startX, int actualComponentWidth) {
-        addCheckbox(tab, startX, "Auto Stats",
-                "Automatically display opponents Duels stats when a match starts.",
-                Toggle.autoStats, v -> {
-            Toggle.autoStats = v;
-            Setting.getInstance().autoStatsEnabled = v;
-            Setting.save();
-        });
-        addCheckbox(tab, startX, "Updated Titles",
-                "Use updated title formatting when displaying Duels stats.",
-                Toggle.duelsUpdated, v -> {
-            Toggle.duelsUpdated = v;
-            Setting.getInstance().duelsUpdated = v;
-            Setting.save();
-        });
-        if (!tab.components.isEmpty()) {
-            logicalCurrentY -= interComponentSpacing;
-        }
-    }
-
-    private void populateSystemTab(Tab tab, int startX, int actualComponentWidth) {
-        Label intro = new Label(
-                getNextId(), startX, logicalCurrentY, actualComponentWidth,
-                "Edit system GUI colors (Hex #RRGGBB)."
-        );
-        tab.components.add(intro);
-        logicalCurrentY += intro.height + interComponentSpacing;
-
-        for (int i = 0; i < GuiColors.SYSTEM_COLOR_KEYS.length; i++) {
-            final String key = GuiColors.SYSTEM_COLOR_KEYS[i];
-            String displayName = GuiColors.SYSTEM_COLOR_LABELS[i];
-            int color = GuiColors.getSystemColor(key);
-            Color setting = new Color(
-                    getNextId(), startX, logicalCurrentY, actualComponentWidth,
-                    key, displayName, color,
-                    rgb -> {
-                        GuiColors.setSystemColor(key, rgb);
-                        Setting.save();
-                    }
-            );
-            tab.components.add(setting);
-            logicalCurrentY += setting.height + interComponentSpacing;
-        }
-
-        Button resetButton = new Button(
-                getNextId(), startX, logicalCurrentY, actualComponentWidth,
-                "Reset Colors",
-                () -> {
-                    GuiColors.applyDefaults();
-                    Setting.save();
-                    rebuildTab("System");
-                }
-        );
-        tab.components.add(resetButton);
-        logicalCurrentY += resetButton.height;
-    }
-
-    private void populateHypixelApiTab(Tab tab, int startX, int actualComponentWidth, Setting setting) {
-        String apiKey = setting.apiKey != null ? setting.apiKey : "";
-        Text apiKeyField = new Text(
-                getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
-                actualComponentWidth, "Server API Key", apiKey,
-                t -> Setting.getInstance().apiKey = t,
-                focused -> {
-                    if (!focused) {
-                        String key = Setting.getInstance().apiKey;
-                        if (key == null) {
-                            key = "";
-                        }
-                        HypixelApiUtil.set(key);
-                    }
-                }
-        );
-        tab.components.add(apiKeyField);
-        logicalCurrentY += labelHeightAboveComponent + apiKeyField.height + interComponentSpacing;
-
-        Label hint = new Label(
-                getNextId(), startX, logicalCurrentY, actualComponentWidth,
-                "Get a key at https://developer.hypixel.net"
-        );
-        tab.components.add(hint);
-        logicalCurrentY += hint.height;
-    }
-
-    private void populateSkinTab(Tab tab, int startX, int actualComponentWidth, Setting setting) {
-        final Text[] playerHolder = new Text[1];
-        playerHolder[0] = new Text(
-                getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
-                actualComponentWidth, "Player name", "",
-                t -> {
-                }
-        );
-        tab.components.add(playerHolder[0]);
-        logicalCurrentY += labelHeightAboveComponent + playerHolder[0].height + interComponentSpacing;
-
-        Button saveSkinButton = new Button(
-                getNextId(), startX, logicalCurrentY, actualComponentWidth,
-                "Save Skin",
-                () -> {
-                    String name = playerHolder[0] != null ? playerHolder[0].getText() : "";
-                    if (name == null) {
-                        name = "";
-                    }
-                    name = name.trim();
-                    if (name.isEmpty()) {
-                        return;
-                    }
-                    Skin.savePlayerSkinAsync(name, false);
-                }
-        );
-        tab.components.add(saveSkinButton);
-        logicalCurrentY += saveSkinButton.height + interComponentSpacing;
-
-        String skinDir = setting.skinSaveDir != null ? setting.skinSaveDir : "";
-        Text skinDirField = new Text(
-                getNextId(), startX, logicalCurrentY + labelHeightAboveComponent,
-                actualComponentWidth, "Skin Save Path (absolute path)", skinDir,
-                t -> Setting.getInstance().skinSaveDir = t != null ? t : "",
-                focused -> {
-                    if (!focused) {
-                        String path = Setting.getInstance().skinSaveDir;
-                        if (path != null && !path.isEmpty()) {
-                            File dir = new File(path);
-                            if (dir.isAbsolute()) {
-                                Setting.getInstance().setDir(dir);
-                            } else {
-                                Setting.save();
-                            }
-                        } else {
-                            Setting.save();
-                        }
-                    }
-                }
-        );
-        tab.components.add(skinDirField);
-        logicalCurrentY += labelHeightAboveComponent + skinDirField.height;
-    }
-
-    private void populateUpdateTab(Tab tab, int startX, int actualComponentWidth) {
-        String initialStatus = buildInitialUpdateStatus();
-        updateStatusLabel = new Label(
-                getNextId(), startX, logicalCurrentY, actualComponentWidth, initialStatus
-        );
-        tab.components.add(updateStatusLabel);
-        logicalCurrentY += updateStatusLabel.height + interComponentSpacing;
-
-        Label versionLabel = new Label(
-                getNextId(), startX, logicalCurrentY, actualComponentWidth,
-                "Current version: " + statflex.VERSION
-        );
-        tab.components.add(versionLabel);
-        logicalCurrentY += versionLabel.height + interComponentSpacing;
-
-        Button checkButton = new Button(
-                getNextId(), startX, logicalCurrentY, actualComponentWidth,
-                "Check for Updates",
-                this::runUpdateCheck
-        );
-        tab.components.add(checkButton);
-        logicalCurrentY += checkButton.height + interComponentSpacing;
-
-        updateInstallButton = new Button(
-                getNextId(), startX, logicalCurrentY, actualComponentWidth,
-                "Update",
-                () -> {
-                    if (Update.updateAvailable && Update.updateDownloaded) {
-                        Update.prepareUpdateAndExit();
-                    }
-                }
-        );
-        updateInstallButton.enabled = Update.updateAvailable && Update.updateDownloaded;
-        tab.components.add(updateInstallButton);
-        logicalCurrentY += updateInstallButton.height + interComponentSpacing;
-
-        Label restartHint = new Label(
-                getNextId(), startX, logicalCurrentY, actualComponentWidth,
-                "After updating, restart Minecraft."
-        );
-        tab.components.add(restartHint);
-        logicalCurrentY += restartHint.height;
-    }
-
-    private String buildInitialUpdateStatus() {
-        if (Update.updateAvailable && Update.latestVersion != null && !Update.latestVersion.isEmpty()) {
-            return "Update available: " + Update.latestVersion;
-        }
-        return "Click \"Check for Updates\" to check.";
-    }
-
-    private void runUpdateCheck() {
-        if (updateCheckInProgress) {
-            return;
-        }
-        updateCheckInProgress = true;
-        if (updateStatusLabel != null) {
-            updateStatusLabel.setText("Checking for updates...");
-            updateStatusLabel.setColor(GuiColors.TEXT_SECONDARY);
-        }
-        if (updateInstallButton != null) {
-            updateInstallButton.enabled = false;
-        }
-
-        new Thread(() -> {
-            Update.UpdateState state = Update.checkNow();
-            Minecraft.getMinecraft().addScheduledTask(() -> {
-                updateCheckInProgress = false;
-                if (mc.currentScreen != this) {
-                    return;
-                }
-                applyUpdateCheckResult(state);
-            });
-        }, "statflex-updater-gui").start();
-    }
-
-    private void applyUpdateCheckResult(Update.UpdateState state) {
-        if (updateStatusLabel == null || updateInstallButton == null) {
-            return;
-        }
-        switch (state) {
-            case UP_TO_DATE:
-                updateStatusLabel.setText("statflex is up-to-date.");
-                updateStatusLabel.setColor(GuiColors.TEXT_SECONDARY);
-                updateInstallButton.enabled = false;
-                break;
-            case UPDATE_AVAILABLE:
-                updateStatusLabel.setText("Update available: " + Update.latestVersion);
-                updateStatusLabel.setColor(GuiColors.TEXT_ACCENT);
-                updateInstallButton.enabled = true;
-                break;
-            case ERROR:
-                updateStatusLabel.setText("Failed to check for updates.");
-                updateStatusLabel.setColor(new java.awt.Color(220, 80, 80).getRGB());
-                updateInstallButton.enabled = false;
-                break;
-            default:
-                break;
-        }
-    }
-
-    private List<String> resolveAutoGGMessagesForDisplay() {
-        if (draftAutoGGMessages != null) {
-            return new ArrayList<String>(draftAutoGGMessages);
-        }
-        String[] saved = Setting.getInstance().gg;
-        List<String> list = new ArrayList<String>();
-        if (saved != null) {
-            for (String m : saved) {
-                list.add(m != null ? m : "");
-            }
-        }
-        if (list.isEmpty()) {
-            list.add("");
-        }
-        return list;
-    }
-
-    private List<String> collectAutoGGMessages(boolean keepEmpty) {
-        List<String> list = new ArrayList<String>();
-        for (Text field : autoGGTextFields) {
-            String text = field.getText();
-            if (text == null) {
-                text = "";
-            }
-            String trimmed = text.trim();
-            if (keepEmpty || !trimmed.isEmpty()) {
-                list.add(keepEmpty ? text : trimmed);
-            }
-        }
-        if (keepEmpty && list.isEmpty()) {
-            list.add("");
-        }
-        return list;
-    }
-
-    private void saveAutoGGFromFields() {
-        List<String> list = collectAutoGGMessages(false);
-        Setting.getInstance().gg = list.toArray(new String[0]);
-        Setting.save();
-        draftAutoGGMessages = null;
-    }
-
-    private void addCheckbox(Tab tab, int startX, String label, boolean initial, Checkbox.OnValueChanged onChange) {
-        addCheckbox(tab, startX, label, null, initial, onChange);
-    }
-
-    private void addCheckbox(Tab tab, int startX, String label, String description,
-                             boolean initial, Checkbox.OnValueChanged onChange) {
-        Checkbox cb = new Checkbox(getNextId(), startX, logicalCurrentY, label, description, initial, onChange);
-        tab.components.add(cb);
-        logicalCurrentY += cb.height + interComponentSpacing;
-    }
-
-    private void calculateTabScrolling() {
-        if (tabs.isEmpty()) {
-            return;
-        }
-        totalTabsWidthUnscrolled = 0;
-        for (int i = 0; i < tabs.size(); i++) {
-            totalTabsWidthUnscrolled += tabButtonWidth + tabButtonSpacing;
-        }
-        totalTabsWidthUnscrolled -= tabButtonSpacing;
-
-        int tabBarContainerWidth = panelWidth - (panelPadding * 2);
-        boolean needsScrolling = totalTabsWidthUnscrolled > tabBarContainerWidth && tabs.size() > 1;
-        visibleTabBarAreaWidth = needsScrolling
-                ? tabBarContainerWidth - (tabBarScrollButtonWidth * 2 + tabButtonSpacing * 2)
-                : tabBarContainerWidth;
-        maxTabScrollX = Math.max(0, totalTabsWidthUnscrolled - visibleTabBarAreaWidth);
-        targetTabScrollX = Math.max(0, Math.min(maxTabScrollX, targetTabScrollX));
-        tabScrollX = Math.max(0f, Math.min((float) maxTabScrollX, tabScrollX));
-    }
-
-    private void ensureSelectedTabVisible() {
-        if (tabs.isEmpty() || maxTabScrollX <= 0) {
-            return;
-        }
-        int tabStart = currentTabIndex * (tabButtonWidth + tabButtonSpacing);
-        int tabEnd = tabStart + tabButtonWidth;
-        if (tabStart < targetTabScrollX) {
-            targetTabScrollX = tabStart;
-        } else if (tabEnd > targetTabScrollX + visibleTabBarAreaWidth) {
-            targetTabScrollX = tabEnd - visibleTabBarAreaWidth;
-        }
-        targetTabScrollX = Math.max(0, Math.min(maxTabScrollX, targetTabScrollX));
-        tabScrollX = targetTabScrollX;
-    }
-
-    private void calculateContentScrollingForTab(Tab tab) {
-        int tabBarYOffset = panelY + topBarHeight;
-        int tabBarInternalHeight = tabBarButtonHeight + 8;
-        int contentAreaMarginTop = tabBarYOffset + tabBarInternalHeight;
-        int contentAreaDrawableHeight = (panelY + panelHeight - panelPadding) - contentAreaMarginTop;
-        tab.maxScrollY = Math.max(0, tab.contentHeight - contentAreaDrawableHeight);
-        tab.targetScrollY = Math.max(0, Math.min(tab.maxScrollY, tab.targetScrollY));
-        tab.scrollY = Math.max(0f, Math.min((float) tab.maxScrollY, tab.scrollY));
-    }
-
-    private boolean loggedFirstDraw;
-
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         if (!loggedFirstDraw) {
             loggedFirstDraw = true;
         }
-        Tab activeTab = currentTab();
+        Tab activeTab = tab();
         if (!"error_no_tabs".equals(activeTab.id)) {
             if (!isDraggingContentScrollbar) {
                 float scrollYDiff = activeTab.targetScrollY - activeTab.scrollY;
@@ -809,8 +160,8 @@ public class Gui extends GuiScreen {
 
         drawRect(0, 0, this.width, this.height, new java.awt.Color(0, 0, 0, 170).getRGB());
 
-        drawRoundedRectUsingGL(panelX, panelY, panelWidth, panelHeight, panelCornerRadius, GuiColors.SCREEN_BACKGROUND);
-        drawRoundedRectUsingGL(panelX, panelY, panelWidth, topBarHeight, panelCornerRadius, GuiColors.TITLE_BAR_BACKGROUND);
+        roundRect(panelX, panelY, panelWidth, panelHeight, panelCornerRadius, GuiColors.SCREEN_BACKGROUND);
+        roundRect(panelX, panelY, panelWidth, topBarHeight, panelCornerRadius, GuiColors.TITLE_BAR_BACKGROUND);
         drawRect(
                 (int) (panelX + panelCornerRadius),
                 (int) (panelY + topBarHeight - panelCornerRadius),
@@ -829,7 +180,7 @@ public class Gui extends GuiScreen {
         int closeColor = isCloseButtonHovered
                 ? new java.awt.Color(200, 50, 50, 220).getRGB()
                 : new java.awt.Color(80, 80, 80, 180).getRGB();
-        drawRoundedRectUsingGL(closeX, closeY, closeButtonSize, closeButtonSize, 3f, closeColor);
+        roundRect(closeX, closeY, closeButtonSize, closeButtonSize, 3f, closeColor);
         drawCenteredString(guiFont, "\u2715", closeX + closeButtonSize / 2,
                 closeY + (closeButtonSize - guiFont.FONT_HEIGHT) / 2 + 1, java.awt.Color.WHITE.getRGB());
 
@@ -852,7 +203,7 @@ public class Gui extends GuiScreen {
             int scrollLeftX = tabsAreaX;
             boolean scrollLeftHover = mouseX >= scrollLeftX && mouseX < scrollLeftX + tabBarScrollButtonWidth
                     && mouseY >= buttonY && mouseY < buttonY + tabBarButtonHeight;
-            drawRoundedRectWithBorderUsingGL(scrollLeftX, buttonY, tabBarScrollButtonWidth, tabBarButtonHeight, 2f,
+            borderRect(scrollLeftX, buttonY, tabBarScrollButtonWidth, tabBarButtonHeight, 2f,
                     scrollLeftHover ? GuiColors.TAB_SCROLL_BUTTON_HOVER_BG : GuiColors.TAB_SCROLL_BUTTON_BG,
                     GuiColors.COMPONENT_BORDER, 1f);
             drawCenteredString(guiFont, "<", scrollLeftX + tabBarScrollButtonWidth / 2,
@@ -862,7 +213,7 @@ public class Gui extends GuiScreen {
             int scrollRightX = tabsAreaX + tabsAreaWidth - tabBarScrollButtonWidth;
             boolean scrollRightHover = mouseX >= scrollRightX && mouseX < scrollRightX + tabBarScrollButtonWidth
                     && mouseY >= buttonY && mouseY < buttonY + tabBarButtonHeight;
-            drawRoundedRectWithBorderUsingGL(scrollRightX, buttonY, tabBarScrollButtonWidth, tabBarButtonHeight, 2f,
+            borderRect(scrollRightX, buttonY, tabBarScrollButtonWidth, tabBarButtonHeight, 2f,
                     scrollRightHover ? GuiColors.TAB_SCROLL_BUTTON_HOVER_BG : GuiColors.TAB_SCROLL_BUTTON_BG,
                     GuiColors.COMPONENT_BORDER, 1f);
             drawCenteredString(guiFont, ">", scrollRightX + tabBarScrollButtonWidth / 2,
@@ -871,7 +222,7 @@ public class Gui extends GuiScreen {
         }
 
         int tabButtonVisualY = tabBarYOffset + (tabBarInternalHeight - tabBarButtonHeight) / 2;
-        startScissor(tabsViewportStartX, tabButtonVisualY, localVisibleTabBarAreaWidth, tabBarButtonHeight);
+        clip(tabsViewportStartX, tabButtonVisualY, localVisibleTabBarAreaWidth, tabBarButtonHeight);
         float currentTabButtonVisualX = tabsViewportStartX - tabScrollX;
         for (int index = 0; index < tabs.size(); index++) {
             Tab tab = tabs.get(index);
@@ -895,7 +246,7 @@ public class Gui extends GuiScreen {
                 textColor = GuiColors.TAB_BUTTON_TEXT_INACTIVE;
             }
 
-            drawRoundedRectWithBorderUsingGL(currentTabButtonVisualX, tabButtonVisualY,
+            borderRect(currentTabButtonVisualX, tabButtonVisualY,
                     tabButtonWidth, tabBarButtonHeight, 3f, tabBgColor, GuiColors.TAB_BAR_BORDER, 1f);
             if (isSelected) {
                 net.minecraft.client.gui.Gui.drawRect((int) currentTabButtonVisualX + 3, tabButtonVisualY + tabBarButtonHeight - 2,
@@ -907,14 +258,14 @@ public class Gui extends GuiScreen {
                     tabButtonVisualY + (tabBarButtonHeight - guiFont.FONT_HEIGHT) / 2, textColor);
             currentTabButtonVisualX += tabButtonWidth + tabButtonSpacing;
         }
-        stopScissor();
+        unclip();
 
         int contentAreaVisualTop = tabBarYOffset + tabBarInternalHeight;
         int contentAreaVisualBottom = panelY + panelHeight - panelPadding;
         int contentAreaDrawableHeight = contentAreaVisualBottom - contentAreaVisualTop;
 
         net.minecraft.client.gui.Gui.drawRect(panelX, contentAreaVisualTop, panelX + panelWidth, contentAreaVisualTop + 1, GuiColors.TITLE_BAR_SEPARATOR);
-        drawRoundedRectWithBorderUsingGL(
+        borderRect(
                 panelX + panelPadding, contentAreaVisualTop + panelPadding,
                 panelWidth - panelPadding * 2, contentAreaDrawableHeight - panelPadding * 2,
                 3f, GuiColors.MODERN_SECONDARY_BACKGROUND, GuiColors.COMPONENT_BORDER, 1f
@@ -928,7 +279,7 @@ public class Gui extends GuiScreen {
             contentAreaWidth -= (scrollbarWidth + scrollbarMargin);
         }
 
-        startScissor(contentAreaX, contentAreaY, contentAreaWidth, contentAreaHeight);
+        clip(contentAreaX, contentAreaY, contentAreaWidth, contentAreaHeight);
 
         if (!"error_no_tabs".equals(activeTab.id)) {
             for (GuiComponentBase component : activeTab.components) {
@@ -938,19 +289,19 @@ public class Gui extends GuiScreen {
                         && componentScreenY <= contentAreaY + contentAreaHeight) {
                     component.y = componentScreenY;
                     if (!(component instanceof Dropdown && ((Dropdown) component).isOpen)) {
-                        component.drawComponent(mouseX, mouseY, partialTicks);
+                        component.draw(mouseX, mouseY, partialTicks);
                     }
                     component.y = originalLogicalY;
                 }
             }
         }
-        stopScissor();
+        unclip();
 
         if (activeTab.maxScrollY > 0) {
             int scrollBarActualX = contentAreaX + contentAreaWidth + scrollbarMargin;
             int scrollBarTrackY = contentAreaY;
             int scrollBarTrackHeight = contentAreaHeight;
-            drawRoundedRectUsingGL(scrollBarActualX, scrollBarTrackY, scrollbarWidth, scrollBarTrackHeight, 3f, GuiColors.SCROLLBAR_BG);
+            roundRect(scrollBarActualX, scrollBarTrackY, scrollbarWidth, scrollBarTrackHeight, 3f, GuiColors.SCROLLBAR_BG);
 
             float thumbHeightRatio = Math.max(0.05f, Math.min(1f, contentAreaHeight / (float) activeTab.contentHeight));
             int thumbHeight = Math.max(20, (int) (scrollBarTrackHeight * thumbHeightRatio));
@@ -961,7 +312,7 @@ public class Gui extends GuiScreen {
 
             float thumbYClamped = Math.max(scrollBarTrackY,
                     Math.min(scrollBarTrackY + scrollBarTrackHeight - thumbHeight, thumbYPos));
-            drawRoundedRectUsingGL(scrollBarActualX + 1f, thumbYClamped, scrollbarWidth - 2f, thumbHeight, 3f,
+            roundRect(scrollBarActualX + 1f, thumbYClamped, scrollbarWidth - 2f, thumbHeight, 3f,
                     thumbHovered ? GuiColors.MODERN_SCROLLBAR_THUMB_HOVER : GuiColors.SCROLLBAR_THUMB);
         }
 
@@ -969,7 +320,7 @@ public class Gui extends GuiScreen {
             Dropdown dd = openDropdown;
             int originalLogicalYDd = dd.y;
             dd.y = contentAreaY + originalLogicalYDd - (int) activeTab.scrollY;
-            dd.drawComponent(mouseX, mouseY, partialTicks);
+            dd.draw(mouseX, mouseY, partialTicks);
             dd.y = originalLogicalYDd;
         }
     }
@@ -1023,7 +374,7 @@ public class Gui extends GuiScreen {
                     && mouseX >= tabsViewportStartX
                     && mouseX < tabsViewportStartX + actualClickableTabBarWidth) {
                 if (currentTabIndex != index) {
-                    for (GuiComponentBase c : currentTab().components) {
+                    for (GuiComponentBase c : tab().components) {
                         if (c instanceof Dropdown) {
                             ((Dropdown) c).close();
                         }
@@ -1037,15 +388,15 @@ public class Gui extends GuiScreen {
                     openDropdown = null;
                     isDraggingContentScrollbar = false;
                     currentTabIndex = index;
-                    currentTab().targetScrollY = 0;
-                    currentTab().scrollY = 0f;
+                    tab().targetScrollY = 0;
+                    tab().scrollY = 0f;
                 }
                 return;
             }
             currentTabButtonVisualX += tabButtonWidth + tabButtonSpacing;
         }
 
-        Tab activeTab = currentTab();
+        Tab activeTab = tab();
         if ("error_no_tabs".equals(activeTab.id)) {
             return;
         }
@@ -1059,7 +410,7 @@ public class Gui extends GuiScreen {
             Dropdown dd = this.openDropdown;
             int oY = dd.y;
             dd.y = contentAreaY + oY - (int) activeTab.scrollY;
-            if (dd.mouseClicked(mouseX, mouseY, mouseButton)) {
+            if (dd.click(mouseX, mouseY, mouseButton)) {
                 dd.y = oY;
                 if (!dd.isOpen) {
                     this.openDropdown = null;
@@ -1068,7 +419,7 @@ public class Gui extends GuiScreen {
             }
             dd.y = oY;
             int listH = dd.isOpen
-                    ? Math.min(dd.getOptions().size(), dd.maxDisplayableOptions) * dd.optionHeight
+                    ? Math.min(dd.options().size(), dd.maxDisplayableOptions) * dd.optionHeight
                     : 0;
             boolean clickInside = mouseX >= dd.x && mouseX < dd.x + dd.width
                     && mouseY >= dd.y && mouseY < dd.y + dd.height + listH;
@@ -1086,7 +437,7 @@ public class Gui extends GuiScreen {
                 GuiComponentBase component = activeTab.components.get(i);
                 int oY = component.y;
                 component.y = contentAreaY + oY - (int) activeTab.scrollY;
-                if (component.mouseClicked(mouseX, mouseY, mouseButton)) {
+                if (component.click(mouseX, mouseY, mouseButton)) {
                     if (component instanceof Dropdown) {
                         if (((Dropdown) component).isOpen) {
                             this.openDropdown = (Dropdown) component;
@@ -1146,12 +497,12 @@ public class Gui extends GuiScreen {
             super.mouseReleased(mouseX, mouseY, state);
         } catch (Exception ignored) {
         }
-        Tab activeTab = currentTab();
+        Tab activeTab = tab();
         int contentAreaY = panelY + topBarHeight + (tabBarButtonHeight + 8) + panelPadding + 1;
         for (GuiComponentBase it : activeTab.components) {
             int oY = it.y;
             it.y = contentAreaY + oY - (int) activeTab.scrollY;
-            it.mouseReleased(mouseX, mouseY, state);
+            it.release(mouseX, mouseY, state);
             it.y = oY;
         }
     }
@@ -1159,7 +510,7 @@ public class Gui extends GuiScreen {
     @Override
     protected void mouseClickMove(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
         if (isDraggingContentScrollbar) {
-            Tab activeTab = currentTab();
+            Tab activeTab = tab();
             int contentAreaY = panelY + topBarHeight + (tabBarButtonHeight + 8) + panelPadding + 1;
             int contentAreaH = (panelY + panelHeight - panelPadding) - contentAreaY;
             int thumbH = Math.max(20, (int) (contentAreaH / (float) Math.max(1, activeTab.contentHeight) * contentAreaH));
@@ -1179,13 +530,13 @@ public class Gui extends GuiScreen {
             super.mouseClickMove(mouseX, mouseY, clickedMouseButton, timeSinceLastClick);
         } catch (Exception ignored) {
         }
-        Tab activeTab = currentTab();
+        Tab activeTab = tab();
         int contentAreaY = panelY + topBarHeight + (tabBarButtonHeight + 8) + panelPadding + 1;
         for (GuiComponentBase c : activeTab.components) {
             if (c instanceof Slider) {
                 int oY = c.y;
                 c.y = contentAreaY + oY - (int) activeTab.scrollY;
-                c.mouseClickMove(mouseX, mouseY, clickedMouseButton, timeSinceLastClick);
+                c.drag(mouseX, mouseY, clickedMouseButton, timeSinceLastClick);
                 c.y = oY;
             }
         }
@@ -1205,7 +556,7 @@ public class Gui extends GuiScreen {
 
             if (rawMouseX > panelX && rawMouseX < panelX + panelWidth
                     && rawMouseY > panelY && rawMouseY < panelY + panelHeight) {
-                Tab activeTab = currentTab();
+                Tab activeTab = tab();
                 int scrollAmount = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) ? 90 : 45;
                 activeTab.targetScrollY = Math.max(0, Math.min(activeTab.maxScrollY,
                         activeTab.targetScrollY - dWheel / 120 * scrollAmount));
@@ -1215,8 +566,8 @@ public class Gui extends GuiScreen {
 
     @Override
     protected void keyTyped(char typedChar, int keyCode) {
-        for (GuiComponentBase c : currentTab().components) {
-            if (c.keyTyped(typedChar, keyCode)) {
+        for (GuiComponentBase c : tab().components) {
+            if (c.key(typedChar, keyCode)) {
                 return;
             }
         }
@@ -1238,15 +589,15 @@ public class Gui extends GuiScreen {
         for (Tab tab : tabs) {
             for (GuiComponentBase c : tab.components) {
                 if (c instanceof Text) {
-                    ((Text) c).unfocusIfNeeded();
+                    ((Text) c).unfocus();
                 }
                 if (c instanceof Color) {
-                    ((Color) c).unfocusIfNeeded();
+                    ((Color) c).unfocus();
                 }
             }
         }
         if (!autoGGTextFields.isEmpty()) {
-            saveAutoGGFromFields();
+            saveGg();
         }
         Setting.save();
     }
@@ -1254,9 +605,632 @@ public class Gui extends GuiScreen {
     @Override
     public boolean doesGuiPauseGame() {
         return false;
-    }   
+    }
 
-    private void startScissor(int x, int y, int width, int height) {
+    private void defineTabs() {
+        allPossibleTabsMap.clear();
+        allPossibleTabsMap.put("General", new Tab("General", "General"));
+        allPossibleTabsMap.put("Bedwars", new Tab("Bedwars", "Bedwars"));
+        allPossibleTabsMap.put("Skywars", new Tab("Skywars", "Skywars"));
+        allPossibleTabsMap.put("Duels", new Tab("Duels", "Duels"));
+        allPossibleTabsMap.put("Server API", new Tab("Server API", "Server API"));
+        allPossibleTabsMap.put("Skin", new Tab("Skin", "Skin"));
+        allPossibleTabsMap.put("System", new Tab("System", "System"));
+        allPossibleTabsMap.put("Update", new Tab("Update", "Update"));
+    }
+
+    private void buildTabs() {
+        tabs.clear();
+        String[] order = {
+                "General", "Bedwars", "Skywars", "Duels", "Server API", "Skin", "System", "Update"
+        };
+        for (String tabId : order) {
+            Tab tab = allPossibleTabsMap.get(tabId);
+            if (tab != null) {
+                tab.components.clear();
+                fill(tab);
+                tabs.add(tab);
+            }
+        }
+        for (Tab tab : allPossibleTabsMap.values()) {
+            if (!tabs.contains(tab)) {
+                tab.components.clear();
+                fill(tab);
+                tabs.add(tab);
+            }
+        }
+    }
+
+    private void rebuild(String tabId) {
+        for (Tab tab : tabs) {
+            if (tabId.equals(tab.id)) {
+                float savedScroll = tab.scrollY;
+                int savedTarget = tab.targetScrollY;
+                tab.components.clear();
+                fill(tab);
+                contentScroll(tab);
+                tab.targetScrollY = Math.max(0, Math.min(tab.maxScrollY, savedTarget));
+                tab.scrollY = Math.max(0f, Math.min((float) tab.maxScrollY, savedScroll));
+                return;
+            }
+        }
+    }
+
+    private void fill(Tab tab) {
+        Setting setting = Setting.get();
+        int contentAreaWidth = panelWidth - (panelPadding * 2);
+        int actualComponentWidth = Math.min(this.componentWidth, contentAreaWidth);
+        int startX = panelX + panelPadding + (contentAreaWidth - actualComponentWidth) / 2;
+
+        logicalCurrentY = 0;
+        logicalCurrentY += contentPaddingTopForComponents;
+
+        if ("General".equals(tab.id)) {
+            general(tab, startX, actualComponentWidth, setting);
+        } else if ("Bedwars".equals(tab.id)) {
+            bedwars(tab, startX, actualComponentWidth, setting);
+        } else if ("Skywars".equals(tab.id)) {
+            skywars(tab, startX, actualComponentWidth);
+        } else if ("Duels".equals(tab.id)) {
+            duels(tab, startX, actualComponentWidth);
+        } else if ("Server API".equals(tab.id)) {
+            api(tab, startX, actualComponentWidth, setting);
+        } else if ("Skin".equals(tab.id)) {
+            skin(tab, startX, actualComponentWidth, setting);
+        } else if ("System".equals(tab.id)) {
+            system(tab, startX, actualComponentWidth);
+        } else if ("Update".equals(tab.id)) {
+            update(tab, startX, actualComponentWidth);
+        }
+
+        tab.contentHeight = (logicalCurrentY - contentPaddingTopForComponents) + contentPaddingBottomForComponents;
+        contentScroll(tab);
+    }
+
+    private void general(Tab tab, int startX, int actualComponentWidth, Setting setting) {
+        section(tab, startX, actualComponentWidth, "Denick");
+        checkbox(tab, startX, "Denick",
+                "Detect and reveal nicked players when they join or chat.",
+                Toggle.denick, v -> {
+            Toggle.denick = v;
+            Setting.get().denickEnabled = v;
+            Setting.save();
+        });
+
+        section(tab, startX, actualComponentWidth, "Connection");
+        checkbox(tab, startX, "Secure Connection",
+                "Validate SSL certificates for API and update requests.",
+                !Toggle.ignoreCertificates, v -> {
+            Toggle.ignoreCertificates = !v;
+            Setting.get().ignoreCertificates = !v;
+            Setting.save();
+        });
+        checkbox(tab, startX, "Auto-off Outside Server",
+                "Disable Auto Stats and Denick when not on Server.",
+                Toggle.disableHypixelFeaturesOutsideHypixel, v -> {
+            Toggle.disableHypixelFeaturesOutsideHypixel = v;
+            Setting.get().disableHypixelFeaturesOutsideHypixel = v;
+            Setting.save();
+        });
+
+        section(tab, startX, actualComponentWidth, "AutoGG");
+        autoGGTextFields.clear();
+        List<String> messages = readGg();
+        for (int i = 0; i < messages.size(); i++) {
+            String label = messages.size() == 1 ? "AutoGG Messages" : "AutoGG Messages " + (i + 1);
+            Text field = new Text(
+                    nextId(), startX, logicalCurrentY + labelHeightAboveComponent,
+                    actualComponentWidth, label, messages.get(i),
+                    t -> {
+                    },
+                    focused -> {
+                        if (!focused) {
+                            saveGg();
+                        }
+                    }
+            );
+            autoGGTextFields.add(field);
+            tab.components.add(field);
+            logicalCurrentY += labelHeightAboveComponent + field.height + interComponentSpacing;
+        }
+
+        Button addMessageButton = new Button(
+                nextId(), startX, logicalCurrentY, actualComponentWidth,
+                "Add message",
+                () -> {
+                    List<String> current = collectGg(true);
+                    current.add("");
+                    draftAutoGGMessages = current;
+                    rebuild("General");
+                }
+        );
+        tab.components.add(addMessageButton);
+        logicalCurrentY += addMessageButton.height + interComponentSpacing;
+
+        Button saveAutoGGButton = new Button(
+                nextId(), startX, logicalCurrentY, actualComponentWidth,
+                "Save AutoGG Messages",
+                this::saveGg
+        );
+        tab.components.add(saveAutoGGButton);
+        logicalCurrentY += saveAutoGGButton.height + interComponentSpacing;
+
+        section(tab, startX, actualComponentWidth, "Anticheat");
+        Slider flagIntervalSlider = new Slider(
+                nextId(), startX, logicalCurrentY + labelHeightAboveComponent,
+                actualComponentWidth, "Anticheat Flag Interval (seconds)",
+                (float) setting.flagInterval, 0f, 20f, 0.5f,
+                v -> String.format(Locale.US, "%.1f s", v),
+                v -> Setting.get().setFlag(v)
+        );
+        tab.components.add(flagIntervalSlider);
+        logicalCurrentY += labelHeightAboveComponent + flagIntervalSlider.height + interComponentSpacing;
+
+        section(tab, startX, actualComponentWidth, "Discord RPC");
+        checkbox(tab, startX, "Discord Rich Presence",
+                "Show Minecraft activity on Discord.",
+                Toggle.discordRpc, v -> {
+            Toggle.discordRpc = v;
+            Setting.get().discordRpcEnabled = v;
+            Setting.save();
+        });
+        String appId = setting.discordRpcApplicationId != null ? setting.discordRpcApplicationId : "";
+        Text appIdField = new Text(
+                nextId(), startX, logicalCurrentY + labelHeightAboveComponent,
+                actualComponentWidth, "Discord Application ID", appId,
+                t -> Setting.get().discordRpcApplicationId = t != null ? t.trim() : "",
+                focused -> {
+                    if (!focused) {
+                        Setting.save();
+                    }
+                }
+        );
+        tab.components.add(appIdField);
+        logicalCurrentY += labelHeightAboveComponent + appIdField.height + interComponentSpacing;
+
+        Label rpcHint = new Label(
+                nextId(), startX, logicalCurrentY, actualComponentWidth,
+                "Upload an image named \"minecraft\" in the Discord Developer Portal."
+        );
+        tab.components.add(rpcHint);
+        logicalCurrentY += rpcHint.height;
+    }
+
+    private void bedwars(Tab tab, int startX, int actualComponentWidth, Setting setting) {
+        checkbox(tab, startX, "Auto Stats",
+                "List Bedwars stats for players by /who.",
+                Toggle.listStats, v -> {
+            Toggle.listStats = v;
+            Setting.get().listStatsEnabled = v;
+            Setting.save();
+        });
+        checkbox(tab, startX, "Keep Original /who",
+                "Keep original /who output in chat alongside the stats list.",
+                Toggle.keepWho, v -> {
+            Toggle.keepWho = v;
+            Setting.get().keepWhoEnabled = v;
+            Setting.save();
+        });
+        Label note = new Label(
+                nextId(), startX, logicalCurrentY, actualComponentWidth,
+                "Manual lookup: /s bw [Player] -[Mode]"
+        );
+        tab.components.add(note);
+        logicalCurrentY += note.height;
+
+        Slider warnLevelSlider = new Slider(
+                nextId(), startX, logicalCurrentY + labelHeightAboveComponent,
+                actualComponentWidth, "Warn by Level",
+                (float) setting.warnLevel, 0f, 3000f, 1f,
+                v -> v == 0f ? "Disabled" : String.format(Locale.US, "\u272B%.0f", v),
+                v -> {
+                    Setting.get().warnLevel = Math.round(v);
+                    Setting.save();
+                }
+        );
+        tab.components.add(warnLevelSlider);
+        logicalCurrentY += labelHeightAboveComponent + warnLevelSlider.height + interComponentSpacing;
+
+        Slider warnFkdrSlider = new Slider(
+                nextId(), startX, logicalCurrentY + labelHeightAboveComponent,
+                actualComponentWidth, "Warn by FKDR",
+                (float) setting.warnFKDR, 0f, 50f, 0.1f,
+                v -> v == 0f ? "Disabled" : String.format(Locale.US, "%.1f FKDR", v),
+                v -> {
+                    Setting.get().warnFKDR = v;
+                    Setting.save();
+                }
+        );
+        tab.components.add(warnFkdrSlider);
+        logicalCurrentY += labelHeightAboveComponent + warnFkdrSlider.height;
+    }
+
+    private void skywars(Tab tab, int startX, int actualComponentWidth) {
+        checkbox(tab, startX, "Auto Stats",
+                "List Skywars stats for players by /who.",
+                Toggle.skywarsListStats, v -> {
+            Toggle.skywarsListStats = v;
+            Setting.get().skywarsListStatsEnabled = v;
+            Setting.save();
+        });
+        checkbox(tab, startX, "Keep Original /who",
+                "Keep original /who output in chat alongside the stats list.",
+                Toggle.keepWho, v -> {
+            Toggle.keepWho = v;
+            Setting.get().keepWhoEnabled = v;
+            Setting.save();
+        });
+        Label note = new Label(
+                nextId(), startX, logicalCurrentY, actualComponentWidth,
+                "Manual lookup: /s sw [Player] -[Mode]"
+        );
+        tab.components.add(note);
+        logicalCurrentY += note.height;
+    }
+
+    private void duels(Tab tab, int startX, int actualComponentWidth) {
+        checkbox(tab, startX, "Auto Stats",
+                "Automatically display opponents Duels stats when a match starts.",
+                Toggle.autoStats, v -> {
+            Toggle.autoStats = v;
+            Setting.get().autoStatsEnabled = v;
+            Setting.save();
+        });
+        checkbox(tab, startX, "Updated Titles",
+                "Use updated title formatting when displaying Duels stats.",
+                Toggle.duelsUpdated, v -> {
+            Toggle.duelsUpdated = v;
+            Setting.get().duelsUpdated = v;
+            Setting.save();
+        });
+        if (!tab.components.isEmpty()) {
+            logicalCurrentY -= interComponentSpacing;
+        }
+    }
+
+    private void api(Tab tab, int startX, int actualComponentWidth, Setting setting) {
+        String apiKey = setting.apiKey != null ? setting.apiKey : "";
+        Text apiKeyField = new Text(
+                nextId(), startX, logicalCurrentY + labelHeightAboveComponent,
+                actualComponentWidth, "Server API Key", apiKey,
+                t -> Setting.get().apiKey = t,
+                focused -> {
+                    if (!focused) {
+                        String key = Setting.get().apiKey;
+                        if (key == null) {
+                            key = "";
+                        }
+                        HypixelApiUtil.set(key);
+                    }
+                }
+        );
+        tab.components.add(apiKeyField);
+        logicalCurrentY += labelHeightAboveComponent + apiKeyField.height + interComponentSpacing;
+
+        Label hint = new Label(
+                nextId(), startX, logicalCurrentY, actualComponentWidth,
+                "Get a key at https://developer.hypixel.net"
+        );
+        tab.components.add(hint);
+        logicalCurrentY += hint.height;
+    }
+
+    private void skin(Tab tab, int startX, int actualComponentWidth, Setting setting) {
+        final Text[] playerHolder = new Text[1];
+        playerHolder[0] = new Text(
+                nextId(), startX, logicalCurrentY + labelHeightAboveComponent,
+                actualComponentWidth, "Player name", "",
+                t -> {
+                }
+        );
+        tab.components.add(playerHolder[0]);
+        logicalCurrentY += labelHeightAboveComponent + playerHolder[0].height + interComponentSpacing;
+
+        Button saveSkinButton = new Button(
+                nextId(), startX, logicalCurrentY, actualComponentWidth,
+                "Save Skin",
+                () -> {
+                    String name = playerHolder[0] != null ? playerHolder[0].getText() : "";
+                    if (name == null) {
+                        name = "";
+                    }
+                    name = name.trim();
+                    if (name.isEmpty()) {
+                        return;
+                    }
+                    Skin.save(name, false);
+                }
+        );
+        tab.components.add(saveSkinButton);
+        logicalCurrentY += saveSkinButton.height + interComponentSpacing;
+
+        String skinDir = setting.skinSaveDir != null ? setting.skinSaveDir : "";
+        Text skinDirField = new Text(
+                nextId(), startX, logicalCurrentY + labelHeightAboveComponent,
+                actualComponentWidth, "Skin Save Path (absolute path)", skinDir,
+                t -> Setting.get().skinSaveDir = t != null ? t : "",
+                focused -> {
+                    if (!focused) {
+                        String path = Setting.get().skinSaveDir;
+                        if (path != null && !path.isEmpty()) {
+                            File dir = new File(path);
+                            if (dir.isAbsolute()) {
+                                Setting.get().setDir(dir);
+                            } else {
+                                Setting.save();
+                            }
+                        } else {
+                            Setting.save();
+                        }
+                    }
+                }
+        );
+        tab.components.add(skinDirField);
+        logicalCurrentY += labelHeightAboveComponent + skinDirField.height;
+    }
+
+    private void system(Tab tab, int startX, int actualComponentWidth) {
+        Label intro = new Label(
+                nextId(), startX, logicalCurrentY, actualComponentWidth,
+                "Edit system GUI colors (Hex #RRGGBB)."
+        );
+        tab.components.add(intro);
+        logicalCurrentY += intro.height + interComponentSpacing;
+
+        for (int i = 0; i < GuiColors.SYSTEM_COLOR_KEYS.length; i++) {
+            final String key = GuiColors.SYSTEM_COLOR_KEYS[i];
+            String displayName = GuiColors.SYSTEM_COLOR_LABELS[i];
+            int color = GuiColors.color(key);
+            Color setting = new Color(
+                    nextId(), startX, logicalCurrentY, actualComponentWidth,
+                    key, displayName, color,
+                    rgb -> {
+                        GuiColors.set(key, rgb);
+                        Setting.save();
+                    }
+            );
+            tab.components.add(setting);
+            logicalCurrentY += setting.height + interComponentSpacing;
+        }
+
+        Button resetButton = new Button(
+                nextId(), startX, logicalCurrentY, actualComponentWidth,
+                "Reset Colors",
+                () -> {
+                    GuiColors.reset();
+                    Setting.save();
+                    rebuild("System");
+                }
+        );
+        tab.components.add(resetButton);
+        logicalCurrentY += resetButton.height;
+    }
+
+    private void update(Tab tab, int startX, int actualComponentWidth) {
+        String initialStatus = updateStatus();
+        updateStatusLabel = new Label(
+                nextId(), startX, logicalCurrentY, actualComponentWidth, initialStatus
+        );
+        tab.components.add(updateStatusLabel);
+        logicalCurrentY += updateStatusLabel.height + interComponentSpacing;
+
+        Label versionLabel = new Label(
+                nextId(), startX, logicalCurrentY, actualComponentWidth,
+                "Current version: " + statflex.VERSION
+        );
+        tab.components.add(versionLabel);
+        logicalCurrentY += versionLabel.height + interComponentSpacing;
+
+        Button checkButton = new Button(
+                nextId(), startX, logicalCurrentY, actualComponentWidth,
+                "Check for Updates",
+                this::checkUpdate
+        );
+        tab.components.add(checkButton);
+        logicalCurrentY += checkButton.height + interComponentSpacing;
+
+        updateInstallButton = new Button(
+                nextId(), startX, logicalCurrentY, actualComponentWidth,
+                "Update",
+                () -> {
+                    if (Update.updateAvailable && Update.updateDownloaded) {
+                        Update.apply();
+                    }
+                }
+        );
+        updateInstallButton.enabled = Update.updateAvailable && Update.updateDownloaded;
+        tab.components.add(updateInstallButton);
+        logicalCurrentY += updateInstallButton.height + interComponentSpacing;
+
+        Label restartHint = new Label(
+                nextId(), startX, logicalCurrentY, actualComponentWidth,
+                "After updating, restart Minecraft."
+        );
+        tab.components.add(restartHint);
+        logicalCurrentY += restartHint.height;
+    }
+
+    private void section(Tab tab, int startX, int width, String title) {
+        if (logicalCurrentY > contentPaddingTopForComponents + 4) {
+            logicalCurrentY += 6;
+        }
+        Title section = new Title(nextId(), startX, logicalCurrentY, width, title);
+        tab.components.add(section);
+        logicalCurrentY += section.height + 8;
+    }
+
+    private void checkbox(Tab tab, int startX, String label, boolean initial, Checkbox.OnValueChanged onChange) {
+        checkbox(tab, startX, label, null, initial, onChange);
+    }
+
+    private void checkbox(Tab tab, int startX, String label, String description,
+                             boolean initial, Checkbox.OnValueChanged onChange) {
+        Checkbox cb = new Checkbox(nextId(), startX, logicalCurrentY, label, description, initial, onChange);
+        tab.components.add(cb);
+        logicalCurrentY += cb.height + interComponentSpacing;
+    }
+
+    private List<String> readGg() {
+        if (draftAutoGGMessages != null) {
+            return new ArrayList<String>(draftAutoGGMessages);
+        }
+        String[] saved = Setting.get().gg;
+        List<String> list = new ArrayList<String>();
+        if (saved != null) {
+            for (String m : saved) {
+                list.add(m != null ? m : "");
+            }
+        }
+        if (list.isEmpty()) {
+            list.add("");
+        }
+        return list;
+    }
+
+    private List<String> collectGg(boolean keepEmpty) {
+        List<String> list = new ArrayList<String>();
+        for (Text field : autoGGTextFields) {
+            String text = field.getText();
+            if (text == null) {
+                text = "";
+            }
+            String trimmed = text.trim();
+            if (keepEmpty || !trimmed.isEmpty()) {
+                list.add(keepEmpty ? text : trimmed);
+            }
+        }
+        if (keepEmpty && list.isEmpty()) {
+            list.add("");
+        }
+        return list;
+    }
+
+    private void saveGg() {
+        List<String> list = collectGg(false);
+        Setting.get().gg = list.toArray(new String[0]);
+        Setting.save();
+        draftAutoGGMessages = null;
+    }
+
+    private String updateStatus() {
+        if (Update.updateAvailable && Update.latestVersion != null && !Update.latestVersion.isEmpty()) {
+            return "Update available: " + Update.latestVersion;
+        }
+        return "Click \"Check for Updates\" to check.";
+    }
+
+    private void checkUpdate() {
+        if (updateCheckInProgress) {
+            return;
+        }
+        updateCheckInProgress = true;
+        if (updateStatusLabel != null) {
+            updateStatusLabel.setText("Checking for updates...");
+            updateStatusLabel.setColor(GuiColors.TEXT_SECONDARY);
+        }
+        if (updateInstallButton != null) {
+            updateInstallButton.enabled = false;
+        }
+
+        new Thread(() -> {
+            Update.UpdateState state = Update.checkNow();
+            Minecraft.getMinecraft().addScheduledTask(() -> {
+                updateCheckInProgress = false;
+                if (mc.currentScreen != this) {
+                    return;
+                }
+                showResult(state);
+            });
+        }, "statflex-updater-gui").start();
+    }
+
+    private void showResult(Update.UpdateState state) {
+        if (updateStatusLabel == null || updateInstallButton == null) {
+            return;
+        }
+        switch (state) {
+            case UP_TO_DATE:
+                updateStatusLabel.setText("statflex is up-to-date.");
+                updateStatusLabel.setColor(GuiColors.TEXT_SECONDARY);
+                updateInstallButton.enabled = false;
+                break;
+            case UPDATE_AVAILABLE:
+                updateStatusLabel.setText("Update available: " + Update.latestVersion);
+                updateStatusLabel.setColor(GuiColors.TEXT_ACCENT);
+                updateInstallButton.enabled = true;
+                break;
+            case ERROR:
+                updateStatusLabel.setText("Failed to check for updates.");
+                updateStatusLabel.setColor(new java.awt.Color(220, 80, 80).getRGB());
+                updateInstallButton.enabled = false;
+                break;
+            default:
+                break;
+        }
+    }
+
+    private Tab tab() {
+        if (tabs.isEmpty()) {
+            return new Tab("Error", "error_no_tabs");
+        }
+        if (currentTabIndex < 0 || currentTabIndex >= tabs.size()) {
+            return tabs.get(0);
+        }
+        return tabs.get(currentTabIndex);
+    }
+
+    private int nextId() {
+        return nextComponentId++;
+    }
+
+    private void tabScroll() {
+        if (tabs.isEmpty()) {
+            return;
+        }
+        totalTabsWidthUnscrolled = 0;
+        for (int i = 0; i < tabs.size(); i++) {
+            totalTabsWidthUnscrolled += tabButtonWidth + tabButtonSpacing;
+        }
+        totalTabsWidthUnscrolled -= tabButtonSpacing;
+
+        int tabBarContainerWidth = panelWidth - (panelPadding * 2);
+        boolean needsScrolling = totalTabsWidthUnscrolled > tabBarContainerWidth && tabs.size() > 1;
+        visibleTabBarAreaWidth = needsScrolling
+                ? tabBarContainerWidth - (tabBarScrollButtonWidth * 2 + tabButtonSpacing * 2)
+                : tabBarContainerWidth;
+        maxTabScrollX = Math.max(0, totalTabsWidthUnscrolled - visibleTabBarAreaWidth);
+        targetTabScrollX = Math.max(0, Math.min(maxTabScrollX, targetTabScrollX));
+        tabScrollX = Math.max(0f, Math.min((float) maxTabScrollX, tabScrollX));
+    }
+
+    private void showTab() {
+        if (tabs.isEmpty() || maxTabScrollX <= 0) {
+            return;
+        }
+        int tabStart = currentTabIndex * (tabButtonWidth + tabButtonSpacing);
+        int tabEnd = tabStart + tabButtonWidth;
+        if (tabStart < targetTabScrollX) {
+            targetTabScrollX = tabStart;
+        } else if (tabEnd > targetTabScrollX + visibleTabBarAreaWidth) {
+            targetTabScrollX = tabEnd - visibleTabBarAreaWidth;
+        }
+        targetTabScrollX = Math.max(0, Math.min(maxTabScrollX, targetTabScrollX));
+        tabScrollX = targetTabScrollX;
+    }
+
+    private void contentScroll(Tab tab) {
+        int tabBarYOffset = panelY + topBarHeight;
+        int tabBarInternalHeight = tabBarButtonHeight + 8;
+        int contentAreaMarginTop = tabBarYOffset + tabBarInternalHeight;
+        int contentAreaDrawableHeight = (panelY + panelHeight - panelPadding) - contentAreaMarginTop;
+        tab.maxScrollY = Math.max(0, tab.contentHeight - contentAreaDrawableHeight);
+        tab.targetScrollY = Math.max(0, Math.min(tab.maxScrollY, tab.targetScrollY));
+        tab.scrollY = Math.max(0f, Math.min((float) tab.maxScrollY, tab.scrollY));
+    }
+
+   
+
+    private void clip(int x, int y, int width, int height) {
         ScaledResolution sr = new ScaledResolution(mc);
         int scale = sr.getScaleFactor();
         if (width <= 0 || height <= 0) {
@@ -1266,11 +1240,11 @@ public class Gui extends GuiScreen {
         GL11.glScissor(x * scale, (sr.getScaledHeight() - (y + height)) * scale, width * scale, height * scale);
     }
 
-    private void stopScissor() {
+    private void unclip() {
         GL11.glDisable(GL11.GL_SCISSOR_TEST);
     }
 
-    private void drawRoundedRectUsingGL(float x, float y, float width, float height, float radius, int colorInt) {
+    private void roundRect(float x, float y, float width, float height, float radius, int colorInt) {
         GlStateManager.enableBlend();
         GlStateManager.disableTexture2D();
         GlStateManager.disableCull();
@@ -1314,13 +1288,28 @@ public class Gui extends GuiScreen {
         GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
     }
 
-    private void drawRoundedRectWithBorderUsingGL(float x, float y, float width, float height,
+    private void borderRect(float x, float y, float width, float height,
                                                    float radius, int bgColor, int borderColor, float borderWidth) {
-        drawRoundedRectUsingGL(x, y, width, height, radius, borderColor);
-        drawRoundedRectUsingGL(
+        roundRect(x, y, width, height, radius, borderColor);
+        roundRect(
                 x + borderWidth, y + borderWidth,
                 width - borderWidth * 2, height - borderWidth * 2,
                 Math.max(0f, radius - borderWidth), bgColor
         );
+    }
+
+    private static class Tab {
+        final String name;
+        final String id;
+        final List<GuiComponentBase> components = new ArrayList<GuiComponentBase>();
+        float scrollY;
+        int targetScrollY;
+        int contentHeight;
+        int maxScrollY;
+
+        Tab(String name, String id) {
+            this.name = name;
+            this.id = id;
+        }
     }
 }

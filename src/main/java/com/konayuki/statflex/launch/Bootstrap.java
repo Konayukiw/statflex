@@ -25,13 +25,11 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 public final class Bootstrap {
     private static final Object LOCK = new Object();
     private static final LifecycleHandler LIFECYCLE_HANDLER = new LifecycleHandler();
-
     private static boolean initialized;
     private static boolean eventHandlersRegistered;
     private static boolean updateCheckStarted;
     private static boolean pendingLoadedMessage;
     private static String initializedBy = "unknown";
-
     private static BedwarsList bwList;
     private static SkywarsList swList;
     private static Denick denick;
@@ -44,19 +42,11 @@ public final class Bootstrap {
     private Bootstrap() {
     }
 
-    public static boolean startFromForge() {
-        return start("forge");
-    }
-
-    public static boolean startFromInjection() {
-        return start("injection");
-    }
-
     public static boolean start(String source) {
         synchronized (LOCK) {
             if (initialized) {
                 Debug.log("statflex is already initialized by " + initializedBy + "; ignored duplicate request from " + source + ".");
-                requestLoadedMessage();
+                greet();
                 return false;
             }
 
@@ -68,14 +58,14 @@ public final class Bootstrap {
             System.setProperty("https.protocols", "TLSv1.2");
 
             Setting.load();
-            Toggle.syncFromSettings(Setting.getInstance());
+            Toggle.sync(Setting.get());
             Anticheat.register();
             PacketUtil.register();
             Commands.register();
             HypixelApiUtil.init();
-            registerEventHandlers();
-            startUpdateCheck();
-            requestLoadedMessage();
+            registerEvents();
+            checkUpdate();
+            greet();
             return true;
         } catch (Throwable throwable) {
             throwable.printStackTrace();
@@ -83,7 +73,15 @@ public final class Bootstrap {
         }
     }
 
-    private static void registerEventHandlers() {
+    public static boolean fromForge() {
+        return start("forge");
+    }
+
+    public static boolean fromInjection() {
+        return start("injection");
+    }
+
+    private static void registerEvents() {
         synchronized (LOCK) {
             if (eventHandlersRegistered) {
                 return;
@@ -94,9 +92,9 @@ public final class Bootstrap {
             denick = new Denick();
             autoGG = new AutoGG();
             duelsList = new DuelsList();
-            locraw = Locraw.getInstance();
-            party = Party.getInstance();
-            discordRPC = DiscordRPC.getInstance();
+            locraw = Locraw.get();
+            party = Party.get();
+            discordRPC = DiscordRPC.get();
 
             MinecraftForge.EVENT_BUS.register(LIFECYCLE_HANDLER);
             MinecraftForge.EVENT_BUS.register(locraw);
@@ -110,7 +108,7 @@ public final class Bootstrap {
         }
     }
 
-    private static void startUpdateCheck() {
+    private static void checkUpdate() {
         synchronized (LOCK) {
             if (updateCheckStarted) {
                 return;
@@ -118,20 +116,20 @@ public final class Bootstrap {
             updateCheckStarted = true;
         }
 
-        Update.checkForUpdatesAsync();
+        Update.checkAsync();
     }
 
-    private static void requestLoadedMessage() {
+    private static void greet() {
         pendingLoadedMessage = true;
-        runOnClientThread(new Runnable() {
+        onClient(new Runnable() {
             @Override
             public void run() {
-                flushLoadedMessage();
+                flushGreet();
             }
         });
     }
 
-    private static void flushLoadedMessage() {
+    private static void flushGreet() {
         Minecraft mc = Minecraft.getMinecraft();
         if (!pendingLoadedMessage || mc == null || mc.thePlayer == null) {
             return;
@@ -141,7 +139,7 @@ public final class Bootstrap {
         Chat.send(Messages.PREFIX + "statflex has been loaded!");
     }
 
-    private static void runOnClientThread(Runnable runnable) {
+    private static void onClient(Runnable runnable) {
         try {
             Minecraft mc = Minecraft.getMinecraft();
             if (mc != null) {
@@ -156,14 +154,14 @@ public final class Bootstrap {
 
     private static final class LifecycleHandler {
         @SubscribeEvent
-        public void onClientTick(TickEvent.ClientTickEvent event) {
+        public void onTick(TickEvent.ClientTickEvent event) {
             if (event.phase != TickEvent.Phase.END) {
                 return;
             }
 
-            PacketUtil.ensureInstalled();
-            flushLoadedMessage();
-            DiscordRPC.getInstance().onTick();
+            PacketUtil.ensure();
+            flushGreet();
+            DiscordRPC.get().onTick();
         }
     }
 }

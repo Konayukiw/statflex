@@ -23,15 +23,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class Anticheat {
     private static final Minecraft mc = Minecraft.getMinecraft();
     private static final Anticheat INSTANCE = new Anticheat();
-
     private static final String AUTO_BLOCK = "Auto Block";
     private static final String NO_FALL = "NoFall";
     private static final String NO_SLOW = "NoSlow";
     private static final String SCAFFOLD = "Scaffold";
     private static final String LEGIT_SCAFFOLD = "Legit Scaffold";
-
     private static boolean registered;
-
     private final Map<UUID, Map<String, Long>> flags = new HashMap<>();
     private final Map<UUID, AnticheatUtil> players = new ConcurrentHashMap<UUID, AnticheatUtil>();
     private long lastAlert;
@@ -47,60 +44,41 @@ public final class Anticheat {
     }
 
     @SubscribeEvent
-    public void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !AnticheatUtil.nullCheck() || mc.isSingleplayer()) {
+    public void onTick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || !AnticheatUtil.ready() || mc.isSingleplayer()) {
             return;
         }
 
         if (mc.theWorld == null) return;
 
         for (EntityPlayer player : mc.theWorld.playerEntities) {
-            if (!isCheckTarget(player)) continue;
+            if (!isTarget(player)) continue;
 
-            AnticheatUtil data = getData(player);
+            AnticheatUtil data = data(player);
 
             data.update(player);
-            performCheck(player, data);
-            data.updateServerPos(player);
-            data.updateSneak(player);
+            check(player, data);
+            data.syncPos(player);
+            data.sneak(player);
         }
     }
 
     @SubscribeEvent
-    public void onReceivePacket(ReceivedPacketDetector event) {
+    public void onPacket(ReceivedPacketDetector event) {
         lastClientBoundPacket = System.currentTimeMillis();
     }
 
     @SubscribeEvent
-    public void onEntityJoin(EntityJoinWorldEvent event) {
+    public void onJoin(EntityJoinWorldEvent event) {
         if (event.entity == mc.thePlayer) reset();
     }
 
     @SubscribeEvent
-    public void onClientDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) {
+    public void onDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) {
         reset();
     }
 
-    private boolean isCheckTarget(EntityPlayer player) {
-        return player != null
-                && player != mc.thePlayer
-                && !player.isDead
-                && player.getName() != null
-                && !player.getName().isEmpty()
-                && !Bot.isBot(player);
-    }
-
-    private AnticheatUtil getData(EntityPlayer player) {
-        AnticheatUtil data = players.get(player.getUniqueID());
-        if (data == null) {
-            data = new AnticheatUtil();
-            data.player = player;
-            players.put(player.getUniqueID(), data);
-        }
-        return data;
-    }
-
-    private void performCheck(EntityPlayer player, AnticheatUtil data) {
+    private void check(EntityPlayer player, AnticheatUtil data) {
         if (data.autoBlockTicks >= 10) {
             alert(player, AUTO_BLOCK);
             return;
@@ -127,7 +105,7 @@ public final class Anticheat {
             net.minecraft.util.BlockPos blockPos = player.getPosition().down(2);
             boolean overAir = true;
             for (int i = 0; i < 4; i++) {
-                if (!(AnticheatUtil.getBlock(blockPos) instanceof net.minecraft.block.BlockAir)) {
+                if (!(AnticheatUtil.block(blockPos) instanceof net.minecraft.block.BlockAir)) {
                     overAir = false;
                     break;
                 }
@@ -140,11 +118,11 @@ public final class Anticheat {
         }
 
         if (!player.capabilities.isFlying
-                && AnticheatUtil.timeBetween(System.currentTimeMillis(), lastClientBoundPacket) <= 200L) {
+                && AnticheatUtil.since(System.currentTimeMillis(), lastClientBoundPacket) <= 200L) {
 
-            double serverPosX = AnticheatUtil.getServerPosX(player);
-            double serverPosY = AnticheatUtil.getServerPosY(player);
-            double serverPosZ = AnticheatUtil.getServerPosZ(player);
+            double serverPosX = AnticheatUtil.serverX(player);
+            double serverPosY = AnticheatUtil.serverY(player);
+            double serverPosZ = AnticheatUtil.serverZ(player);
 
             if (Double.isNaN(serverPosX) || Double.isNaN(serverPosY) || Double.isNaN(serverPosZ)
                     || Double.isNaN(data.serverPosX) || Double.isNaN(data.serverPosY) || Double.isNaN(data.serverPosZ)) {
@@ -160,7 +138,7 @@ public final class Anticheat {
                     && deltaZ <= 10.0D
                     && deltaY <= 40.0D
                     && !AnticheatUtil.overVoid(serverPosX, serverPosY, serverPosZ)
-                    && AnticheatUtil.distanceToGround(player) > 3.0D
+                    && AnticheatUtil.toGround(player) > 3.0D
                     && !AnticheatUtil.onLadder(player)
                     && !player.isInWater()
                     && !player.isInLava()) {
@@ -169,22 +147,81 @@ public final class Anticheat {
         }
     }
 
-    private double getFlagIntervalSeconds() {
-        return clampFlagInterval(readFlagInterval());
+    private void alert(EntityPlayer player, String cheat) {
+        long now = System.currentTimeMillis();
+        double interval = interval();
+
+        if (interval > 0.0D) {
+            Map<String, Long> playerFlags = flags.get(player.getUniqueID());
+            if (playerFlags == null) {
+                playerFlags = new HashMap<>();
+            } else {
+                Long previous = playerFlags.get(cheat);
+                if (previous != null && AnticheatUtil.since(previous.longValue(), now) <= (long) (interval * 1000.0D)) {
+                    return;
+                }
+            }
+            playerFlags.put(cheat, now);
+            flags.put(player.getUniqueID(), playerFlags);
+        }
+
+        String displayName = player.getDisplayName() == null ? player.getName() : player.getDisplayName().getFormattedText();
+        Chat.send(Messages.PREFIX + Color.YELLOW + displayName + " " + Color.GRAY + "flagged " + Color.RED + cheat);
+        if (AnticheatUtil.since(lastAlert, now) >= 1500L) {
+            mc.thePlayer.playSound("note.pling", 1.0F, 1.0F);
+            lastAlert = now;
+        }
     }
 
-    private double readFlagInterval() {
+    private boolean isTarget(EntityPlayer player) {
+        return player != null
+                && player != mc.thePlayer
+                && !player.isDead
+                && player.getName() != null
+                && !player.getName().isEmpty()
+                && !Bot.isBot(player);
+    }
+
+    private AnticheatUtil data(EntityPlayer player) {
+        AnticheatUtil data = players.get(player.getUniqueID());
+        if (data == null) {
+            data = new AnticheatUtil();
+            data.player = player;
+            players.put(player.getUniqueID(), data);
+        }
+        return data;
+    }
+
+    private void reset() {
+        players.clear();
+        flags.clear();
+        lastAlert = 0L;
+        lastClientBoundPacket = 0L;
+    }
+
+    private double interval() {
+        return clamp(readInterval());
+    }
+
+    private double readInterval() {
         try {
             Field field = Setting.class.getDeclaredField("flagInterval");
             field.setAccessible(true);
-            Object owner = Modifier.isStatic(field.getModifiers()) ? null : findSettingsInstance();
+            Object owner = Modifier.isStatic(field.getModifiers()) ? null : settings();
             return toDouble(field.get(owner), 5.0D);
         } catch (Throwable ignored) {
             return 5.0D;
         }
     }
 
-    private Object findSettingsInstance() {
+    private double clamp(double value) {
+        if (Double.isNaN(value) || Double.isInfinite(value)) return 20.0D;
+        if (value < 0.0D) return 0.0D;
+        if (value > 20.0D) return 20.0D;
+        return value;
+    }
+
+    private Object settings() {
         try {
             Field instance = Setting.class.getDeclaredField("INSTANCE");
             instance.setAccessible(true);
@@ -196,52 +233,12 @@ public final class Anticheat {
             return instance.get(null);
         } catch (Throwable ignored) {}
         try {
-            Method getInstance = Setting.class.getDeclaredMethod("getInstance");
-            getInstance.setAccessible(true);
-            return getInstance.invoke(null);
+            Method accessor = Setting.class.getDeclaredMethod("get");
+            accessor.setAccessible(true);
+            return accessor.invoke(null);
         } catch (Throwable ignored) {
             return null;
         }
-    }
-
-    private double clampFlagInterval(double value) {
-        if (Double.isNaN(value) || Double.isInfinite(value)) return 20.0D;
-        if (value < 0.0D) return 0.0D;
-        if (value > 20.0D) return 20.0D;
-        return value;
-    }
-
-    private void alert(EntityPlayer player, String cheat) {
-        long now = System.currentTimeMillis();
-        double interval = getFlagIntervalSeconds();
-
-        if (interval > 0.0D) {
-            Map<String, Long> playerFlags = flags.get(player.getUniqueID());
-            if (playerFlags == null) {
-                playerFlags = new HashMap<>();
-            } else {
-                Long previous = playerFlags.get(cheat);
-                if (previous != null && AnticheatUtil.timeBetween(previous.longValue(), now) <= (long) (interval * 1000.0D)) {
-                    return;
-                }
-            }
-            playerFlags.put(cheat, now);
-            flags.put(player.getUniqueID(), playerFlags);
-        }
-
-        String displayName = player.getDisplayName() == null ? player.getName() : player.getDisplayName().getFormattedText();
-        Chat.send(Messages.PREFIX + Color.YELLOW + displayName + " " + Color.GRAY + "flagged " + Color.RED + cheat);
-        if (AnticheatUtil.timeBetween(lastAlert, now) >= 1500L) {
-            mc.thePlayer.playSound("note.pling", 1.0F, 1.0F);
-            lastAlert = now;
-        }
-    }
-
-    private void reset() {
-        players.clear();
-        flags.clear();
-        lastAlert = 0L;
-        lastClientBoundPacket = 0L;
     }
 
     private double toDouble(Object value, double fallback) {
@@ -250,7 +247,7 @@ public final class Anticheat {
             try { return Double.parseDouble((String) value); } catch (NumberFormatException ignored) { return fallback; }
         }
         if (value == null) return fallback;
-        String[] methodNames = new String[] {"getInput", "getValue", "get", "doubleValue", "floatValue"};
+        String[] methodNames = new String[] {"value", "get", "doubleValue", "floatValue"};
         for (String methodName : methodNames) {
             try {
                 Method method = value.getClass().getMethod(methodName);

@@ -21,7 +21,6 @@ public final class AnticheatUtil {
     private static final Minecraft mc = Minecraft.getMinecraft();
     private static final Map<String, Field> fieldCache = new HashMap<String, Field>();
     private static final Set<String> missingFields = new HashSet<String>();
-
     public int fastTick;
     public int autoBlockTicks;
     public int ticksExisted;
@@ -34,7 +33,6 @@ public final class AnticheatUtil {
     public double serverPosX = Double.NaN;
     public double serverPosY = Double.NaN;
     public double serverPosZ = Double.NaN;
-
     public boolean sneaking;
     public EntityPlayer player;
 
@@ -87,31 +85,31 @@ public final class AnticheatUtil {
         }
     }
 
-    public void updateSneak(EntityPlayer player) {
+    public void sneak(EntityPlayer player) {
         sneaking = player.isSneaking();
     }
 
-    public void updateServerPos(EntityPlayer player) {
-        serverPosX = getServerPosX(player);
-        serverPosY = getServerPosY(player);
-        serverPosZ = getServerPosZ(player);
+    public void syncPos(EntityPlayer player) {
+        serverPosX = serverX(player);
+        serverPosY = serverY(player);
+        serverPosZ = serverZ(player);
     }
 
-    public static boolean nullCheck() {
+    public static boolean ready() {
         return mc.thePlayer != null && mc.theWorld != null;
     }
 
-    public static long timeBetween(long first, long second) {
+    public static long since(long first, long second) {
         return Math.abs(second - first);
     }
 
-    public static Block getBlock(BlockPos pos) {
+    public static Block block(BlockPos pos) {
         return mc.theWorld.getBlockState(pos).getBlock();
     }
 
     public static boolean overVoid(double posX, double posY, double posZ) {
         for (int i = (int) posY; i > -1; i--) {
-            if (!(getBlock(new BlockPos(posX, (double) i, posZ)) instanceof BlockAir)) {
+            if (!(block(new BlockPos(posX, (double) i, posZ)) instanceof BlockAir)) {
                 return false;
             }
         }
@@ -123,11 +121,11 @@ public final class AnticheatUtil {
         int posX = MathHelper.floor_double(entity.posX);
         int posY = MathHelper.floor_double(entity.posY - 0.2D);
         int posZ = MathHelper.floor_double(entity.posZ);
-        Block block = getBlock(new BlockPos(posX, posY, posZ));
+        Block block = block(new BlockPos(posX, posY, posZ));
         return block instanceof BlockLadder && !entity.onGround;
     }
 
-    public static double distanceToGround(Entity entity) {
+    public static double toGround(Entity entity) {
         if (entity.onGround) {
             return 0.0D;
         }
@@ -149,7 +147,7 @@ public final class AnticheatUtil {
     }
 
     public static boolean isPlaceable(BlockPos pos) {
-        Block block = getBlock(pos);
+        Block block = block(pos);
         return block.isReplaceable(mc.theWorld, pos) || isFluid(block);
     }
 
@@ -158,27 +156,27 @@ public final class AnticheatUtil {
         return material == Material.water || material == Material.lava;
     }
 
-    public static double getServerPosX(Entity entity) {
-        return getScaledServerPosition(entity, "serverPosX", "field_70118_ct");
+    public static double serverX(Entity entity) {
+        return scaled(entity, "serverPosX", "field_70118_ct");
     }
 
-    public static double getServerPosY(Entity entity) {
-        return getScaledServerPosition(entity, "serverPosY", "field_70117_cu");
+    public static double serverY(Entity entity) {
+        return scaled(entity, "serverPosY", "field_70117_cu");
     }
 
-    public static double getServerPosZ(Entity entity) {
-        return getScaledServerPosition(entity, "serverPosZ", "field_70116_cv");
+    public static double serverZ(Entity entity) {
+        return scaled(entity, "serverPosZ", "field_70116_cv");
     }
 
-    private static double getScaledServerPosition(Entity entity, String mcpName, String srgName) {
-        Integer value = getIntField(entity, mcpName, srgName);
+    private static double scaled(Entity entity, String mcpName, String srgName) {
+        Integer value = intField(entity, mcpName, srgName);
         return value == null ? Double.NaN : value.intValue() / 32.0D;
     }
 
-    private static Integer getIntField(Object target, String mcpName, String srgName) {
-        Field field = findField(target.getClass(), mcpName);
+    private static Integer intField(Object target, String mcpName, String srgName) {
+        Field field = field(target.getClass(), mcpName);
         if (field == null) {
-            field = findField(target.getClass(), srgName);
+            field = field(target.getClass(), srgName);
         }
 
         if (field == null) {
@@ -193,7 +191,7 @@ public final class AnticheatUtil {
         }
     }
 
-    private static Field findField(Class<?> type, String name) {
+    private static Field field(Class<?> type, String name) {
         String cacheKey = type.getName() + "#" + name;
         if (fieldCache.containsKey(cacheKey)) {
             return fieldCache.get(cacheKey);

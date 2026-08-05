@@ -15,8 +15,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class DuelsUpdated {
-
     private static final Map<String, EnumChatFormatting[]> COLOR_MAP = new HashMap<>();
+
     static {
         COLOR_MAP.put("prefix_scheme_boilerplate_gold", new EnumChatFormatting[] { Color.GOLD });
         COLOR_MAP.put("prefix_scheme_absorption", new EnumChatFormatting[] { Color.YELLOW });
@@ -77,11 +77,11 @@ public class DuelsUpdated {
                 Color.AQUA, Color.WHITE, Color.WHITE, Color.WHITE, Color.AQUA });
     }
 
-    public static void fetchStats(String inputName, String mode) {
-        fetchStats(inputName, mode, false);
+    public static void stats(String inputName, String mode) {
+        stats(inputName, mode, false);
     }
 
-    public static void fetchStats(String inputName, String mode, boolean auto) {
+    public static void stats(String inputName, String mode, boolean auto) {
         new Thread(() -> {
             try {
                 HypixelApi.result result = HypixelApi.fetch(inputName);
@@ -100,7 +100,7 @@ public class DuelsUpdated {
                 double wlr;
 
                 if (mode != null) {
-                    String key = Duels.getModeKey(mode);
+                    String key = Duels.keyOf(mode);
                     if (key == null) {
                         Chat.send(Messages.INVALID_MODE + mode);
                         return;
@@ -114,8 +114,8 @@ public class DuelsUpdated {
                 wlr = losses == 0 ? wins : (double) wins / losses;
 
                 String coloredPlayerName = Ranks.rank(player, properName);
-                String formattedWins = Duels.getFormattedWins(wins);
-                String coloredWLR = Duels.getColoredWLR(wlr);
+                String formattedWins = Duels.wins(wins);
+                String coloredWLR = Duels.wlr(wlr);
 
                 String schemeName = null;
                 if (stats.has("active_prefix_scheme") && !stats.get("active_prefix_scheme").isJsonNull()) {
@@ -126,17 +126,17 @@ public class DuelsUpdated {
                         schemeName != null ? COLOR_MAP.get(schemeName) : null;
                 boolean boldScheme = wins > 100_000;
 
-                String rawTitle = mode != null ? Duels.getColoredTitle(wins, false)
-                        : Duels.getColoredTitle(wins, true);
+                String rawTitle = mode != null ? Duels.titleText(wins, false)
+                        : Duels.titleText(wins, true);
                 String plainTitle = Text.strip(rawTitle);
-                String modeDisplay = mode != null ? Duels.getModeDisplayName(mode.toLowerCase()) : "";
+                String modeDisplay = mode != null ? Duels.nameOf(mode.toLowerCase()) : "";
                 String plainMode = modeDisplay == null ? "" : Text.strip(modeDisplay);
 
                 String titleWithScheme = plainTitle;
                 String modeWithScheme = plainMode;
                 if (schemeColors != null) {
-                    titleWithScheme = applyColorGradient(plainTitle, schemeColors, boldScheme);
-                    modeWithScheme = applyColorGradient(plainMode, schemeColors, boldScheme);
+                    titleWithScheme = gradient(plainTitle, schemeColors, boldScheme);
+                    modeWithScheme = gradient(plainMode, schemeColors, boldScheme);
                 }
 
                 String modeAndTitle = (modeWithScheme.isEmpty() ? "" : modeWithScheme + " ") + titleWithScheme;
@@ -162,7 +162,7 @@ public class DuelsUpdated {
         }, "DuelsUpdated").start();
     }
 
-    private static String applyColorGradient(String text, EnumChatFormatting[] colors, boolean bold) {
+    private static String gradient(String text, EnumChatFormatting[] colors, boolean bold) {
         StringBuilder sb = new StringBuilder();
         int colorCount = colors.length;
         if (colorCount == 1) {

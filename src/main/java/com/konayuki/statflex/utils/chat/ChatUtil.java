@@ -15,10 +15,6 @@ public final class ChatUtil {
     private ChatUtil() {
     }
 
-    public static int next() {
-        return nextId++;
-    }
-
     public static void register(int id, IChatComponent message) {
         messages.put(Integer.valueOf(id), message);
         Chat.run(() -> {
@@ -26,6 +22,14 @@ public final class ChatUtil {
                 mc.ingameGUI.getChatGUI()
                         .printChatMessageWithOptionalDeletion(message, id);
             }
+        });
+    }
+
+    public static void update(int id, IChatComponent message) {
+        messages.put(Integer.valueOf(id), message);
+        Chat.run(() -> {
+            mc.ingameGUI.getChatGUI()
+                    .printChatMessageWithOptionalDeletion(message, id);
         });
     }
 
@@ -41,11 +45,7 @@ public final class ChatUtil {
         }
     }
 
-    public static void update(int id, IChatComponent message) {
-        messages.put(Integer.valueOf(id), message);
-        Chat.run(() -> {
-            mc.ingameGUI.getChatGUI()
-                    .printChatMessageWithOptionalDeletion(message, id);
-        });
+    public static int next() {
+        return nextId++;
     }
 }

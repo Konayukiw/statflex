@@ -5,15 +5,9 @@ import com.konayuki.statflex.gui.GuiFonts;
 import net.minecraft.client.gui.GuiTextField;
 
 public class Color extends GuiComponentBase {
-
-    public interface OnColorChanged {
-        void accept(int argb);
-    }
-
     private static final int SWATCH_SIZE = 18;
     private static final int FIELD_HEIGHT = MODERN_TEXT_INPUT_HEIGHT;
     private static final int GAP = 6;
-
     private final String colorKey;
     private final OnColorChanged onColorChanged;
     private final GuiTextField hexField;
@@ -36,51 +30,13 @@ public class Color extends GuiComponentBase {
         hexField.setMaxStringLength(7);
         hexField.setEnableBackgroundDrawing(false);
         hexField.setTextColor(GuiColors.TEXTFIELD_TEXT);
-        hexField.setText("#" + GuiColors.toHexRgb(initialColor));
+        hexField.setText("#" + GuiColors.hex(initialColor));
         hexField.setFocused(false);
     }
 
-    private static int fontHeight() {
-        return GuiFonts.getInstance().FONT_HEIGHT;
-    }
-
-    public String getColorKey() {
-        return colorKey;
-    }
-
-    public int getColor() {
-        return currentColor;
-    }
-
-    public void setColor(int argb, boolean notify) {
-        this.currentColor = argb;
-        String hex = "#" + GuiColors.toHexRgb(argb);
-        if (!hex.equalsIgnoreCase(hexField.getText())) {
-            hexField.setText(hex);
-        }
-        if (notify && onColorChanged != null) {
-            onColorChanged.accept(argb);
-        }
-    }
-
-    public boolean isFocused() {
-        return hexField.isFocused();
-    }
-
-    public void setFocused(boolean focused) {
-        hexField.setFocused(focused);
-    }
-
-    public void unfocusIfNeeded() {
-        if (hexField.isFocused()) {
-            hexField.setFocused(false);
-            commitHexText();
-        }
-    }
-
     @Override
-    public void drawComponent(int mouseX, int mouseY, float partialTicks) {
-        super.drawComponent(mouseX, mouseY, partialTicks);
+    public void draw(int mouseX, int mouseY, float partialTicks) {
+        super.draw(mouseX, mouseY, partialTicks);
         if (!visible) {
             return;
         }
@@ -92,14 +48,14 @@ public class Color extends GuiComponentBase {
         int fieldX = x + SWATCH_SIZE + GAP;
         int fieldW = Math.max(40, width - SWATCH_SIZE - GAP);
 
-        drawRoundedRectUsingGL(x, swatchY, SWATCH_SIZE, SWATCH_SIZE, 3f, GuiColors.COMPONENT_BORDER);
-        drawRoundedRectUsingGL(x + 1f, swatchY + 1f, SWATCH_SIZE - 2f, SWATCH_SIZE - 2f, 2f, currentColor);
+        roundRect(x, swatchY, SWATCH_SIZE, SWATCH_SIZE, 3f, GuiColors.COMPONENT_BORDER);
+        roundRect(x + 1f, swatchY + 1f, SWATCH_SIZE - 2f, SWATCH_SIZE - 2f, 2f, currentColor);
 
         int borderColor = hexField.isFocused() && enabled
                 ? GuiColors.TEXTFIELD_BORDER_FOCUSED
                 : GuiColors.TEXTFIELD_BORDER;
-        drawRoundedRectUsingGL(fieldX, swatchY, fieldW, FIELD_HEIGHT, cornerRadius, borderColor);
-        drawRoundedRectUsingGL(
+        roundRect(fieldX, swatchY, fieldW, FIELD_HEIGHT, cornerRadius, borderColor);
+        roundRect(
                 fieldX + 1f, swatchY + 1f,
                 fieldW - 2f, FIELD_HEIGHT - 2f,
                 Math.max(0f, cornerRadius - 1f),
@@ -115,7 +71,7 @@ public class Color extends GuiComponentBase {
     }
 
     @Override
-    public boolean mouseClicked(int mouseX, int mouseY, int mouseButton) {
+    public boolean click(int mouseX, int mouseY, int mouseButton) {
         if (!visible || !enabled) {
             if (hexField.isFocused()) {
                 setFocused(false);
@@ -148,30 +104,72 @@ public class Color extends GuiComponentBase {
     }
 
     @Override
-    public boolean keyTyped(char typedChar, int keyCode) {
+    public boolean key(char typedChar, int keyCode) {
         if (!enabled || !visible || !hexField.isFocused()) {
             return false;
         }
 
         boolean handled = hexField.textboxKeyTyped(typedChar, keyCode);
         if (handled) {
-            commitHexText();
+            commit();
         }
         return handled;
     }
 
-    private void commitHexText() {
+    public int color() {
+        return currentColor;
+    }
+
+    public void setColor(int argb, boolean notify) {
+        this.currentColor = argb;
+        String hex = "#" + GuiColors.hex(argb);
+        if (!hex.equalsIgnoreCase(hexField.getText())) {
+            hexField.setText(hex);
+        }
+        if (notify && onColorChanged != null) {
+            onColorChanged.accept(argb);
+        }
+    }
+
+    public String colorKey() {
+        return colorKey;
+    }
+
+    public boolean isFocused() {
+        return hexField.isFocused();
+    }
+
+    public void setFocused(boolean focused) {
+        hexField.setFocused(focused);
+    }
+
+    public void unfocus() {
+        if (hexField.isFocused()) {
+            hexField.setFocused(false);
+            commit();
+        }
+    }
+
+    private void commit() {
         String raw = hexField.getText();
-        Integer parsed = GuiColors.parseHexRgb(raw);
+        Integer parsed = GuiColors.parse(raw);
         if (parsed != null && parsed != currentColor) {
             currentColor = parsed;
             if (onColorChanged != null) {
                 onColorChanged.accept(currentColor);
             }
-            String normalized = "#" + GuiColors.toHexRgb(currentColor);
+            String normalized = "#" + GuiColors.hex(currentColor);
             if (!normalized.equals(hexField.getText())) {
                 hexField.setText(normalized);
             }
         }
+    }
+
+    private static int fontHeight() {
+        return GuiFonts.get().FONT_HEIGHT;
+    }
+
+    public interface OnColorChanged {
+        void accept(int argb);
     }
 }

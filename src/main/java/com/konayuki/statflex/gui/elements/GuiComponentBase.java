@@ -10,7 +10,6 @@ import org.lwjgl.opengl.GL11;
 import java.awt.Color;
 
 public abstract class GuiComponentBase {
-
     public static final float DEFAULT_CORNER_RADIUS = 4f;
     public static final float DEFAULT_BORDER_THICKNESS = 1f;
     public static final float MODERN_CORNER_RADIUS = 5f;
@@ -24,20 +23,16 @@ public abstract class GuiComponentBase {
     public static final int MODERN_SLIDER_HEIGHT = 20;
     public static final float MODERN_SLIDER_KNOB_RADIUS = 7f;
     public static final float MODERN_SLIDER_TRACK_HEIGHT = 5f;
-
     public static final float SHADOW_OFFSET_X = 1f;
     public static final float SHADOW_OFFSET_Y = 1f;
-
     public int id;
     public int x;
     public int y;
     public int width;
     public int height;
     public String label;
-
     protected final Minecraft mc = Minecraft.getMinecraft();
-    protected final FontRenderer fontRenderer = GuiFonts.getInstance();
-
+    protected final FontRenderer fontRenderer = GuiFonts.get();
     public boolean enabled = true;
     public boolean visible = true;
     public boolean hovered = false;
@@ -51,7 +46,7 @@ public abstract class GuiComponentBase {
         this.label = label != null ? label : "";
     }
 
-    public void drawComponent(int mouseX, int mouseY, float partialTicks) {
+    public void draw(int mouseX, int mouseY, float partialTicks) {
         if (!visible) {
             return;
         }
@@ -60,7 +55,7 @@ public abstract class GuiComponentBase {
                 && mouseX < this.x + this.width && mouseY < this.y + this.height;
     }
 
-    public boolean mouseClicked(int mouseX, int mouseY, int mouseButton) {
+    public boolean click(int mouseX, int mouseY, int mouseButton) {
         if (!enabled || !visible) {
             return false;
         }
@@ -68,31 +63,31 @@ public abstract class GuiComponentBase {
                 && mouseX < this.x + this.width && mouseY < this.y + this.height;
     }
 
-    public void mouseReleased(int mouseX, int mouseY, int state) {
+    public void release(int mouseX, int mouseY, int state) {
     }
 
-    public void mouseClickMove(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
+    public void drag(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
     }
 
-    public boolean keyTyped(char typedChar, int keyCode) {
+    public boolean key(char typedChar, int keyCode) {
         return false;
     }
 
-    protected void drawSideLabel(int labelYOffset, int xOffset) {
+    protected void sideLabel(int labelYOffset, int xOffset) {
         if (label != null && !label.isEmpty()) {
             int labelColor = enabled ? GuiColors.TEXT_PRIMARY : GuiColors.TEXT_DISABLED;
             fontRenderer.drawString(label, x + width + xOffset, y + labelYOffset, labelColor);
         }
     }
 
-    protected void drawTopLabel(int yOffset) {
+    protected void topLabel(int yOffset) {
         if (label != null && !label.isEmpty()) {
             int labelColor = enabled ? GuiColors.TEXT_PRIMARY : GuiColors.TEXT_DISABLED;
             fontRenderer.drawString(label, x, y - fontRenderer.FONT_HEIGHT + yOffset, labelColor);
         }
     }
 
-    protected void drawRoundedRectUsingGL(float x, float y, float width, float height, float radius, int colorInt) {
+    protected void roundRect(float x, float y, float width, float height, float radius, int colorInt) {
         GlStateManager.enableBlend();
         GlStateManager.disableTexture2D();
         GlStateManager.disableCull();

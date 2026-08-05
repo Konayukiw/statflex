@@ -16,29 +16,27 @@ import java.net.URL;
 import java.net.URLConnection;
 
 public class Update {
-
     private static final String REPO = "Konayukiw/statflex";
+
     private static final String API_LATEST =
             "https://api.github.com/repos/" + REPO + "/releases/latest";
-
     private static final String JAR_PREFIX = "statflex-";
-
     public static boolean updateAvailable = false;
     public static boolean updateDownloaded = false;
     public static String latestVersion = "";
     public static File downloadedFile = null;
 
-    public static void checkForUpdatesAsync() {
+    public static void checkAsync() {
         new Thread(() -> {
             try {
-                checkForUpdates();
+                check();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }, "Update").start();
     }
 
-    private static void checkForUpdates() throws Exception {
+    private static void check() throws Exception {
         File mcDir = Minecraft.getMinecraft().mcDataDir;
         URLConnection raw = new URL(API_LATEST).openConnection();
         if (raw instanceof HttpsURLConnection) {
@@ -62,7 +60,7 @@ public class Update {
 
         if (!isNewer(latestVersion, currentVersion)) return;
 
-        JsonObject asset = findstatflexJarAsset(root);
+        JsonObject asset = asset(root);
         if (asset == null) {
             Debug.error("statflex jar not found.");
             return;
@@ -81,23 +79,31 @@ public class Update {
         downloadedFile = outFile;
     }
 
-    private static JsonObject findstatflexJarAsset(JsonObject root) {
-        if (!root.has("assets") || !root.get("assets").isJsonArray()) {
-            return null;
+    public static UpdateState checkNow() {
+        try {
+            check();
+            return updateDownloaded
+                    ? UpdateState.UPDATE_AVAILABLE
+                    : UpdateState.UP_TO_DATE;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return UpdateState.ERROR;
         }
-
-        for (com.google.gson.JsonElement element : root.getAsJsonArray("assets")) {
-            JsonObject asset = element.getAsJsonObject();
-            String name = asset.get("name").getAsString().toLowerCase();
-
-            if (name.startsWith(JAR_PREFIX) && name.endsWith(".jar")) {
-                return asset;
-            }
-        }
-        return null;
     }
 
-    public static void prepareAndRunUpdateChecker(File newJar) throws IOException {
+    public static void apply() {
+        if (!updateDownloaded || downloadedFile == null) {
+            return;
+        }
+
+        try {
+            install(downloadedFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void install(File newJar) throws IOException {
         File mcDir = Minecraft.getMinecraft().mcDataDir;
         File updateDir = new File(mcDir, "updates");
         if (!updateDir.exists()) updateDir.mkdirs();
@@ -115,7 +121,7 @@ public class Update {
         }
 
         File bat = new File(updateDir, "statflex-updater.bat");
-        writeBat(bat);
+        bat(bat);
 
         Runtime.getRuntime().exec(new String[]{
                 "cmd.exe", "/C", "start", "\"\"", "\"" + bat.getAbsolutePath() + "\""
@@ -124,7 +130,52 @@ public class Update {
         Minecraft.getMinecraft().shutdown();
     }
 
-    private static void writeBat(File bat) throws IOException {
+    private static void download(String url, File out) throws IOException {
+        File parent = out.getParentFile();
+        if (parent != null && !parent.exists()) {
+            parent.mkdirs();
+        }
+
+        URLConnection raw = new URL(url).openConnection();
+        if (raw instanceof HttpsURLConnection && Toggle.ignoreCertificates) {
+            try {
+                Connection.trustAll((HttpsURLConnection) raw);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        HttpURLConnection conn = (HttpURLConnection) raw;
+        conn.setConnectTimeout(5000);
+        conn.setReadTimeout(10000);
+
+        try (InputStream in = conn.getInputStream();
+             FileOutputStream fos = new FileOutputStream(out)) {
+
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                fos.write(buffer, 0, read);
+            }
+        }
+    }
+
+    private static JsonObject asset(JsonObject root) {
+        if (!root.has("assets") || !root.get("assets").isJsonArray()) {
+            return null;
+        }
+
+        for (com.google.gson.JsonElement element : root.getAsJsonArray("assets")) {
+            JsonObject asset = element.getAsJsonObject();
+            String name = asset.get("name").getAsString().toLowerCase();
+
+            if (name.startsWith(JAR_PREFIX) && name.endsWith(".jar")) {
+                return asset;
+            }
+        }
+        return null;
+    }
+
+    private static void bat(File bat) throws IOException {
         try (PrintWriter pw = new PrintWriter(new OutputStreamWriter(
                 new FileOutputStream(bat), "UTF-8"))) {
 
@@ -191,8 +242,8 @@ public class Update {
 
         int len = Math.max(l.length, c.length);
         for (int i = 0; i < len; i++) {
-            int li = i < l.length ? parseSafe(l[i]) : 0;
-            int ci = i < c.length ? parseSafe(c[i]) : 0;
+            int li = i < l.length ? toInt(l[i]) : 0;
+            int ci = i < c.length ? toInt(c[i]) : 0;
 
             if (li > ci) return true;
             if (li < ci) return false;
@@ -204,68 +255,9 @@ public class Update {
         return v.replaceAll("[^0-9.]", "");
     }
 
-    private static int parseSafe(String s) {
+    private static int toInt(String s) {
         if (s.isEmpty()) return 0;
         return Integer.parseInt(s);
-    }
-
-    public static void prepareUpdateAndExit() {
-        if (!updateDownloaded || downloadedFile == null) {
-            return;
-        }
-
-        try {
-            prepareAndRunUpdateChecker(downloadedFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public enum UpdateState {
-        UP_TO_DATE,
-        UPDATE_AVAILABLE,
-        ERROR
-    }
-
-    public static UpdateState checkNow() {
-        try {
-            checkForUpdates();
-            return updateDownloaded
-                    ? UpdateState.UPDATE_AVAILABLE
-                    : UpdateState.UP_TO_DATE;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return UpdateState.ERROR;
-        }
-    }
-
-    private static void download(String url, File out) throws IOException {
-        File parent = out.getParentFile();
-        if (parent != null && !parent.exists()) {
-            parent.mkdirs();
-        }
-
-        URLConnection raw = new URL(url).openConnection();
-        if (raw instanceof HttpsURLConnection && Toggle.ignoreCertificates) {
-            try {
-                Connection.trustAll((HttpsURLConnection) raw);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        HttpURLConnection conn = (HttpURLConnection) raw;
-        conn.setConnectTimeout(5000);
-        conn.setReadTimeout(10000);
-
-        try (InputStream in = conn.getInputStream();
-             FileOutputStream fos = new FileOutputStream(out)) {
-
-            byte[] buffer = new byte[8192];
-            int read;
-            while ((read = in.read(buffer)) != -1) {
-                fos.write(buffer, 0, read);
-            }
-        }
     }
 
     private static String readAll(InputStream in) throws IOException {
@@ -276,5 +268,11 @@ public class Update {
             sb.append(line);
         }
         return sb.toString();
+    }
+
+    public enum UpdateState {
+        UP_TO_DATE,
+        UPDATE_AVAILABLE,
+        ERROR
     }
 }

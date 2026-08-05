@@ -23,7 +23,7 @@ public class Locraw {
 
     private Locraw() {}
 
-    public static synchronized Locraw getInstance() {
+    public static synchronized Locraw get() {
         if (instance == null) {
             instance = new Locraw();
         }
@@ -31,46 +31,18 @@ public class Locraw {
     }
 
     public interface LocrawCallback {
-        void onLocrawReceived(String gameType, String mode);
-        void onLocrawTimeout();
+        void onReceived(String gameType, String mode);
+        void onTimeout();
     }
 
-    @SubscribeEvent
-    public void onTick(TickEvent.ClientTickEvent event) {
-        if (awaitingLocraw) {
-            locrawTimeout++;
-            if (locrawTimeout > 100) {
-                finish(false);
-            }
-        }
-    }
-
-    @SubscribeEvent
-    public void onChatReceived(ClientChatReceivedEvent event) {
-        if (awaitingLocraw) {
-            String message = event.message.getUnformattedText();
-            if (message.startsWith("{") && message.endsWith("}")) {
-                try {
-                    JsonObject json = new JsonParser().parse(message).getAsJsonObject();
-                    gameType = json.has("gametype") ? json.get("gametype").getAsString() : null;
-                    mode = json.has("mode") ? json.get("mode").getAsString() : null;
-                    event.setCanceled(true);
-                    finish(true);
-                } catch (Exception e) {
-                    finish(false);
-                }
-            }
-        }
-    }
-
-    public void sendLocraw(LocrawCallback callback) {
+    public void request(LocrawCallback callback) {
         if (callback == null) {
             return;
         }
 
         Minecraft mc = Minecraft.getMinecraft();
         if (mc == null || mc.thePlayer == null) {
-            callback.onLocrawTimeout();
+            callback.onTimeout();
             return;
         }
 
@@ -87,6 +59,34 @@ public class Locraw {
         mc.thePlayer.sendChatMessage("/locraw");
     }
 
+    @SubscribeEvent
+    public void onChat(ClientChatReceivedEvent event) {
+        if (awaitingLocraw) {
+            String message = event.message.getUnformattedText();
+            if (message.startsWith("{") && message.endsWith("}")) {
+                try {
+                    JsonObject json = new JsonParser().parse(message).getAsJsonObject();
+                    gameType = json.has("gametype") ? json.get("gametype").getAsString() : null;
+                    mode = json.has("mode") ? json.get("mode").getAsString() : null;
+                    event.setCanceled(true);
+                    finish(true);
+                } catch (Exception e) {
+                    finish(false);
+                }
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onTick(TickEvent.ClientTickEvent event) {
+        if (awaitingLocraw) {
+            locrawTimeout++;
+            if (locrawTimeout > 100) {
+                finish(false);
+            }
+        }
+    }
+
     private void finish(boolean received) {
         awaitingLocraw = false;
         locrawTimeout = 0;
@@ -99,9 +99,9 @@ public class Locraw {
         for (LocrawCallback callback : callbacks) {
             try {
                 if (received) {
-                    callback.onLocrawReceived(gameType, mode);
+                    callback.onReceived(gameType, mode);
                 } else {
-                    callback.onLocrawTimeout();
+                    callback.onTimeout();
                 }
             } catch (Exception e) {
                 Debug.error("Locraw callback failed: " + e);
@@ -109,10 +109,11 @@ public class Locraw {
         }
     }
 
-    public String getCurrentGameType() {
+    public String game() {
         return gameType;
     }
-    public String getCurrentMode() {
+
+    public String mode() {
         return mode;
     }
 }

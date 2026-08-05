@@ -10,15 +10,6 @@ import java.awt.Color;
 import java.util.Locale;
 
 public class Slider extends GuiComponentBase {
-
-    public interface OnValueChanged {
-        void accept(float value);
-    }
-
-    public interface DisplayFormat {
-        String format(float value);
-    }
-
     private float currentValue;
     private boolean isDragging;
     private final float minValue;
@@ -26,11 +17,9 @@ public class Slider extends GuiComponentBase {
     private final float step;
     private final DisplayFormat displayFormat;
     private final OnValueChanged onValueChanged;
-
     private final float knobVisualRadius = 6f;
     private final float trackHeightToUse = MODERN_SLIDER_TRACK_HEIGHT;
     private final float trackCornerRadius = trackHeightToUse / 2f;
-
     private float visualKnobCenterX;
     private float targetKnobCenterX;
     private static final float KNOB_SMOOTH_FACTOR = 0.25f;
@@ -46,8 +35,8 @@ public class Slider extends GuiComponentBase {
                 ? displayFormat
                 : v -> String.format(Locale.US, "%.2f", v);
         this.onValueChanged = onValueChanged;
-        internalSetValue(initialValue, false);
-        targetKnobCenterX = calculateKnobCenterX(this.currentValue);
+        apply(initialValue, false);
+        targetKnobCenterX = knobX(this.currentValue);
         visualKnobCenterX = targetKnobCenterX;
     }
 
@@ -58,15 +47,9 @@ public class Slider extends GuiComponentBase {
                 initialValue, minValue, maxValue, step, displayFormat, onValueChanged);
     }
 
-    private float calculateKnobCenterX(float value) {
-        float progress = (maxValue - minValue == 0f) ? 0f : (value - minValue) / (maxValue - minValue);
-        float travelWidth = this.width - (2 * knobVisualRadius);
-        return this.x + knobVisualRadius + (travelWidth > 0 ? travelWidth * progress : 0f);
-    }
-
     @Override
-    public void drawComponent(int mouseX, int mouseY, float partialTicks) {
-        super.drawComponent(mouseX, mouseY, partialTicks);
+    public void draw(int mouseX, int mouseY, float partialTicks) {
+        super.draw(mouseX, mouseY, partialTicks);
         if (!visible) {
             return;
         }
@@ -83,7 +66,7 @@ public class Slider extends GuiComponentBase {
         float currentKnobRenderCenterX = Math.max(minKnobX, Math.min(maxKnobX, visualKnobCenterX));
         float knobRenderY = y + height / 2f;
 
-        drawTopLabel(-3);
+        topLabel(-3);
         String valueText = displayFormat.format(currentValue);
         int valueColor = enabled ? GuiColors.TEXT_ACCENT : GuiColors.TEXT_DISABLED;
         int valueTextWidth = fontRenderer.getStringWidth(valueText);
@@ -96,12 +79,12 @@ public class Slider extends GuiComponentBase {
 
         float trackActualY = y + (height - trackHeightToUse) / 2f;
         int trackColor = enabled ? GuiColors.SLIDER_TRACK : GuiColors.COMPONENT_BACKGROUND_DISABLED;
-        drawRoundedRectUsingGL(x, trackActualY, width, trackHeightToUse, trackCornerRadius, trackColor);
+        roundRect(x, trackActualY, width, trackHeightToUse, trackCornerRadius, trackColor);
 
         float filledWidth = currentKnobRenderCenterX - x;
         if (filledWidth > 0f) {
             int filledTrackColor = enabled ? GuiColors.SLIDER_TRACK_FILLED : GuiColors.PRIMARY_BLUE_DARK;
-            drawRoundedRectUsingGL(
+            roundRect(
                     x, trackActualY,
                     Math.min(filledWidth, (float) width), trackHeightToUse,
                     trackCornerRadius, filledTrackColor
@@ -126,51 +109,19 @@ public class Slider extends GuiComponentBase {
             knobColor = GuiColors.PRIMARY_BLUE;
         }
 
-        drawCircleUsingGL(currentKnobRenderCenterX, knobRenderY, knobVisualRadius, knobColor);
-    }
-
-    private void internalSetValue(float newValue, boolean notify) {
-        float oldValue = this.currentValue;
-        float tempValue = Math.max(minValue, Math.min(maxValue, newValue));
-        if (step > 0f) {
-            int decimalPlaces = getDecimalPlaces(step);
-            tempValue = Math.round(tempValue / step) * step;
-            tempValue = Float.parseFloat(String.format(Locale.US, "%." + decimalPlaces + "f", tempValue));
-        }
-        this.currentValue = Math.max(minValue, Math.min(maxValue, tempValue));
-        this.targetKnobCenterX = calculateKnobCenterX(this.currentValue);
-        float threshold = Math.min(step / 2.0f, 0.00001f);
-        if (notify && Math.abs(oldValue - this.currentValue) > threshold && onValueChanged != null) {
-            onValueChanged.accept(this.currentValue);
-        }
-    }
-
-    public void setValue(float newValue) {
-        internalSetValue(newValue, true);
-        visualKnobCenterX = calculateKnobCenterX(this.currentValue);
-        targetKnobCenterX = visualKnobCenterX;
-    }
-
-    public float getValue() {
-        return currentValue;
-    }
-
-    private int getDecimalPlaces(float value) {
-        String s = String.valueOf(value).replace(',', '.');
-        int dot = s.indexOf('.');
-        return dot < 0 ? 0 : s.length() - dot - 1;
+        circle(currentKnobRenderCenterX, knobRenderY, knobVisualRadius, knobColor);
     }
 
     @Override
-    public boolean mouseClicked(int mouseX, int mouseY, int mouseButton) {
-        if (!enabled || !visible || !super.mouseClicked(mouseX, mouseY, mouseButton)) {
+    public boolean click(int mouseX, int mouseY, int mouseButton) {
+        if (!enabled || !visible || !super.click(mouseX, mouseY, mouseButton)) {
             return false;
         }
 
         if (mouseButton == 0) {
             isDragging = true;
-            updateValueFromMouse(mouseX, true);
-            visualKnobCenterX = calculateKnobCenterX(this.currentValue);
+            fromMouse(mouseX, true);
+            visualKnobCenterX = knobX(this.currentValue);
             targetKnobCenterX = visualKnobCenterX;
             mc.getSoundHandler().playSound(
                     PositionedSoundRecord.create(new ResourceLocation("gui.button.press"), 0.6F));
@@ -180,20 +131,46 @@ public class Slider extends GuiComponentBase {
     }
 
     @Override
-    public void mouseClickMove(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
+    public void drag(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
         if (isDragging && clickedMouseButton == 0 && enabled) {
-            updateValueFromMouse(mouseX, true);
+            fromMouse(mouseX, true);
         }
     }
 
     @Override
-    public void mouseReleased(int mouseX, int mouseY, int state) {
+    public void release(int mouseX, int mouseY, int state) {
         if (state == 0 && isDragging) {
             isDragging = false;
         }
     }
 
-    private void updateValueFromMouse(int mouseX, boolean notify) {
+    public float value() {
+        return currentValue;
+    }
+
+    public void setValue(float newValue) {
+        apply(newValue, true);
+        visualKnobCenterX = knobX(this.currentValue);
+        targetKnobCenterX = visualKnobCenterX;
+    }
+
+    private void apply(float newValue, boolean notify) {
+        float oldValue = this.currentValue;
+        float tempValue = Math.max(minValue, Math.min(maxValue, newValue));
+        if (step > 0f) {
+            int decimalPlaces = decimals(step);
+            tempValue = Math.round(tempValue / step) * step;
+            tempValue = Float.parseFloat(String.format(Locale.US, "%." + decimalPlaces + "f", tempValue));
+        }
+        this.currentValue = Math.max(minValue, Math.min(maxValue, tempValue));
+        this.targetKnobCenterX = knobX(this.currentValue);
+        float threshold = Math.min(step / 2.0f, 0.00001f);
+        if (notify && Math.abs(oldValue - this.currentValue) > threshold && onValueChanged != null) {
+            onValueChanged.accept(this.currentValue);
+        }
+    }
+
+    private void fromMouse(int mouseX, boolean notify) {
         if (!enabled) {
             return;
         }
@@ -204,10 +181,22 @@ public class Slider extends GuiComponentBase {
         float relativeMouseX = mouseX - (this.x + knobVisualRadius);
         float ratio = Math.max(0f, Math.min(1f, relativeMouseX / travelWidth));
         float newValue = minValue + (maxValue - minValue) * ratio;
-        internalSetValue(newValue, notify);
+        apply(newValue, notify);
     }
 
-    private void drawCircleUsingGL(float cx, float cy, float radius, int colorInt) {
+    private float knobX(float value) {
+        float progress = (maxValue - minValue == 0f) ? 0f : (value - minValue) / (maxValue - minValue);
+        float travelWidth = this.width - (2 * knobVisualRadius);
+        return this.x + knobVisualRadius + (travelWidth > 0 ? travelWidth * progress : 0f);
+    }
+
+    private int decimals(float value) {
+        String s = String.valueOf(value).replace(',', '.');
+        int dot = s.indexOf('.');
+        return dot < 0 ? 0 : s.length() - dot - 1;
+    }
+
+    private void circle(float cx, float cy, float radius, int colorInt) {
         GlStateManager.enableBlend();
         GlStateManager.disableTexture2D();
         GlStateManager.disableCull();
@@ -234,5 +223,13 @@ public class Slider extends GuiComponentBase {
         GlStateManager.enableTexture2D();
         GlStateManager.disableBlend();
         GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
+    }
+
+    public interface OnValueChanged {
+        void accept(float value);
+    }
+
+    public interface DisplayFormat {
+        String format(float value);
     }
 }

@@ -34,31 +34,31 @@ public final class PacketUtil {
             }
         }
 
-        ensureInstalled();
+        ensure();
     }
 
-    public static void ensureInstalled() {
+    public static void ensure() {
         if (!registered) {
             return;
         }
 
-        INSTANCE.installCurrent();
+        INSTANCE.install();
     }
 
     @SubscribeEvent
-    public void onClientConnected(FMLNetworkEvent.ClientConnectedToServerEvent event) {
-        installCurrent();
+    public void onConnect(FMLNetworkEvent.ClientConnectedToServerEvent event) {
+        install();
     }
 
     @SubscribeEvent
-    public void onClientDisconnected(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) {
+    public void onDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) {
         synchronized (this) {
             hookedManager = null;
             hookedChannel = null;
         }
     }
 
-    private void installCurrent() {
+    private void install() {
         try {
             Minecraft mc = Minecraft.getMinecraft();
             if (mc == null || mc.getNetHandler() == null) {
@@ -76,7 +76,7 @@ public final class PacketUtil {
             return;
         }
 
-        Channel channel = findChannel(manager);
+        Channel channel = channel(manager);
         if (channel == null || !channel.isOpen()) {
             return;
         }
@@ -133,7 +133,7 @@ public final class PacketUtil {
         hookedChannel = channel;
     }
 
-    private Channel findChannel(NetworkManager manager) {
+    private Channel channel(NetworkManager manager) {
         Class<?> type = manager.getClass();
         while (type != null) {
             Field[] fields = type.getDeclaredFields();

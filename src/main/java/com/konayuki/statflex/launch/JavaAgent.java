@@ -28,13 +28,13 @@ public final class JavaAgent {
 
     private static void launch() {
         try {
-            JarLauncher.launch(getOwnJarUrl(), Thread.currentThread().getContextClassLoader());
+            JarLauncher.launch(jarUrl(), Thread.currentThread().getContextClassLoader());
         } catch (Throwable throwable) {
             throwable.printStackTrace();
         }
     }
 
-    private static URL getOwnJarUrl() {
+    private static URL jarUrl() {
         CodeSource codeSource = JavaAgent.class.getProtectionDomain().getCodeSource();
         if (codeSource == null || codeSource.getLocation() == null) {
             Debug.error("Unable to resolve statflex jar location.");

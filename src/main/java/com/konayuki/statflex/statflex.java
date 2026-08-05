@@ -13,10 +13,10 @@ public class statflex {
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
-        Bootstrap.startFromForge();
+        Bootstrap.fromForge();
     }
 
     public static void init() {
-        Bootstrap.startFromInjection();
+        Bootstrap.fromInjection();
     }
 }

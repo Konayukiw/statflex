@@ -10,16 +10,16 @@ public final class HypixelApiUtil {
 
     public static void init() {
         Setting.load();
-        apiKey = Setting.getInstance().apiKey;
-    }
-
-    public static void set(String key) {
-        apiKey = key;
-        Setting.getInstance().apiKey = key;
-        Setting.save();
+        apiKey = Setting.get().apiKey;
     }
 
     public static String get() {
         return apiKey != null && !apiKey.isEmpty() ? apiKey : "N/A";
+    }
+
+    public static void set(String key) {
+        apiKey = key;
+        Setting.get().apiKey = key;
+        Setting.save();
     }
 }

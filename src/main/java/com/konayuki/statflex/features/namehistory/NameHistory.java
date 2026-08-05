@@ -19,7 +19,7 @@ import java.time.format.DateTimeFormatter;
 
 public class NameHistory {
 
-    public static void getNameHistory(String inputName) {
+    public static void show(String inputName) {
         new Thread(() -> {
             try {
                 Profile.PlayerInfo info = Profile.info(inputName);

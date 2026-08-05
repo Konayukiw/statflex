@@ -29,61 +29,16 @@ import java.util.regex.Pattern;
 public class AutoGG {
     private static final String PREFIX =
             Color.GRAY + "[" + Color.RED + "S" + Color.GRAY + "] ";
-
     private final Minecraft mc = Minecraft.getMinecraft();
     private final List<Pattern> triggers = Collections.synchronizedList(new ArrayList<>());
     private final List<String> gg = Collections.synchronizedList(new ArrayList<>());
-
     private volatile int tickDelay = 0;
     private volatile boolean sending = false;
     private volatile int sendIndex = 0;
 
     public AutoGG() {
         Setting.load();
-        reloadMessages();
-    }
-
-    private void reloadMessages() {
-        synchronized (gg) {
-            gg.clear();
-            String[] saved = Setting.getInstance().gg;
-            if (saved != null) {
-                Collections.addAll(gg, saved);
-            } else {
-                Chat.send(PREFIX + "Failed to load AutoGG messages.");
-            }
-        }
-    }
-
-    @SubscribeEvent
-    public void onServerJoin(FMLNetworkEvent.ClientConnectedToServerEvent event) {
-        loadHypixelTriggers();
-    }
-
-    private void loadHypixelTriggers() {
-        try (InputStream is = AutoGG.class.getResourceAsStream("/regex_triggers_3.json");
-             InputStreamReader reader = new InputStreamReader(is)) {
-            JsonParser parser = new JsonParser();
-            JsonObject root = parser.parse(reader).getAsJsonObject();
-            JsonArray servers = root.getAsJsonArray("servers");
-            for (JsonElement serverElem : servers) {
-                JsonObject server = serverElem.getAsJsonObject();
-                String name = server.get("name").getAsString();
-                if (!name.toLowerCase().contains("hypixel")) {
-                    continue;
-                }
-                JsonArray triggerArr = server.getAsJsonArray("triggers");
-                for (JsonElement triggerElem : triggerArr) {
-                    JsonObject trigger = triggerElem.getAsJsonObject();
-                    if (trigger.get("type").getAsInt() == 0) {
-                        String regex = trigger.get("pattern").getAsString();
-                        triggers.add(Pattern.compile(regex, Pattern.CASE_INSENSITIVE));
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        reload();
     }
 
     @SubscribeEvent
@@ -101,7 +56,7 @@ public class AutoGG {
                 if (pattern.matcher(msg).find()) {
                     Debug.log("Trigger matched: " + msg);
                     Setting.load();
-                    reloadMessages();
+                    reload();
                     synchronized (gg) {
                         if (!gg.isEmpty()) {
                             sending = true;
@@ -115,7 +70,7 @@ public class AutoGG {
     }
 
     @SubscribeEvent
-    public void onClientTick(TickEvent.ClientTickEvent event) {
+    public void onTick(TickEvent.ClientTickEvent event) {
         if (mc.thePlayer == null)
             return;
 
@@ -139,16 +94,21 @@ public class AutoGG {
         }
     }
 
-    public void handleCommand(String[] args) {
+    @SubscribeEvent
+    public void onJoin(FMLNetworkEvent.ClientConnectedToServerEvent event) {
+        loadTriggers();
+    }
+
+    public void command(String[] args) {
         synchronized (gg) {
             if (args.length == 0) {
-                showMessages();
+                show();
             } else if (args[0].equalsIgnoreCase("remove") && args.length == 2) {
                 try {
                     int idx = Integer.parseInt(args[1]);
                     if (idx >= 0 && idx < gg.size()) {
                         gg.remove(idx);
-                        Setting.getInstance().gg = gg.toArray(new String[0]);
+                        Setting.get().gg = gg.toArray(new String[0]);
                         Setting.save();
                         Chat.send(PREFIX + "Removed message.");
                     } else {
@@ -160,14 +120,14 @@ public class AutoGG {
             } else {
                 String msg = String.join(" ", args);
                 gg.add(msg);
-                Setting.getInstance().gg = gg.toArray(new String[0]);
+                Setting.get().gg = gg.toArray(new String[0]);
                 Setting.save();
                 Chat.send(PREFIX + "Added message: " + Color.YELLOW + msg);
             }
         }
     }
 
-    public void showMessages() {
+    public void show() {
         Chat.send(PREFIX + "Current AutoGG messages:");
         synchronized (gg) {
             if (gg.isEmpty()) {
@@ -198,5 +158,43 @@ public class AutoGG {
                 .setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                         new ChatComponentText("Click to add messages."))));
         mc.thePlayer.addChatMessage(add);
+    }
+
+    private void reload() {
+        synchronized (gg) {
+            gg.clear();
+            String[] saved = Setting.get().gg;
+            if (saved != null) {
+                Collections.addAll(gg, saved);
+            } else {
+                Chat.send(PREFIX + "Failed to load AutoGG messages.");
+            }
+        }
+    }
+
+    private void loadTriggers() {
+        try (InputStream is = AutoGG.class.getResourceAsStream("/regex_triggers_3.json");
+             InputStreamReader reader = new InputStreamReader(is)) {
+            JsonParser parser = new JsonParser();
+            JsonObject root = parser.parse(reader).getAsJsonObject();
+            JsonArray servers = root.getAsJsonArray("servers");
+            for (JsonElement serverElem : servers) {
+                JsonObject server = serverElem.getAsJsonObject();
+                String name = server.get("name").getAsString();
+                if (!name.toLowerCase().contains("hypixel")) {
+                    continue;
+                }
+                JsonArray triggerArr = server.getAsJsonArray("triggers");
+                for (JsonElement triggerElem : triggerArr) {
+                    JsonObject trigger = triggerElem.getAsJsonObject();
+                    if (trigger.get("type").getAsInt() == 0) {
+                        String regex = trigger.get("pattern").getAsString();
+                        triggers.add(Pattern.compile(regex, Pattern.CASE_INSENSITIVE));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

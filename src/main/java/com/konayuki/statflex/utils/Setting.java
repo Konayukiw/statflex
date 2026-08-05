@@ -33,7 +33,7 @@ public class Setting {
 
     private static Setting instance;
 
-    public static Setting getInstance() {
+    public static Setting get() {
         if (instance == null) {
             load();
         }
@@ -56,7 +56,7 @@ public class Setting {
             e.printStackTrace();
             instance = new Setting();
         }
-        GuiColors.loadFromSettings(instance);
+        GuiColors.load(instance);
     }
 
     public static void save() {
@@ -64,9 +64,9 @@ public class Setting {
             if (!configFile.getParentFile().exists()) {
                 configFile.getParentFile().mkdirs();
             }
-            GuiColors.saveToSettings(getInstance());
+            GuiColors.store(get());
             try (FileWriter writer = new FileWriter(configFile)) {
-                gson.toJson(getInstance(), writer);
+                gson.toJson(get(), writer);
             }
         } catch (IOException e) {
             e.printStackTrace();

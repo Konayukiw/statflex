@@ -25,17 +25,16 @@ import java.util.Collection;
 import java.util.UUID;
 
 public class Skin {
-
-    public static void savePlayerSkinAsync(String playerName, boolean useNpcSkin) {
-        new Thread(() -> savePlayerSkin(playerName, useNpcSkin), "Skin").start();
+    public static void save(String playerName, boolean useNpcSkin) {
+        new Thread(() -> fetch(playerName, useNpcSkin), "Skin").start();
     }
 
-    private static void savePlayerSkin(String playerName, boolean useNpcSkin) {
+    private static void fetch(String playerName, boolean useNpcSkin) {
         try {
             Minecraft mc = Minecraft.getMinecraft();
 
             if (useNpcSkin) {
-                if (saveSkin(playerName, mc)) {
+                if (fromTab(playerName, mc)) {
                     return;
                 }
             }
@@ -46,8 +45,8 @@ public class Skin {
                 return;
             }
 
-            UUID uuid = parseUuid(info.uuid);
-            String textureJson = getTextureJson(uuid);
+            UUID uuid = uuid(info.uuid);
+            String textureJson = texture(uuid);
 
             if (textureJson == null) {
                 Chat.send(Messages.PREFIX + "Failed to fetch skin data");
@@ -67,7 +66,7 @@ public class Skin {
                     textures.getAsJsonObject("SKIN")
                             .get("url").getAsString();
 
-            downloadSkin(skinUrl, playerName, uuid);
+            download(skinUrl, playerName, uuid);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -75,7 +74,54 @@ public class Skin {
         }
     }
 
-    private static String getTextureJson(UUID uuid) {
+    private static boolean fromTab(String playerName, Minecraft mc) {
+        try {
+            NetworkPlayerInfo localInfo = null;
+
+            for (NetworkPlayerInfo npi : mc.getNetHandler().getPlayerInfoMap()) {
+                if (npi.getGameProfile().getName().equalsIgnoreCase(playerName)) {
+                    localInfo = npi;
+                    break;
+                }
+            }
+
+            if (localInfo != null) {
+                GameProfile profile = localInfo.getGameProfile();
+                Collection<Property> props = profile.getProperties().get("textures");
+
+                if (props != null && !props.isEmpty()) {
+                    Property texturesProp = props.iterator().next();
+
+                    String decoded = new String(
+                            Base64.getDecoder().decode(texturesProp.getValue()),
+                            StandardCharsets.UTF_8
+                    );
+
+                    JsonObject root =
+                            new JsonParser().parse(decoded).getAsJsonObject();
+                    JsonObject textures = root.getAsJsonObject("textures");
+
+                    if (textures != null && textures.has("SKIN")) {
+                        String skinUrl =
+                                textures.getAsJsonObject("SKIN")
+                                        .get("url").getAsString();
+
+                        UUID uuid = profile.getId();
+                        download(skinUrl, playerName, uuid);
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private static String texture(UUID uuid) {
         try {
             String urlStr =
                     "https://sessionserver.mojang.com/session/minecraft/profile/"
@@ -119,54 +165,7 @@ public class Skin {
         }
     }
 
-    private static boolean saveSkin(String playerName, Minecraft mc) {
-        try {
-            NetworkPlayerInfo localInfo = null;
-
-            for (NetworkPlayerInfo npi : mc.getNetHandler().getPlayerInfoMap()) {
-                if (npi.getGameProfile().getName().equalsIgnoreCase(playerName)) {
-                    localInfo = npi;
-                    break;
-                }
-            }
-
-            if (localInfo != null) {
-                GameProfile profile = localInfo.getGameProfile();
-                Collection<Property> props = profile.getProperties().get("textures");
-
-                if (props != null && !props.isEmpty()) {
-                    Property texturesProp = props.iterator().next();
-
-                    String decoded = new String(
-                            Base64.getDecoder().decode(texturesProp.getValue()),
-                            StandardCharsets.UTF_8
-                    );
-
-                    JsonObject root =
-                            new JsonParser().parse(decoded).getAsJsonObject();
-                    JsonObject textures = root.getAsJsonObject("textures");
-
-                    if (textures != null && textures.has("SKIN")) {
-                        String skinUrl =
-                                textures.getAsJsonObject("SKIN")
-                                        .get("url").getAsString();
-
-                        UUID uuid = profile.getId();
-                        downloadSkin(skinUrl, playerName, uuid);
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    private static void downloadSkin(String urlStr, String name, UUID uuid) {
+    private static void download(String urlStr, String name, UUID uuid) {
         try {
             HttpURLConnection conn =
                     (HttpURLConnection) new URL(urlStr).openConnection();
@@ -184,14 +183,14 @@ public class Skin {
                 image = ImageIO.read(in);
             }
 
-            File downloadDir = Setting.getInstance().dir();
+            File downloadDir = Setting.get().dir();
             if (!downloadDir.exists()) downloadDir.mkdirs();
 
             File out =
                     new File(downloadDir, name + "_" + uuid + ".png");
             ImageIO.write(image, "png", out);
 
-            showPath(out);
+            announce(out);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -199,25 +198,7 @@ public class Skin {
         }
     }
 
-    private static Property findLocalSkinProperty(String playerName) {
-        Minecraft mc = Minecraft.getMinecraft();
-
-        if (mc.getNetHandler() == null) return null;
-
-        for (NetworkPlayerInfo npi : mc.getNetHandler().getPlayerInfoMap()) {
-            GameProfile profile = npi.getGameProfile();
-            if (profile == null || profile.getName() == null) continue;
-
-            if (profile.getName().equalsIgnoreCase(playerName)) {
-                return profile.getProperties().get("textures").iterator().hasNext()
-                        ? profile.getProperties().get("textures").iterator().next()
-                        : null;
-            }
-        }
-        return null;
-    }
-
-    private static void showPath(File file) {
+    private static void announce(File file) {
         Minecraft mc = Minecraft.getMinecraft();
 
         mc.addScheduledTask(() -> {
@@ -241,7 +222,7 @@ public class Skin {
         });
     }
 
-    private static UUID parseUuid(String raw) {
+    private static UUID uuid(String raw) {
         if (raw == null) throw new IllegalArgumentException("UUID is null");
 
         if (raw.length() == 32) {
@@ -249,5 +230,23 @@ public class Skin {
         }
 
         return UUID.fromString(raw);
+    }
+
+    private static Property property(String playerName) {
+        Minecraft mc = Minecraft.getMinecraft();
+
+        if (mc.getNetHandler() == null) return null;
+
+        for (NetworkPlayerInfo npi : mc.getNetHandler().getPlayerInfoMap()) {
+            GameProfile profile = npi.getGameProfile();
+            if (profile == null || profile.getName() == null) continue;
+
+            if (profile.getName().equalsIgnoreCase(playerName)) {
+                return profile.getProperties().get("textures").iterator().hasNext()
+                        ? profile.getProperties().get("textures").iterator().next()
+                        : null;
+            }
+        }
+        return null;
     }
 }

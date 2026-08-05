@@ -15,13 +15,13 @@ final class JarLauncher {
     }
 
     static void launch(URL jarUrl, ClassLoader preferredLoader) throws Throwable {
-        ClassLoader targetLoader = findMinecraftClassLoader(preferredLoader);
+        ClassLoader targetLoader = findLoader(preferredLoader);
         Throwable targetFailure = null;
 
         if (targetLoader != null) {
             try {
                 addUrl(targetLoader, jarUrl);
-                invokeInit(targetLoader);
+                init(targetLoader);
                 return;
             } catch (Throwable throwable) {
                 targetFailure = throwable;
@@ -31,7 +31,7 @@ final class JarLauncher {
         ClassLoader parent = targetLoader != null ? targetLoader : preferredLoader;
         URLClassLoader childLoader = new URLClassLoader(new URL[] {jarUrl}, parent);
         try {
-            invokeInit(childLoader);
+            init(childLoader);
         } catch (Throwable throwable) {
             if (targetFailure != null && throwable != targetFailure) {
                 throwable.addSuppressed(targetFailure);
@@ -40,15 +40,15 @@ final class JarLauncher {
         }
     }
 
-    private static ClassLoader findMinecraftClassLoader(ClassLoader preferredLoader) {
+    private static ClassLoader findLoader(ClassLoader preferredLoader) {
         Set<ClassLoader> candidates = new LinkedHashSet<ClassLoader>();
-        addCandidate(candidates, preferredLoader);
-        addCandidate(candidates, Thread.currentThread().getContextClassLoader());
-        addCandidate(candidates, JarLauncher.class.getClassLoader());
-        addCandidate(candidates, ClassLoader.getSystemClassLoader());
+        collect(candidates, preferredLoader);
+        collect(candidates, Thread.currentThread().getContextClassLoader());
+        collect(candidates, JarLauncher.class.getClassLoader());
+        collect(candidates, ClassLoader.getSystemClassLoader());
 
         for (Thread thread : Thread.getAllStackTraces().keySet()) {
-            addCandidate(candidates, thread.getContextClassLoader());
+            collect(candidates, thread.getContextClassLoader());
         }
 
         for (ClassLoader candidate : candidates) {
@@ -61,7 +61,7 @@ final class JarLauncher {
         return null;
     }
 
-    private static void addCandidate(Set<ClassLoader> candidates, ClassLoader loader) {
+    private static void collect(Set<ClassLoader> candidates, ClassLoader loader) {
         for (ClassLoader current = loader; current != null; current = current.getParent()) {
             candidates.add(current);
         }
@@ -97,7 +97,7 @@ final class JarLauncher {
         addUrl.invoke(loader, jarUrl);
     }
 
-    private static void invokeInit(ClassLoader loader) throws Throwable {
+    private static void init(ClassLoader loader) throws Throwable {
         try {
             Class<?> mainClass = Class.forName(MAIN_CLASS, true, loader);
             Method init = mainClass.getDeclaredMethod(INIT_METHOD);

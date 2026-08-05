@@ -26,7 +26,6 @@ public class SkywarsList {
     private static final int COLLECT_TIMEOUT_TICKS = 5;
     private static final Pattern TEAM_LINE = Pattern.compile("(?i)^Team\\s*#(\\d+)\\s*:\\s*(.*)$");
     private static final Pattern namePattern = Pattern.compile("\\b[a-zA-Z0-9_]{3,16}\\b");
-
     private final List<String> queue = Collections.synchronizedList(new ArrayList<>());
     private final Map<String, PlayerData> fetched = new ConcurrentHashMap<>();
     private final Set<String> fetchStarted = ConcurrentHashMap.newKeySet();
@@ -36,13 +35,12 @@ public class SkywarsList {
     private final AtomicBoolean listDisplayed = new AtomicBoolean(false);
     private final Set<String> failedNames = ConcurrentHashMap.newKeySet();
     private final AtomicBoolean apiErrorReported = new AtomicBoolean(false);
-
     private volatile int lastTeamNumber = 0;
     private volatile int ticksSinceLastTeam = 0;
 
     @SubscribeEvent
     public void onChat(ClientChatReceivedEvent event) {
-        if (!Toggle.isSkywarsListStats()) {
+        if (!Toggle.isSwList()) {
             return;
         }
 
@@ -58,15 +56,15 @@ public class SkywarsList {
             if (!Toggle.isKeepWho()) {
                 event.setCanceled(true);
             }
-            resetSession();
+            reset();
             List<String> names = new ArrayList<>();
-            extractPlayerNames(stripped, names);
+            names(stripped, names);
             for (String name : names) {
-                enqueuePlayer(name);
+                enqueue(name);
             }
             collectionDone.set(true);
             collecting.set(false);
-            tryDisplayList();
+            display();
             return;
         }
 
@@ -74,7 +72,7 @@ public class SkywarsList {
             if (!Toggle.isKeepWho()) {
                 event.setCanceled(true);
             }
-            beginCollection();
+            begin();
             return;
         }
 
@@ -100,19 +98,19 @@ public class SkywarsList {
 
             String playersPart = teamMatcher.group(2);
             List<String> names = new ArrayList<>();
-            extractPlayerNames(playersPart, names);
+            names(playersPart, names);
             for (String name : names) {
-                enqueuePlayer(name);
+                enqueue(name);
             }
         }
     }
 
     @SubscribeEvent
-    public void onClientTick(TickEvent.ClientTickEvent event) {
+    public void onTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) {
             return;
         }
-        if (!Toggle.isSkywarsListStats() || !collecting.get() || collectionDone.get()) {
+        if (!Toggle.isSwList() || !collecting.get() || collectionDone.get()) {
             return;
         }
 
@@ -123,87 +121,11 @@ public class SkywarsList {
         if (ticksSinceLastTeam >= COLLECT_TIMEOUT_TICKS) {
             collectionDone.set(true);
             collecting.set(false);
-            tryDisplayList();
+            display();
         }
     }
 
-    private void beginCollection() {
-        resetSession();
-        collecting.set(true);
-        collectionDone.set(false);
-        lastTeamNumber = 0;
-        ticksSinceLastTeam = 0;
-    }
-
-    private void resetSession() {
-        queue.clear();
-        fetched.clear();
-        fetchStarted.clear();
-        failedNames.clear();
-        apiErrorReported.set(false);
-        pendingFetches.set(0);
-        collecting.set(false);
-        collectionDone.set(false);
-        listDisplayed.set(false);
-        lastTeamNumber = 0;
-        ticksSinceLastTeam = 0;
-    }
-
-    private void enqueuePlayer(String name) {
-        if (name == null || name.isEmpty()) {
-            return;
-        }
-        if (Denick.check(name)) {
-            return;
-        }
-        String key = name.toLowerCase();
-        synchronized (queue) {
-            if (!queue.contains(key)) {
-                queue.add(key);
-            }
-        }
-        startFetchIfNeeded(key);
-    }
-
-    private void startFetchIfNeeded(String nameKey) {
-        if (!fetchStarted.add(nameKey)) {
-            return;
-        }
-        pendingFetches.incrementAndGet();
-        new Thread(() -> {
-            try {
-                HypixelApi.result result = HypixelApi.fetch(nameKey);
-                if (!result.success) {
-                    if (HypixelApi.INVALID_API.equals(result.errorCode)) {
-                        if (apiErrorReported.compareAndSet(false, true)) {
-                            Chat.send(Messages.INVALID_API);
-                        }
-                    } else if (HypixelApi.NAME_NOT_FOUND.equals(result.errorCode)) {
-                        // The lobby only lists real players and nicks, so a name no
-                        // Mojang account holds is a nick rather than a failure.
-                        Debug.log("Skipping " + nameKey + ", looks nicked: " + result.errorCode);
-                        Denick.markNicked(nameKey);
-                    } else {
-                        Debug.log("Failed to fetch " + nameKey + ": " + result.errorCode);
-                        failedNames.add(nameKey);
-                    }
-                    return;
-                }
-
-                PlayerData data = buildPlayerData(result.player, result.properName);
-                if (data != null) {
-                    fetched.put(nameKey, data);
-                } else {
-                    failedNames.add(nameKey);
-                }
-            } finally {
-                pendingFetches.decrementAndGet();
-                tryDisplayList();
-            }
-        }, "SkywarsList").start();
-    }
-
-    private void tryDisplayList() {
+    private void display() {
         if (!collectionDone.get()) {
             return;
         }
@@ -247,7 +169,81 @@ public class SkywarsList {
         }
     }
 
-    private static PlayerData buildPlayerData(JsonObject player, String properName) {
+    private void fetch(String nameKey) {
+        if (!fetchStarted.add(nameKey)) {
+            return;
+        }
+        pendingFetches.incrementAndGet();
+        new Thread(() -> {
+            try {
+                HypixelApi.result result = HypixelApi.fetch(nameKey);
+                if (!result.success) {
+                    if (HypixelApi.INVALID_API.equals(result.errorCode)) {
+                        if (apiErrorReported.compareAndSet(false, true)) {
+                            Chat.send(Messages.INVALID_API);
+                        }
+                    } else if (HypixelApi.NAME_NOT_FOUND.equals(result.errorCode)) {
+                        Debug.log("Skipping " + nameKey + ", looks nicked: " + result.errorCode);
+                        Denick.mark(nameKey);
+                    } else {
+                        Debug.log("Failed to fetch " + nameKey + ": " + result.errorCode);
+                        failedNames.add(nameKey);
+                    }
+                    return;
+                }
+
+                PlayerData data = build(result.player, result.properName);
+                if (data != null) {
+                    fetched.put(nameKey, data);
+                } else {
+                    failedNames.add(nameKey);
+                }
+            } finally {
+                pendingFetches.decrementAndGet();
+                display();
+            }
+        }, "SkywarsList").start();
+    }
+
+    private void enqueue(String name) {
+        if (name == null || name.isEmpty()) {
+            return;
+        }
+        if (Denick.isNick(name)) {
+            return;
+        }
+        String key = name.toLowerCase();
+        synchronized (queue) {
+            if (!queue.contains(key)) {
+                queue.add(key);
+            }
+        }
+        fetch(key);
+    }
+
+    private void begin() {
+        reset();
+        collecting.set(true);
+        collectionDone.set(false);
+        lastTeamNumber = 0;
+        ticksSinceLastTeam = 0;
+    }
+
+    private void reset() {
+        queue.clear();
+        fetched.clear();
+        fetchStarted.clear();
+        failedNames.clear();
+        apiErrorReported.set(false);
+        pendingFetches.set(0);
+        collecting.set(false);
+        collectionDone.set(false);
+        listDisplayed.set(false);
+        lastTeamNumber = 0;
+        ticksSinceLastTeam = 0;
+    }
+
+    private static PlayerData build(JsonObject player, String properName) {
         if (!player.has("stats") || !player.get("stats").isJsonObject()) {
             return null;
         }
@@ -269,9 +265,9 @@ public class SkywarsList {
         double kdr = deaths == 0 ? kills : (double) kills / deaths;
 
         String coloredPlayerName = Ranks.rank(player, properName);
-        String formattedWins = Skywars.getFormattedWins(wins);
-        String coloredKDR = Skywars.getColoredKDR(kdr);
-        double score = parseLevelNumber(rawFormatted) * kdr;
+        String formattedWins = Skywars.wins(wins);
+        String coloredKDR = Skywars.kdr(kdr);
+        double score = levelOf(rawFormatted) * kdr;
 
         return new PlayerData(
                 rawFormatted,
@@ -283,7 +279,7 @@ public class SkywarsList {
         );
     }
 
-    private void extractPlayerNames(String text, List<String> targetList) {
+    private void names(String text, List<String> targetList) {
         String stripped = EnumChatFormatting.getTextWithoutFormattingCodes(text);
         if (stripped == null) {
             stripped = text;
@@ -307,7 +303,7 @@ public class SkywarsList {
         }
     }
 
-    private static double parseLevelNumber(String rawFormatted) {
+    private static double levelOf(String rawFormatted) {
         if (rawFormatted == null || rawFormatted.isEmpty()) {
             return 0;
         }

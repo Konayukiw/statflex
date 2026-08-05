@@ -11,17 +11,11 @@ import java.util.Collections;
 import java.util.List;
 
 public class Dropdown extends GuiComponentBase {
-
-    public interface OnSelectionChanged {
-        void accept(int index, String option);
-    }
-
     private final List<String> options;
     private int selectedIndex = -1;
     public boolean isOpen = false;
     public final int optionHeight = 24;
     public final int maxDisplayableOptions = 5;
-
     private float scrollYOptions = 0f;
     private float maxScrollYOptions = 0f;
     private boolean isDraggingScrollbar = false;
@@ -49,49 +43,9 @@ public class Dropdown extends GuiComponentBase {
         this(id, x, y, width, MODERN_DROPDOWN_HEIGHT, label, options, initialSelectedIndex, onSelectionChanged);
     }
 
-    public void setSelected(int index, boolean notify) {
-        int old = selectedIndex;
-        if (options.isEmpty()) {
-            selectedIndex = -1;
-        } else {
-            selectedIndex = Math.max(0, Math.min(index, options.size() - 1));
-        }
-        if (notify && old != selectedIndex && selectedIndex != -1 && selectedIndex < options.size()
-                && onSelectionChanged != null) {
-            onSelectionChanged.accept(selectedIndex, options.get(selectedIndex));
-        }
-    }
-
-    public String getSelectedOption() {
-        if (!options.isEmpty() && selectedIndex != -1 && selectedIndex < options.size()) {
-            return options.get(selectedIndex);
-        }
-        return null;
-    }
-
-    public int getSelectedIndex() {
-        return selectedIndex;
-    }
-
-    public List<String> getOptions() {
-        return Collections.unmodifiableList(options);
-    }
-
-    private int getDisplayableOptionCount() {
-        return Math.min(options.size(), maxDisplayableOptions);
-    }
-
-    private int getListVisibleHeight() {
-        return getDisplayableOptionCount() * optionHeight;
-    }
-
-    private int getTotalOptionsContentHeight() {
-        return options.size() * optionHeight;
-    }
-
     @Override
-    public void drawComponent(int mouseX, int mouseY, float partialTicks) {
-        super.drawComponent(mouseX, mouseY, partialTicks);
+    public void draw(int mouseX, int mouseY, float partialTicks) {
+        super.draw(mouseX, mouseY, partialTicks);
         if (!visible) {
             return;
         }
@@ -117,19 +71,19 @@ public class Dropdown extends GuiComponentBase {
 
         float borderThickness = MODERN_BORDER_THICKNESS;
 
-        drawRoundedRectUsingGL(
+        roundRect(
                 x + SHADOW_OFFSET_X, y + SHADOW_OFFSET_Y,
                 width, height,
                 cornerRadius, GuiColors.SUBTLE_SHADOW_COLOR
         );
-        drawRoundedRectUsingGL(x, y, width, height, cornerRadius, mainBoxBorder);
-        drawRoundedRectUsingGL(
+        roundRect(x, y, width, height, cornerRadius, mainBoxBorder);
+        roundRect(
                 x + borderThickness, y + borderThickness,
                 width - borderThickness * 2, height - borderThickness * 2,
                 Math.max(0f, cornerRadius - borderThickness), mainBoxBg
         );
 
-        String selectedText = getSelectedOption();
+        String selectedText = selected();
         if (selectedText == null) {
             selectedText = "Select...";
         }
@@ -137,22 +91,22 @@ public class Dropdown extends GuiComponentBase {
         String arrow = isOpen ? "\u25B2" : "\u25BC";
         fontRenderer.drawString(arrow, x + width - fontRenderer.getStringWidth(arrow) - textPaddingX, y + textPaddingY, arrowColor);
 
-        drawTopLabel(-3);
+        topLabel(-3);
 
         if (isOpen && enabled) {
-            int totalContentH = getTotalOptionsContentHeight();
-            int listVisH = getListVisibleHeight();
+            int totalContentH = totalHeight();
+            int listVisH = listHeight();
             needsScrollbar = totalContentH > listVisH;
             int listTopY = this.y + this.height;
             int listDrawWidth = this.width;
 
-            drawRoundedRectUsingGL(
+            roundRect(
                     x + SHADOW_OFFSET_X, listTopY + SHADOW_OFFSET_Y,
                     width, listVisH,
                     listCornerRadius, GuiColors.SUBTLE_SHADOW_COLOR
             );
-            drawRoundedRectUsingGL(x, listTopY, width, listVisH, listCornerRadius, GuiColors.MODERN_UI_ELEMENT_BORDER);
-            drawRoundedRectUsingGL(
+            roundRect(x, listTopY, width, listVisH, listCornerRadius, GuiColors.MODERN_UI_ELEMENT_BORDER);
+            roundRect(
                     x + borderThickness, listTopY + borderThickness,
                     width - borderThickness * 2, listVisH - borderThickness * 2,
                     Math.max(0f, listCornerRadius - borderThickness), GuiColors.DROPDOWN_BACKGROUND_OPEN
@@ -192,7 +146,7 @@ public class Dropdown extends GuiComponentBase {
                 }
 
                 if (optBg != 0) {
-                    drawRoundedRectUsingGL(
+                    roundRect(
                             x + borderIntScissor + 1f, optTopScreen,
                             scissorListDrawWidth - 2 * borderIntScissor - 2f, optionHeight,
                             1f, optBg
@@ -206,7 +160,7 @@ public class Dropdown extends GuiComponentBase {
                 maxScrollYOptions = Math.max(0f, (float) (totalContentH - listVisH));
                 scrollYOptions = Math.max(0f, Math.min(maxScrollYOptions, scrollYOptions));
                 int sbX = x + width - scrollbarWidth - borderIntScissor;
-                drawRoundedRectUsingGL(
+                roundRect(
                         sbX,
                         listTopY + borderIntScissor,
                         scrollbarWidth,
@@ -223,7 +177,7 @@ public class Dropdown extends GuiComponentBase {
 
                     boolean thumbHover = mouseX >= sbX && mouseX < sbX + scrollbarWidth
                             && mouseY >= thumbActualY && mouseY < thumbActualY + thumbH;
-                    drawRoundedRectUsingGL(
+                    roundRect(
                             sbX + 1f, thumbActualY,
                             scrollbarWidth - 2f, thumbH,
                             2f,
@@ -238,7 +192,7 @@ public class Dropdown extends GuiComponentBase {
     }
 
     @Override
-    public boolean mouseClicked(int mouseX, int mouseY, int mouseButton) {
+    public boolean click(int mouseX, int mouseY, int mouseButton) {
         if (!enabled || !visible || mouseButton != 0) {
             return false;
         }
@@ -249,7 +203,7 @@ public class Dropdown extends GuiComponentBase {
                 if (!options.isEmpty() && selectedIndex != -1 && selectedIndex < options.size()) {
                     int selTop = selectedIndex * optionHeight;
                     int selBot = selTop + optionHeight;
-                    int visH = getListVisibleHeight();
+                    int visH = listHeight();
                     if (selTop < scrollYOptions) {
                         scrollYOptions = selTop;
                     } else if (selBot > scrollYOptions + visH) {
@@ -257,7 +211,7 @@ public class Dropdown extends GuiComponentBase {
                     }
 
                     if (needsScrollbar) {
-                        maxScrollYOptions = Math.max(0f, (float) (getTotalOptionsContentHeight() - visH));
+                        maxScrollYOptions = Math.max(0f, (float) (totalHeight() - visH));
                         scrollYOptions = Math.max(0f, Math.min(maxScrollYOptions, scrollYOptions));
                     } else {
                         scrollYOptions = 0f;
@@ -273,7 +227,7 @@ public class Dropdown extends GuiComponentBase {
 
         if (isOpen) {
             int listTopY = this.y + this.height;
-            int listVisibleHeight = getListVisibleHeight();
+            int listVisibleHeight = listHeight();
             int listBottomY = listTopY + listVisibleHeight;
             int actualListBorderThicknessInt = (int) MODERN_BORDER_THICKNESS;
 
@@ -318,7 +272,7 @@ public class Dropdown extends GuiComponentBase {
         }
 
         if (isOpen) {
-            int totalDropdownHeight = this.height + (isOpen ? getListVisibleHeight() : 0);
+            int totalDropdownHeight = this.height + (isOpen ? listHeight() : 0);
             if (!(mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + totalDropdownHeight)) {
                 close();
             }
@@ -326,27 +280,44 @@ public class Dropdown extends GuiComponentBase {
         return false;
     }
 
-    @Override
-    public void mouseReleased(int mouseX, int mouseY, int state) {
-        if (state == 0) {
-            isDraggingScrollbar = false;
+    public boolean scroll(int rawMouseX, int rawMouseY, int dWheel) {
+        if (isOpen && enabled && visible && !options.isEmpty()) {
+            int listTopY = y + height;
+            int listVisibleH = listHeight();
+            int listBottomY = listTopY + listVisibleH;
+
+            if (rawMouseX >= x && rawMouseX < x + width
+                    && rawMouseY >= listTopY && rawMouseY < listBottomY) {
+
+                if (totalHeight() <= listVisibleH) {
+                    return false;
+                }
+
+                maxScrollYOptions = Math.max(0f, (float) (totalHeight() - listVisibleH));
+                float scrollAmountPerTick = optionHeight * 1.5f;
+                float scrollDelta = dWheel > 0 ? -scrollAmountPerTick : scrollAmountPerTick;
+
+                scrollYOptions = Math.max(0f, Math.min(maxScrollYOptions, scrollYOptions + scrollDelta));
+                return true;
+            }
         }
+        return false;
     }
 
     @Override
-    public void mouseClickMove(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
+    public void drag(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
         if (isDraggingScrollbar && clickedMouseButton == 0 && needsScrollbar && maxScrollYOptions > 0) {
             int dy = mouseY - lastMouseYForScrollDrag;
             lastMouseYForScrollDrag = mouseY;
 
-            int trackDrawableHeight = getListVisibleHeight() - 2 * (int) MODERN_BORDER_THICKNESS;
+            int trackDrawableHeight = listHeight() - 2 * (int) MODERN_BORDER_THICKNESS;
             if (trackDrawableHeight <= 0) {
                 return;
             }
 
             float thumbHRatio = Math.max(0.1f, Math.min(1f,
-                    getListVisibleHeight() / (float) getTotalOptionsContentHeight()));
-            int thumbH = Math.max(15, (int) (getListVisibleHeight() * thumbHRatio));
+                    listHeight() / (float) totalHeight()));
+            int thumbH = Math.max(15, (int) (listHeight() * thumbHRatio));
             int draggableTrackSpace = trackDrawableHeight - thumbH;
 
             if (draggableTrackSpace <= 0) {
@@ -358,28 +329,11 @@ public class Dropdown extends GuiComponentBase {
         }
     }
 
-    public boolean handleMouseScroll(int rawMouseX, int rawMouseY, int dWheel) {
-        if (isOpen && enabled && visible && !options.isEmpty()) {
-            int listTopY = y + height;
-            int listVisibleH = getListVisibleHeight();
-            int listBottomY = listTopY + listVisibleH;
-
-            if (rawMouseX >= x && rawMouseX < x + width
-                    && rawMouseY >= listTopY && rawMouseY < listBottomY) {
-
-                if (getTotalOptionsContentHeight() <= listVisibleH) {
-                    return false;
-                }
-
-                maxScrollYOptions = Math.max(0f, (float) (getTotalOptionsContentHeight() - listVisibleH));
-                float scrollAmountPerTick = optionHeight * 1.5f;
-                float scrollDelta = dWheel > 0 ? -scrollAmountPerTick : scrollAmountPerTick;
-
-                scrollYOptions = Math.max(0f, Math.min(maxScrollYOptions, scrollYOptions + scrollDelta));
-                return true;
-            }
+    @Override
+    public void release(int mouseX, int mouseY, int state) {
+        if (state == 0) {
+            isDraggingScrollbar = false;
         }
-        return false;
     }
 
     public void close() {
@@ -387,5 +341,49 @@ public class Dropdown extends GuiComponentBase {
             isOpen = false;
             isDraggingScrollbar = false;
         }
+    }
+
+    public void setSelected(int index, boolean notify) {
+        int old = selectedIndex;
+        if (options.isEmpty()) {
+            selectedIndex = -1;
+        } else {
+            selectedIndex = Math.max(0, Math.min(index, options.size() - 1));
+        }
+        if (notify && old != selectedIndex && selectedIndex != -1 && selectedIndex < options.size()
+                && onSelectionChanged != null) {
+            onSelectionChanged.accept(selectedIndex, options.get(selectedIndex));
+        }
+    }
+
+    public String selected() {
+        if (!options.isEmpty() && selectedIndex != -1 && selectedIndex < options.size()) {
+            return options.get(selectedIndex);
+        }
+        return null;
+    }
+
+    public int index() {
+        return selectedIndex;
+    }
+
+    public List<String> options() {
+        return Collections.unmodifiableList(options);
+    }
+
+    private int listHeight() {
+        return visibleCount() * optionHeight;
+    }
+
+    private int totalHeight() {
+        return options.size() * optionHeight;
+    }
+
+    private int visibleCount() {
+        return Math.min(options.size(), maxDisplayableOptions);
+    }
+
+    public interface OnSelectionChanged {
+        void accept(int index, String option);
     }
 }

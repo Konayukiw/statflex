@@ -6,11 +6,6 @@ import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.util.ResourceLocation;
 
 public class Button extends GuiComponentBase {
-
-    public interface OnClick {
-        void run();
-    }
-
     private final float cornerRadius = MODERN_CORNER_RADIUS;
     private final OnClick onClick;
 
@@ -24,8 +19,8 @@ public class Button extends GuiComponentBase {
     }
 
     @Override
-    public void drawComponent(int mouseX, int mouseY, float partialTicks) {
-        super.drawComponent(mouseX, mouseY, partialTicks);
+    public void draw(int mouseX, int mouseY, float partialTicks) {
+        super.draw(mouseX, mouseY, partialTicks);
         if (!visible) {
             return;
         }
@@ -53,7 +48,7 @@ public class Button extends GuiComponentBase {
         float borderThickness = MODERN_BORDER_THICKNESS;
 
         if (glowColor != 0) {
-            drawRoundedRectUsingGL(
+            roundRect(
                     x - 1f, y - 1f,
                     width + 2f, height + 2f,
                     cornerRadius + 1f,
@@ -61,8 +56,8 @@ public class Button extends GuiComponentBase {
             );
         }
 
-        drawRoundedRectUsingGL(x, y, width, height, cornerRadius, currentBorderColor);
-        drawRoundedRectUsingGL(
+        roundRect(x, y, width, height, cornerRadius, currentBorderColor);
+        roundRect(
                 x + borderThickness, y + borderThickness,
                 width - borderThickness * 2, height - borderThickness * 2,
                 Math.max(0f, cornerRadius - borderThickness),
@@ -70,11 +65,11 @@ public class Button extends GuiComponentBase {
         );
 
         int textY = y + (height - fontRenderer.FONT_HEIGHT) / 2 + 1;
-        drawCenteredString(fontRenderer, label, x + width / 2, textY, currentTextColor);
+        centered(fontRenderer, label, x + width / 2, textY, currentTextColor);
     }
 
     @Override
-    public boolean mouseClicked(int mouseX, int mouseY, int mouseButton) {
+    public boolean click(int mouseX, int mouseY, int mouseButton) {
         if (enabled && visible && mouseButton == 0
                 && mouseX >= this.x && mouseY >= this.y
                 && mouseX < this.x + this.width && mouseY < this.y + this.height) {
@@ -88,7 +83,11 @@ public class Button extends GuiComponentBase {
         return false;
     }
 
-    private void drawCenteredString(FontRenderer fr, String text, int x, int y, int color) {
+    private void centered(FontRenderer fr, String text, int x, int y, int color) {
         fr.drawString(text, x - fr.getStringWidth(text) / 2, y, color);
+    }
+
+    public interface OnClick {
+        void run();
     }
 }

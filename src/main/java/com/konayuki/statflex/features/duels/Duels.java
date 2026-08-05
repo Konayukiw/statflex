@@ -15,13 +15,75 @@ import net.minecraft.util.EnumChatFormatting;
 import java.text.DecimalFormat;
 
 public class Duels {
+    private static final String BOLD_DIVINE = Color.LIGHT_PURPLE.toString() + Color.BOLD;
+    private static final String BOLD_CELESTIAL = Color.AQUA.toString() + Color.BOLD;
+    private static final String BOLD_GODLIKE = Color.DARK_PURPLE.toString() + Color.BOLD;
+    private static final String BOLD_GRANDMASTER = Color.YELLOW.toString() + Color.BOLD;
+    private static final String BOLD_LEGEND = Color.DARK_RED.toString() + Color.BOLD;
+    private static final String BOLD_ASCENDED = Color.RED.toString() + Color.BOLD;
+    private static final String MASTER = Color.DARK_GREEN.toString();
+    private static final String DIAMOND = Color.DARK_AQUA.toString();
+    private static final String GOLD_TITLE = Color.GOLD.toString();
+    private static final String IRON = Color.WHITE.toString();
+    private static final String ROOKIE = Color.DARK_GRAY.toString();
 
-    public static void fetchStats(String inputName, String mode) {
-        fetchStats(inputName, mode, false);
+    private static final Object[][] TITLE_THRESHOLDS = {
+            { 100000, BOLD_DIVINE, "DIVINE" },
+            { 90000, BOLD_CELESTIAL, "CELESTIAL V" },
+            { 80000, BOLD_CELESTIAL, "CELESTIAL IV" },
+            { 70000, BOLD_CELESTIAL, "CELESTIAL III" },
+            { 60000, BOLD_CELESTIAL, "CELESTIAL II" },
+            { 50000, BOLD_CELESTIAL, "CELESTIAL" },
+            { 44000, BOLD_GODLIKE, "Godlike V" },
+            { 38000, BOLD_GODLIKE, "Godlike IV" },
+            { 32000, BOLD_GODLIKE, "Godlike III" },
+            { 26000, BOLD_GODLIKE, "Godlike II" },
+            { 20000, BOLD_GODLIKE, "Godlike" },
+            { 18000, BOLD_GRANDMASTER, "Grandmaster V" },
+            { 16000, BOLD_GRANDMASTER, "Grandmaster IV" },
+            { 14000, BOLD_GRANDMASTER, "Grandmaster III" },
+            { 12000, BOLD_GRANDMASTER, "Grandmaster II" },
+            { 10000, BOLD_GRANDMASTER, "Grandmaster" },
+            { 9000, BOLD_LEGEND, "Legend V" },
+            { 7600, BOLD_LEGEND, "Legend IV" },
+            { 6400, BOLD_LEGEND, "Legend III" },
+            { 5200, BOLD_LEGEND, "Legend II" },
+            { 4000, BOLD_LEGEND, "Legend" },
+            { 3600, MASTER, "Master V" },
+            { 3200, MASTER, "Master IV" },
+            { 2800, MASTER, "Master III" },
+            { 2400, MASTER, "Master II" },
+            { 2000, MASTER, "Master" },
+            { 1800, DIAMOND, "Diamond V" },
+            { 1600, DIAMOND, "Diamond IV" },
+            { 1400, DIAMOND, "Diamond III" },
+            { 1200, DIAMOND, "Diamond II" },
+            { 1000, DIAMOND, "Diamond" },
+            { 900, GOLD_TITLE, "Gold V" },
+            { 800, GOLD_TITLE, "Gold IV" },
+            { 700, GOLD_TITLE, "Gold III" },
+            { 600, GOLD_TITLE, "Gold II" },
+            { 500, GOLD_TITLE, "Gold" },
+            { 440, IRON, "Iron V" },
+            { 380, IRON, "Iron IV" },
+            { 320, IRON, "Iron III" },
+            { 260, IRON, "Iron II" },
+            { 200, IRON, "Iron" },
+            { 180, ROOKIE, "Rookie V" },
+            { 160, ROOKIE, "Rookie IV" },
+            { 140, ROOKIE, "Rookie III" },
+            { 120, ROOKIE, "Rookie II" },
+            { 100, ROOKIE, "Rookie" },
+    }
+;
+    private static final Title NO_TITLE = new Title(Color.DARK_GRAY.toString(), "None");
+
+    public static void stats(String inputName, String mode) {
+        stats(inputName, mode, false);
     }
 
-    public static void fetchStats(String inputName, String mode, boolean auto) {
-        if (auto && Denick.check(inputName)) {
+    public static void stats(String inputName, String mode, boolean auto) {
+        if (auto && Denick.isNick(inputName)) {
             Debug.log("Skipping nicked player: " + inputName);
             return;
         }
@@ -30,9 +92,9 @@ public class Duels {
             try {
                 HypixelApi.result result = HypixelApi.fetch(inputName);
                 if (!result.success) {
-                    if (auto && isUnknownPlayer(result)) {
+                    if (auto && isUnknown(result)) {
                         if (HypixelApi.NAME_NOT_FOUND.equals(result.errorCode)) {
-                            Denick.markNicked(inputName);
+                            Denick.mark(inputName);
                         }
                         return;
                     }
@@ -50,7 +112,7 @@ public class Duels {
                 double wlr;
 
                 if (mode != null) {
-                    String key = getModeKey(mode);
+                    String key = keyOf(mode);
                     if (key == null) {
                         Chat.send(Messages.INVALID_MODE + mode);
                         return;
@@ -64,13 +126,13 @@ public class Duels {
                 wlr = losses == 0 ? wins : (double) wins / losses;
 
                 String coloredPlayerName = Ranks.rank(player, properName);
-                String formattedWins = getFormattedWins(wins);
-                String coloredWLR = getColoredWLR(wlr);
-                String modeDisplay = mode != null ? getModeDisplayName(mode.toLowerCase()) : "";
+                String formattedWins = wins(wins);
+                String coloredWLR = wlr(wlr);
+                String modeDisplay = mode != null ? nameOf(mode.toLowerCase()) : "";
                 if (modeDisplay == null || modeDisplay.isEmpty()) {
                     modeDisplay = mode != null ? mode : "";
                 }
-                Title title = findTitleOrNone(wins, mode == null);
+                Title title = title(wins, mode == null);
                 String modeAndTitle = title.format
                         + (modeDisplay.isEmpty() ? "" : modeDisplay + " ") + title.label;
 
@@ -96,12 +158,7 @@ public class Duels {
         }, "Duels").start();
     }
 
-    private static boolean isUnknownPlayer(HypixelApi.result result) {
-        return HypixelApi.NAME_NOT_FOUND.equals(result.errorCode)
-                || HypixelApi.PLAYER_NOT_FOUND.equals(result.errorCode);
-    }
-
-    public static String detectMode(String mode) {
+    public static String detect(String mode) {
         if (mode == null) {
             return null;
         }
@@ -143,10 +200,82 @@ public class Duels {
         } else if (line.contains("quake") || line.contains("quakecraft")) {
             return "quake_duel";
         }
-        return getModeKey(mode);
+        return keyOf(mode);
     }
 
-    public static String getModeKey(String input) {
+    public static String wins(int wins) {
+        DecimalFormat formatter = new DecimalFormat("#,###");
+
+        EnumChatFormatting color;
+        if (wins >= 50000)
+            color = Color.DARK_PURPLE;
+        else if (wins >= 25000)
+            color = Color.DARK_RED;
+        else if (wins >= 10000)
+            color = Color.RED;
+        else if (wins >= 5000)
+            color = Color.GOLD;
+        else if (wins >= 2500)
+            color = Color.YELLOW;
+        else if (wins >= 1000)
+            color = Color.WHITE;
+        else
+            color = Color.GRAY;
+
+        return color + formatter.format(wins);
+    }
+
+    public static String wlr(double wlr) {
+        DecimalFormat df = new DecimalFormat("#.##");
+
+        EnumChatFormatting color;
+        if (wlr >= 30)
+            color = Color.DARK_PURPLE;
+        else if (wlr >= 15)
+            color = Color.DARK_RED;
+        else if (wlr >= 10)
+            color = Color.RED;
+        else if (wlr >= 5)
+            color = Color.GOLD;
+        else if (wlr >= 2)
+            color = Color.YELLOW;
+        else if (wlr >= 1)
+            color = Color.WHITE;
+        else
+            color = Color.GRAY;
+
+        return color + df.format(wlr);
+    }
+
+    public static Title title(int wins, boolean isOverall) {
+        Title title = find(wins, isOverall);
+        return title != null ? title : NO_TITLE;
+    }
+
+    public static Title find(int wins, boolean isOverall) {
+        int usedWins = isOverall ? wins : wins * 2;
+
+        if (usedWins >= 200000) {
+            int ascendedLevel = ((usedWins - 200000) / 20000) + 1;
+            return ascendedLevel == 1
+                    ? new Title(BOLD_ASCENDED, "ASCENDED")
+                    : new Title(BOLD_ASCENDED, "ASCENDED " + roman(ascendedLevel));
+        }
+
+        for (Object[] entry : TITLE_THRESHOLDS) {
+            if (usedWins >= (int) entry[0]) {
+                return new Title((String) entry[1], (String) entry[2]);
+            }
+        }
+        return null;
+    }
+
+    public static String titleText(int wins, boolean isOverall) {
+        Title title = find(wins, isOverall);
+        return title == null ? "" : title.format + title.label;
+    }
+
+    public static String keyOf(String input) {
         if (input == null)
             return null;
         switch (input.toLowerCase()) {
@@ -217,7 +346,7 @@ public class Duels {
         }
     }
 
-    public static String getModeDisplayName(String input) {
+    public static String nameOf(String input) {
         if (input == null)
             return null;
         switch (input.toLowerCase()) {
@@ -288,152 +417,12 @@ public class Duels {
         }
     }
 
-    public static String getFormattedWins(int wins) {
-        DecimalFormat formatter = new DecimalFormat("#,###");
-
-        EnumChatFormatting color;
-        if (wins >= 50000)
-            color = Color.DARK_PURPLE;
-        else if (wins >= 25000)
-            color = Color.DARK_RED;
-        else if (wins >= 10000)
-            color = Color.RED;
-        else if (wins >= 5000)
-            color = Color.GOLD;
-        else if (wins >= 2500)
-            color = Color.YELLOW;
-        else if (wins >= 1000)
-            color = Color.WHITE;
-        else
-            color = Color.GRAY;
-
-        return color + formatter.format(wins);
+    private static boolean isUnknown(HypixelApi.result result) {
+        return HypixelApi.NAME_NOT_FOUND.equals(result.errorCode)
+                || HypixelApi.PLAYER_NOT_FOUND.equals(result.errorCode);
     }
 
-    public static String getColoredWLR(double wlr) {
-        DecimalFormat df = new DecimalFormat("#.##");
-
-        EnumChatFormatting color;
-        if (wlr >= 30)
-            color = Color.DARK_PURPLE;
-        else if (wlr >= 15)
-            color = Color.DARK_RED;
-        else if (wlr >= 10)
-            color = Color.RED;
-        else if (wlr >= 5)
-            color = Color.GOLD;
-        else if (wlr >= 2)
-            color = Color.YELLOW;
-        else if (wlr >= 1)
-            color = Color.WHITE;
-        else
-            color = Color.GRAY;
-
-        return color + df.format(wlr);
-    }
-
-    public static final class Title {
-        public final String format;
-        public final String label;
-
-        Title(String format, String label) {
-            this.format = format;
-            this.label = label;
-        }
-    }
-
-    private static final String BOLD_DIVINE = Color.LIGHT_PURPLE.toString() + Color.BOLD;
-    private static final String BOLD_CELESTIAL = Color.AQUA.toString() + Color.BOLD;
-    private static final String BOLD_GODLIKE = Color.DARK_PURPLE.toString() + Color.BOLD;
-    private static final String BOLD_GRANDMASTER = Color.YELLOW.toString() + Color.BOLD;
-    private static final String BOLD_LEGEND = Color.DARK_RED.toString() + Color.BOLD;
-    private static final String BOLD_ASCENDED = Color.RED.toString() + Color.BOLD;
-    private static final String MASTER = Color.DARK_GREEN.toString();
-    private static final String DIAMOND = Color.DARK_AQUA.toString();
-    private static final String GOLD_TITLE = Color.GOLD.toString();
-    private static final String IRON = Color.WHITE.toString();
-    private static final String ROOKIE = Color.DARK_GRAY.toString();
-
-    private static final Object[][] TITLE_THRESHOLDS = {
-            { 100000, BOLD_DIVINE, "DIVINE" },
-            { 90000, BOLD_CELESTIAL, "CELESTIAL V" },
-            { 80000, BOLD_CELESTIAL, "CELESTIAL IV" },
-            { 70000, BOLD_CELESTIAL, "CELESTIAL III" },
-            { 60000, BOLD_CELESTIAL, "CELESTIAL II" },
-            { 50000, BOLD_CELESTIAL, "CELESTIAL" },
-            { 44000, BOLD_GODLIKE, "Godlike V" },
-            { 38000, BOLD_GODLIKE, "Godlike IV" },
-            { 32000, BOLD_GODLIKE, "Godlike III" },
-            { 26000, BOLD_GODLIKE, "Godlike II" },
-            { 20000, BOLD_GODLIKE, "Godlike" },
-            { 18000, BOLD_GRANDMASTER, "Grandmaster V" },
-            { 16000, BOLD_GRANDMASTER, "Grandmaster IV" },
-            { 14000, BOLD_GRANDMASTER, "Grandmaster III" },
-            { 12000, BOLD_GRANDMASTER, "Grandmaster II" },
-            { 10000, BOLD_GRANDMASTER, "Grandmaster" },
-            { 9000, BOLD_LEGEND, "Legend V" },
-            { 7600, BOLD_LEGEND, "Legend IV" },
-            { 6400, BOLD_LEGEND, "Legend III" },
-            { 5200, BOLD_LEGEND, "Legend II" },
-            { 4000, BOLD_LEGEND, "Legend" },
-            { 3600, MASTER, "Master V" },
-            { 3200, MASTER, "Master IV" },
-            { 2800, MASTER, "Master III" },
-            { 2400, MASTER, "Master II" },
-            { 2000, MASTER, "Master" },
-            { 1800, DIAMOND, "Diamond V" },
-            { 1600, DIAMOND, "Diamond IV" },
-            { 1400, DIAMOND, "Diamond III" },
-            { 1200, DIAMOND, "Diamond II" },
-            { 1000, DIAMOND, "Diamond" },
-            { 900, GOLD_TITLE, "Gold V" },
-            { 800, GOLD_TITLE, "Gold IV" },
-            { 700, GOLD_TITLE, "Gold III" },
-            { 600, GOLD_TITLE, "Gold II" },
-            { 500, GOLD_TITLE, "Gold" },
-            { 440, IRON, "Iron V" },
-            { 380, IRON, "Iron IV" },
-            { 320, IRON, "Iron III" },
-            { 260, IRON, "Iron II" },
-            { 200, IRON, "Iron" },
-            { 180, ROOKIE, "Rookie V" },
-            { 160, ROOKIE, "Rookie IV" },
-            { 140, ROOKIE, "Rookie III" },
-            { 120, ROOKIE, "Rookie II" },
-            { 100, ROOKIE, "Rookie" },
-    };
-
-    private static final Title NO_TITLE = new Title(Color.DARK_GRAY.toString(), "None");
-
-    public static Title findTitle(int wins, boolean isOverall) {
-        int usedWins = isOverall ? wins : wins * 2;
-
-        if (usedWins >= 200000) {
-            int ascendedLevel = ((usedWins - 200000) / 20000) + 1;
-            return ascendedLevel == 1
-                    ? new Title(BOLD_ASCENDED, "ASCENDED")
-                    : new Title(BOLD_ASCENDED, "ASCENDED " + toRoman(ascendedLevel));
-        }
-
-        for (Object[] entry : TITLE_THRESHOLDS) {
-            if (usedWins >= (int) entry[0]) {
-                return new Title((String) entry[1], (String) entry[2]);
-            }
-        }
-        return null;
-    }
-
-    public static Title findTitleOrNone(int wins, boolean isOverall) {
-        Title title = findTitle(wins, isOverall);
-        return title != null ? title : NO_TITLE;
-    }
-
-    public static String getColoredTitle(int wins, boolean isOverall) {
-        Title title = findTitle(wins, isOverall);
-        return title == null ? "" : title.format + title.label;
-    }
-
-    private static String toRoman(int num) {
+    private static String roman(int num) {
         int[] values = { 1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1 };
         String[] numerals = {
                 "M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"
@@ -447,5 +436,15 @@ public class Duels {
             }
         }
         return sb.toString();
+    }
+
+    public static final class Title {
+        public final String format;
+        public final String label;
+
+        Title(String format, String label) {
+            this.format = format;
+            this.label = label;
+        }
     }
 }

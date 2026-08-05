@@ -13,8 +13,7 @@ import net.minecraft.util.EnumChatFormatting;
 import java.text.DecimalFormat;
 
 public class Skywars {
-
-    public static void fetchStats(String playerName, String mode) {
+    public static void stats(String playerName, String mode) {
         new Thread(() -> {
             try {
                 HypixelApi.result result = HypixelApi.fetch(playerName);
@@ -40,7 +39,7 @@ public class Skywars {
                         ? stats.get("levelFormattedWithBrackets").getAsString()
                         : Color.GRAY + "[N/A]";
 
-                String modeKey = getModeKey(mode);
+                String modeKey = keyOf(mode);
                 String coloredPlayerName = Ranks.rank(player, properName);
 
                 String killsKey = "kills" + (modeKey != null ? "_" + modeKey : "");
@@ -52,14 +51,14 @@ public class Skywars {
                 int deaths = stats.has(deathsKey) ? stats.get(deathsKey).getAsInt() : 1;
                 double kdr = deaths == 0 ? kills : (double) kills / deaths;
 
-                String formattedWins = getFormattedWins(wins);
-                String formattedKDR = getColoredKDR(kdr);
+                String formattedWins = wins(wins);
+                String formattedKDR = kdr(kdr);
 
                 String line = String.format(Color.RED + " || %s %s " + Color.GRAY + "| Wins: %s "
                         + Color.GRAY + "| KDR: %s", rawFormatted, coloredPlayerName, formattedWins, formattedKDR);
 
                 if (mode != null) {
-                    String displayMode = getModeDisplayName(mode.toLowerCase());
+                    String displayMode = nameOf(mode.toLowerCase());
                     if (displayMode == null)
                         displayMode = mode;
 
@@ -77,43 +76,7 @@ public class Skywars {
         }, "Skywars").start();
     }
 
-    private static String getModeKey(String input) {
-        if (input == null)
-            return null;
-        switch (input.toLowerCase()) {
-            case "solo":
-            case "1s":
-                return "solo";
-            case "doubles":
-            case "duos":
-            case "2s":
-                return "team";
-            case "mini":
-                return "mini";
-            default:
-                return null;
-        }
-    }
-
-    private static String getModeDisplayName(String input) {
-        if (input == null)
-            return null;
-        switch (input.toLowerCase()) {
-            case "solo":
-            case "1s":
-                return "Solo";
-            case "doubles":
-            case "duos":
-            case "2s":
-                return "Doubles";
-            case "mini":
-                return "Mini";
-            default:
-                return null;
-        }
-    }
-
-    public static String getFormattedWins(int wins) {
+    public static String wins(int wins) {
         DecimalFormat formatter = new DecimalFormat("#,###");
 
         EnumChatFormatting color;
@@ -135,7 +98,7 @@ public class Skywars {
         return color + formatter.format(wins);
     }
 
-    public static String getColoredKDR(double kdr) {
+    public static String kdr(double kdr) {
         DecimalFormat df = new DecimalFormat("#.##");
 
         EnumChatFormatting color;
@@ -155,5 +118,41 @@ public class Skywars {
             color = Color.GRAY;
 
         return color + df.format(kdr);
+    }
+
+    private static String keyOf(String input) {
+        if (input == null)
+            return null;
+        switch (input.toLowerCase()) {
+            case "solo":
+            case "1s":
+                return "solo";
+            case "doubles":
+            case "duos":
+            case "2s":
+                return "team";
+            case "mini":
+                return "mini";
+            default:
+                return null;
+        }
+    }
+
+    private static String nameOf(String input) {
+        if (input == null)
+            return null;
+        switch (input.toLowerCase()) {
+            case "solo":
+            case "1s":
+                return "Solo";
+            case "doubles":
+            case "duos":
+            case "2s":
+                return "Doubles";
+            case "mini":
+                return "Mini";
+            default:
+                return null;
+        }
     }
 }
