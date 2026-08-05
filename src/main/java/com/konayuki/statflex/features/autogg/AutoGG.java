@@ -5,7 +5,7 @@ import com.konayuki.statflex.utils.Debug;
 import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.utils.Setting;
 import com.konayuki.statflex.utils.chat.Chat;
-import com.konayuki.statflex.utils.Strip;
+import com.konayuki.statflex.utils.Text;
 
 import com.google.gson.*;
 import net.minecraft.client.Minecraft;
@@ -94,7 +94,7 @@ public class AutoGG {
             return;
 
         String rawMessage = event.message.getUnformattedText();
-        String msg = Strip.stripColor(rawMessage);
+        String msg = Text.strip(rawMessage);
 
         synchronized (triggers) {
             for (Pattern pattern : triggers) {

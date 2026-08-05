@@ -2,7 +2,7 @@ package com.konayuki.statflex.features.duels;
 
 import com.konayuki.statflex.utils.Toggle;
 import com.konayuki.statflex.utils.chat.Locraw;
-import com.konayuki.statflex.utils.Strip;
+import com.konayuki.statflex.utils.Text;
 
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -81,7 +81,7 @@ public class DuelsList {
                 return opponents;
             }
 
-            String line = Strip.stripColor(chatLine).replaceFirst("(?i)Opponents?:", "").trim();
+            String line = Text.strip(chatLine).replaceFirst("(?i)Opponents?:", "").trim();
             line = line.replaceAll("\\[[^\\]]*\\]", "").trim();
 
             String[] names = line.split(",");
