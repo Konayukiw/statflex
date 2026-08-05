@@ -34,7 +34,6 @@ import java.util.List;
 
 public class Commands implements ICommand {
 
-    /** Leading bullet used by /s help and a few status lines. */
     private static final String BULLET = Color.RED + " || " + Color.GRAY;
 
     private final List<String> aliases = Arrays.asList("s");

@@ -386,10 +386,8 @@ public class Duels {
             { 100, ROOKIE, "Rookie" },
     };
 
-    /** Shown by /s duels when the player has not reached the lowest title yet. */
     private static final Title NO_TITLE = new Title(Color.DARK_GRAY.toString(), "None");
 
-    /** Returns the matching title, or {@code null} when the player has none yet. */
     public static Title findTitle(int wins, boolean isOverall) {
         int usedWins = isOverall ? wins : wins * 2;
 

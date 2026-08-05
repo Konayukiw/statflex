@@ -34,6 +34,7 @@ public class DuelsUpdated {
         COLOR_MAP.put("prefix_scheme_punchable_red", new EnumChatFormatting[] { Color.RED });
         COLOR_MAP.put("prefix_scheme_drawstring_dark_gray", new EnumChatFormatting[] { Color.DARK_GRAY });
         COLOR_MAP.put("prefix_scheme_blitz_blue", new EnumChatFormatting[] { Color.BLUE });
+
         COLOR_MAP.put("prefix_scheme_blossoms", new EnumChatFormatting[] {
                 Color.DARK_PURPLE, Color.LIGHT_PURPLE, Color.WHITE, Color.LIGHT_PURPLE, Color.WHITE });
         COLOR_MAP.put("prefix_scheme_ultra_hardcore_undertone", new EnumChatFormatting[] {

@@ -19,11 +19,6 @@ public final class Profile {
         return result.info;
     }
 
-    /**
-     * @return {@link Boolean#TRUE} if the name is a real Mojang account,
-     *         {@link Boolean#FALSE} if it definitely does not exist,
-     *         {@code null} if the lookup failed (network/API error).
-     */
     public static Boolean nameExists(String name) {
         LookupResult result = lookup(name);
         switch (result.status) {

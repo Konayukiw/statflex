@@ -13,10 +13,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public final class HypixelApi {
-    public static final String INVALID_API = "INVALID_API";
-    public static final String PLAYER_NOT_FOUND = "PLAYER_NOT_FOUND";
-    /** Mojang/Crafthead could not resolve the name (typical for nicks). */
-    public static final String NAME_NOT_FOUND = "NAME_NOT_FOUND";
+    public static final String INVALID_API = Messages.INVALID_API;
+    public static final String PLAYER_NOT_FOUND = Messages.PLAYER_NOT_FOUND;
+    public static final String NAME_NOT_FOUND = Messages.NAME_NOT_FOUND;
 
     private HypixelApi() {
     }
