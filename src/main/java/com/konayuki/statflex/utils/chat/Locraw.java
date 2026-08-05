@@ -46,8 +46,6 @@ public class Locraw {
             return;
         }
 
-        // A request is already out for the same answer: ride along with it rather than
-        // drop the caller, which would leave it waiting on a callback that never comes.
         if (awaitingLocraw) {
             pendingCallbacks.add(callback);
             return;

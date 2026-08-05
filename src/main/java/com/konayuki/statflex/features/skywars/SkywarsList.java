@@ -176,7 +176,7 @@ public class SkywarsList {
         pendingFetches.incrementAndGet();
         new Thread(() -> {
             try {
-                HypixelApi.result result = HypixelApi.fetch(nameKey);
+                HypixelApi.Result result = HypixelApi.fetch(nameKey);
                 if (!result.success) {
                     if (HypixelApi.INVALID_API.equals(result.errorCode)) {
                         if (apiErrorReported.compareAndSet(false, true)) {

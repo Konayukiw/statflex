@@ -21,8 +21,8 @@ import java.util.Map;
 public class GuiFonts extends FontRenderer {
     public static final float DEFAULT_FONT_SIZE = 11f;
     public static final float TITLE_FONT_SIZE = 15f;
+    private static final float LETTER_SPACING = 0.75f;
     private static final int RASTER_SCALE = 2;
-    private static final int LETTER_SPACING = 1;
     private static GuiFonts instance;
     private static GuiFonts titleInstance;
     private final Font font;

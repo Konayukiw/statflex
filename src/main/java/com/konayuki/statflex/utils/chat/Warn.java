@@ -23,7 +23,7 @@ public class Warn {
 
         new Thread(() -> {
             try {
-                HypixelApi.result result = HypixelApi.fetch(playerName);
+                HypixelApi.Result result = HypixelApi.fetch(playerName);
                 if (!result.success) {
                     HypixelApi.error(result);
                     return;

@@ -90,7 +90,7 @@ public class Duels {
 
         new Thread(() -> {
             try {
-                HypixelApi.result result = HypixelApi.fetch(inputName);
+                HypixelApi.Result result = HypixelApi.fetch(inputName);
                 if (!result.success) {
                     if (auto && isUnknown(result)) {
                         if (HypixelApi.NAME_NOT_FOUND.equals(result.errorCode)) {
@@ -417,7 +417,7 @@ public class Duels {
         }
     }
 
-    private static boolean isUnknown(HypixelApi.result result) {
+    private static boolean isUnknown(HypixelApi.Result result) {
         return HypixelApi.NAME_NOT_FOUND.equals(result.errorCode)
                 || HypixelApi.PLAYER_NOT_FOUND.equals(result.errorCode);
     }

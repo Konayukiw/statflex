@@ -21,19 +21,19 @@ public final class HypixelApi {
     private HypixelApi() {
     }
 
-    public static result fetch(String inputName) {
+    public static Result fetch(String inputName) {
         if (inputName == null || inputName.isEmpty()) {
-            return result.failure(NAME_NOT_FOUND, null, inputName);
+            return Result.failure(NAME_NOT_FOUND, null, inputName);
         }
 
         String apiKey = HypixelApiUtil.get();
         if (apiKey.equals("N/A")) {
-            return result.failure(INVALID_API, null, null);
+            return Result.failure(INVALID_API, null, null);
         }
 
         PlayerInfo info = Profile.info(inputName.toLowerCase());
         if (info == null) {
-            return result.failure(NAME_NOT_FOUND, null, inputName);
+            return Result.failure(NAME_NOT_FOUND, null, inputName);
         }
 
         try {
@@ -53,23 +53,23 @@ public final class HypixelApi {
                         : "Unknown error";
                 String lower = cause.toLowerCase();
                 if (lower.contains("invalid") || lower.contains("api key")) {
-                    return result.failure(INVALID_API, null, info.name);
+                    return Result.failure(INVALID_API, null, info.name);
                 }
-                return result.failure(cause, null, info.name);
+                return Result.failure(cause, null, info.name);
             }
 
             JsonElement playerElement = response.get("player");
             if (playerElement == null || playerElement.isJsonNull()) {
-                return result.failure(PLAYER_NOT_FOUND, null, info.name);
+                return Result.failure(PLAYER_NOT_FOUND, null, info.name);
             }
 
-            return result.success(playerElement.getAsJsonObject(), info.name);
+            return Result.success(playerElement.getAsJsonObject(), info.name);
         } catch (Exception e) {
-            return result.failure(e.getClass().getSimpleName(), e, info.name);
+            return Result.failure(e.getClass().getSimpleName(), e, info.name);
         }
     }
 
-    public static void error(result result) {
+    public static void error(Result result) {
         if (INVALID_API.equals(result.errorCode)) {
             Chat.send(Messages.INVALID_API);
         } else if (PLAYER_NOT_FOUND.equals(result.errorCode)
@@ -80,14 +80,14 @@ public final class HypixelApi {
         }
     }
 
-    public static final class result {
+    public static final class Result {
         public final boolean success;
         public final JsonObject player;
         public final String properName;
         public final String errorCode;
         public final Exception exception;
 
-        private result(boolean success, JsonObject player, String properName, String errorCode, Exception exception) {
+        private Result(boolean success, JsonObject player, String properName, String errorCode, Exception exception) {
             this.success = success;
             this.player = player;
             this.properName = properName;
@@ -95,12 +95,12 @@ public final class HypixelApi {
             this.exception = exception;
         }
 
-        public static result success(JsonObject player, String properName) {
-            return new result(true, player, properName, null, null);
+        public static Result success(JsonObject player, String properName) {
+            return new Result(true, player, properName, null, null);
         }
 
-        public static result failure(String errorCode, Exception exception, String properName) {
-            return new result(false, null, properName, errorCode, exception);
+        public static Result failure(String errorCode, Exception exception, String properName) {
+            return new Result(false, null, properName, errorCode, exception);
         }
     }
 }

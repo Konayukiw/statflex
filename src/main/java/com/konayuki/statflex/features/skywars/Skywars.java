@@ -16,7 +16,7 @@ public class Skywars {
     public static void stats(String playerName, String mode) {
         new Thread(() -> {
             try {
-                HypixelApi.result result = HypixelApi.fetch(playerName);
+                HypixelApi.Result result = HypixelApi.fetch(playerName);
                 if (!result.success) {
                     HypixelApi.error(result);
                     return;

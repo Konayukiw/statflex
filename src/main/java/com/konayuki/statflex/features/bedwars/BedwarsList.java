@@ -117,7 +117,7 @@ public class BedwarsList {
         for (String name : playerNames) {
             new Thread(() -> {
                 try {
-                    HypixelApi.result result = HypixelApi.fetch(name);
+                    HypixelApi.Result result = HypixelApi.fetch(name);
                     if (!result.success) {
                         if (HypixelApi.NAME_NOT_FOUND.equals(result.errorCode)) {
                             Denick.mark(name);

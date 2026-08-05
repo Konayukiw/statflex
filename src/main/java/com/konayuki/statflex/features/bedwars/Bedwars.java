@@ -16,7 +16,7 @@ public class Bedwars {
     public static void stats(String inputName, String mode) {
         new Thread(() -> {
             try {
-                HypixelApi.result result = HypixelApi.fetch(inputName);
+                HypixelApi.Result result = HypixelApi.fetch(inputName);
                 if (!result.success) {
                     HypixelApi.error(result);
                     return;
