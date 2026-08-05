@@ -14,7 +14,8 @@ public final class Messages {
     public static final String BEDWARS_STATS = PREFIX + "§c§lBed§f§lWars §7stats | ";
     public static final String DUELS_STATS = PREFIX + "§b§lDuels §7| ";
     public static final String SKYWARS_STATS = PREFIX + "§b§lSky§e§lWars §7| ";
-    public static final String UNKNOWN_GAMEMODE = PREFIX + "Failed to execute Auto-Stats. Unknown gamemode. ";
+    public static final String NO_STATS = PREFIX + "No stats found for ";
+    public static final String UNKNOWN_GAMEMODE = PREFIX + "Unknown gamemode.";
 
     private Messages() {
     }

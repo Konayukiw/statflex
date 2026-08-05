@@ -1,8 +1,8 @@
 package com.konayuki.statflex.features.skywars;
 
 import com.konayuki.statflex.utils.chat.Chat;
-import com.konayuki.statflex.utils.Ranks;
 import com.konayuki.statflex.utils.api.HypixelApi;
+import com.konayuki.statflex.utils.hypixel.Ranks;
 import com.konayuki.statflex.utils.Messages;
 
 import com.google.gson.JsonObject;
@@ -70,40 +70,7 @@ public class Skywars {
                 Chat.send(Messages.FETCH_ERROR + e.getClass().getSimpleName()
                         + (e.getMessage() != null ? ": " + e.getMessage() : ""));
             }
-        }).start();
-    }
-
-    public static String sanitizeFormattedLevel(String raw) {
-        StringBuilder result = new StringBuilder();
-        int i = 0;
-        while (i < raw.length()) {
-            char c = raw.charAt(i);
-            if (c == '§' && i + 1 < raw.length()) {
-                result.append(c).append(raw.charAt(i + 1));
-                i += 2;
-                continue;
-            }
-
-            if (Character.isSurrogate(c)) {
-                if (Character.isHighSurrogate(c) && (i + 1 < raw.length())
-                        && Character.isLowSurrogate(raw.charAt(i + 1))) {
-                    result.append(c).append(raw.charAt(i + 1));
-                    i += 2;
-                    continue;
-                }
-            }
-
-            int type = Character.getType(c);
-            if (Character.isLetterOrDigit(c) || c == '[' || c == ']' || c == '.' || c == '_' ||
-                    type == Character.OTHER_SYMBOL ||
-                    type == Character.MATH_SYMBOL ||
-                    type == Character.LETTER_NUMBER ||
-                    type == Character.OTHER_LETTER) {
-                result.append(c);
-            }
-            i++;
-        }
-        return result.toString();
+        }, "Skywars").start();
     }
 
     private static String getModeKey(String input) {

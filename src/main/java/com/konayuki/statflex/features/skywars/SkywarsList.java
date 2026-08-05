@@ -2,10 +2,10 @@ package com.konayuki.statflex.features.skywars;
 
 import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.api.HypixelApi;
+import com.konayuki.statflex.utils.hypixel.Ranks;
 import com.konayuki.statflex.utils.Debug;
 import com.konayuki.statflex.utils.Toggles;
 import com.konayuki.statflex.utils.Messages;
-import com.konayuki.statflex.utils.Ranks;
 
 import com.google.gson.JsonObject;
 import net.minecraft.util.EnumChatFormatting;
@@ -190,7 +190,7 @@ public class SkywarsList {
                 pendingFetches.decrementAndGet();
                 tryDisplayList();
             }
-        }, "statflex-sw-fetch-" + nameKey).start();
+        }, "SkywarsList").start();
     }
 
     private void tryDisplayList() {
@@ -252,7 +252,6 @@ public class SkywarsList {
         String rawFormatted = stats.has("levelFormattedWithBrackets")
                 ? stats.get("levelFormattedWithBrackets").getAsString()
                 : "§7[N/A]";
-        String levelFormatted = Skywars.sanitizeFormattedLevel(rawFormatted);
 
         int wins = stats.has("wins") ? stats.get("wins").getAsInt() : 0;
         int kills = stats.has("kills") ? stats.get("kills").getAsInt() : 0;
@@ -265,7 +264,7 @@ public class SkywarsList {
         double score = parseLevelNumber(rawFormatted) * kdr;
 
         return new PlayerData(
-                levelFormatted,
+                rawFormatted,
                 coloredPlayerName,
                 formattedWins,
                 coloredKDR,

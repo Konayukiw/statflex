@@ -14,13 +14,15 @@ import java.net.URL;
 public final class HypixelApi {
     public static final String INVALID_API = "INVALID_API";
     public static final String PLAYER_NOT_FOUND = "PLAYER_NOT_FOUND";
+    /** Mojang/Crafthead could not resolve the name (typical for nicks). */
+    public static final String NAME_NOT_FOUND = "NAME_NOT_FOUND";
 
     private HypixelApi() {
     }
 
     public static result Fetch(String inputName) {
         if (inputName == null || inputName.isEmpty()) {
-            return result.failure(PLAYER_NOT_FOUND, null, inputName);
+            return result.failure(NAME_NOT_FOUND, null, inputName);
         }
 
         String apiKey = HypixelApiUtil.getApiKey();
@@ -30,7 +32,7 @@ public final class HypixelApi {
 
         PlayerInfo info = Profile.getPlayerInfo(inputName.toLowerCase());
         if (info == null) {
-            return result.failure(PLAYER_NOT_FOUND, null, inputName);
+            return result.failure(NAME_NOT_FOUND, null, inputName);
         }
 
         try {
@@ -69,7 +71,8 @@ public final class HypixelApi {
     public static void sendError(result result) {
         if (INVALID_API.equals(result.errorCode)) {
             Chat.send(Messages.INVALID_API);
-        } else if (PLAYER_NOT_FOUND.equals(result.errorCode)) {
+        } else if (PLAYER_NOT_FOUND.equals(result.errorCode)
+                || NAME_NOT_FOUND.equals(result.errorCode)) {
             Chat.send(Messages.PLAYER_NOT_FOUND);
         } else {
             Chat.send(Messages.FETCH_ERROR + result.properName + "§7| " + result.errorCode);

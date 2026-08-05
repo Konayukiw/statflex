@@ -1,4 +1,4 @@
-package com.konayuki.statflex.utils;
+package com.konayuki.statflex.utils.hypixel;
 
 import com.google.gson.JsonObject;
 

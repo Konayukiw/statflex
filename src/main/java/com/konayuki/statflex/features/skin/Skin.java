@@ -29,7 +29,7 @@ import java.util.UUID;
 public class Skin {
 
     public static void savePlayerSkinAsync(String playerName, boolean useNpcSkin) {
-        new Thread(() -> savePlayerSkin(playerName, useNpcSkin), "Skin-Thread").start();
+        new Thread(() -> savePlayerSkin(playerName, useNpcSkin), "Skin").start();
     }
 
     private static void savePlayerSkin(String playerName, boolean useNpcSkin) {

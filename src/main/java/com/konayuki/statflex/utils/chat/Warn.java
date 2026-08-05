@@ -1,8 +1,8 @@
 package com.konayuki.statflex.utils.chat;
 
-import com.konayuki.statflex.utils.Ranks;
 import com.konayuki.statflex.utils.Settings;
 import com.konayuki.statflex.utils.api.HypixelApi;
+import com.konayuki.statflex.utils.hypixel.Ranks;
 import com.konayuki.statflex.features.bedwars.Bedwars;
 import com.konayuki.statflex.features.bedwars.BedwarsList;
 
@@ -67,7 +67,7 @@ public class Warn {
                 sendWarning(buildStatWarning(data));
             } catch (Exception ignored) {
             }
-        }).start();
+        }, "Warn").start();
     }
 
     public static String buildStatWarning(BedwarsList.PlayerData data) {

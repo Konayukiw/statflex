@@ -35,7 +35,7 @@ public class Update {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }, "statflex-Update").start();
+        }, "Update").start();
     }
 
     private static void checkForUpdates() throws Exception {

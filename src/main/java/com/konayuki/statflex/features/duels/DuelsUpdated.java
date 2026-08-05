@@ -1,10 +1,10 @@
 package com.konayuki.statflex.features.duels;
 
+import com.konayuki.statflex.utils.Messages;
+import com.konayuki.statflex.utils.Strip;
 import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.api.HypixelApi;
-import com.konayuki.statflex.utils.Messages;
-import com.konayuki.statflex.utils.Ranks;
-import com.konayuki.statflex.utils.Strip;
+import com.konayuki.statflex.utils.hypixel.Ranks;
 
 import com.google.gson.JsonObject;
 
@@ -142,7 +142,7 @@ public class DuelsUpdated {
             } catch (Exception e) {
                 Chat.send(Messages.FETCH_ERROR + e.getClass().getSimpleName());
             }
-        }).start();
+        }, "DuelsUpdated").start();
     }
 
     private static String applyColorGradient(String text, String[] colors) {

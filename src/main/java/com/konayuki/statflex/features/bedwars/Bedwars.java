@@ -2,8 +2,8 @@ package com.konayuki.statflex.features.bedwars;
 
 import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.api.HypixelApi;
+import com.konayuki.statflex.utils.hypixel.Ranks;
 import com.konayuki.statflex.utils.Messages;
-import com.konayuki.statflex.utils.Ranks;
 
 import com.google.gson.JsonObject;
 
@@ -72,7 +72,7 @@ public class Bedwars {
             } catch (Exception e) {
                 Chat.send(Messages.FETCH_ERROR + e.getClass().getSimpleName());
             }
-        }).start();
+        }, "Bedwars").start();
     }
 
     public static String formatLevelPlain(int level) {

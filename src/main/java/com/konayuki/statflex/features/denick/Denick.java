@@ -1,9 +1,11 @@
 package com.konayuki.statflex.features.denick;
 
 import com.konayuki.statflex.utils.*;
+import com.konayuki.statflex.utils.api.Profile;
 import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.chat.Warn;
 import com.konayuki.statflex.utils.chat.Locraw;
+import com.konayuki.statflex.utils.hypixel.isBot;
 import com.konayuki.statflex.features.bedwars.BedwarsList;
 import com.konayuki.statflex.features.duels.Duels;
 import com.konayuki.statflex.features.skywars.Skywars;
@@ -21,13 +23,10 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.*;
-import java.util.regex.Pattern;
 import java.io.InputStreamReader;
 import java.io.InputStream;
-import java.text.Normalizer;
+import java.util.Base64;
 
 public class Denick {
 
@@ -36,9 +35,6 @@ public class Denick {
 
     private static final Gson gson = new Gson();
     private static final Set<String> nicks = loadHashesFromJson();
-
-    private int sendCooldown = 0;
-
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
@@ -49,16 +45,10 @@ public class Denick {
         if (!Toggles.isDenickEnabled())
             return;
 
-
         for (NetworkPlayerInfo npi : mc.getNetHandler().getPlayerInfoMap()) {
             String name = npi.getGameProfile().getName();
             if (parsed.contains(name))
                 continue;
-
-            IChatComponent displayNameComponent = npi.getDisplayName();
-            String displayNameText = (displayNameComponent != null)
-                    ? displayNameComponent.getFormattedText()
-                    : name;
 
             parseSkinData(npi);
             parsed.add(name);
@@ -72,14 +62,11 @@ public class Denick {
         }
     }
 
-
     public void parseSkinData(NetworkPlayerInfo npi) {
-
-        GameProfile profile = npi.getGameProfile();
-
         if (npi == null || npi.getGameProfile() == null)
             return;
 
+        GameProfile profile = npi.getGameProfile();
         String name = profile.getName();
         IChatComponent displayNameComponent = npi.getDisplayName();
         String displayNameText = (displayNameComponent != null)
@@ -133,21 +120,9 @@ public class Denick {
                     continue;
                 String hash = skin.get("url").getAsString().split("/")[4];
 
-                String displayName = (npi.getDisplayName() != null)
-                        ? cleanName(npi.getDisplayName().getFormattedText())
-                        : cleanName(npi.getGameProfile().getName());
-
-                if (nicks.contains(hash)) {
-                    Chat.send("§8[§cS§8]§7 Found a nicked player:§c " + displayName);
-                    return;
-                }
-
                 String profileName = json.has("profileName") ? json.get("profileName").getAsString() : "";
-                if (profileName.isEmpty())
-                    return;
-
-                if (!profileName.contains(displayName)) {
-                    Chat.send("§8[§cS§8]§c " + profileName + " §7is nicked as §c" + displayName + "§7!");
+                if (!profileName.isEmpty() && !profileName.equalsIgnoreCase(name)) {
+                    Chat.send("§8[§cS§8]§c " + profileName + " §7is nicked as §c" + name + "§7!");
 
                     Locraw.getInstance().sendLocraw(new Locraw.LocrawCallback() {
                         @Override
@@ -158,9 +133,23 @@ public class Denick {
                         @Override
                         public void onLocrawTimeout() {
                             new Thread(() -> Warn.sendWarning(
-                                    profileName + " (nicked as " + displayName + ")")).start();
+                                    profileName + " (nicked as " + name + ")")).start();
                         }
                     });
+                    return;
+                }
+
+                if (nicks.contains(hash)) {
+                    final String checkName = name;
+                    new Thread(() -> {
+                        Boolean exists = Profile.nameExists(checkName);
+                        if (Boolean.TRUE.equals(exists)) {
+                            return;
+                        }
+                        if (Boolean.FALSE.equals(exists)) {
+                            Chat.send("§8[§cS§8]§7 Found a nicked player:§c " + checkName);
+                        }
+                    }, "Denick").start();
                 }
 
             } catch (Exception e) {
@@ -191,61 +180,6 @@ public class Denick {
             default:
                 Chat.send(Messages.UNKNOWN_GAMEMODE);
         }
-    }
-
-    public static String getSkinData(UUID uuid) {
-        if (uuid == null) {
-            Chat.send("§8[§cS§8]§7 Failed to get UUID");
-            return "{}";
-        }
-
-        try {
-            String urlStr = "https://sessionserver.mojang.com/session/minecraft/profile/"
-                    + uuid.toString().replace("-", "") + "?unsigned=false";
-            URL url = new URL(urlStr);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestProperty("User-Agent", "Mozilla/5.0");
-
-            int response = conn.getResponseCode();
-            if (response != 200) {
-                Chat.send("§8[§cS§8]§7 Failed to fetch skin data: " + response);
-                return "{}";
-            }
-
-            JsonObject root = gson.fromJson(new InputStreamReader(conn.getInputStream()), JsonObject.class);
-
-            if (!root.has("properties") || root.getAsJsonArray("properties").size() == 0) {
-                Chat.send("§8[§cS§8]§7 No properties found");
-                return "{}";
-            }
-
-            JsonObject property = root.getAsJsonArray("properties").get(0).getAsJsonObject();
-            if (!property.has("value")) {
-                Chat.send("§8[§cS§8]§7 Data in properties was null");
-                return "{}";
-            }
-
-            String value = property.get("value").getAsString();
-            String decoded = new String(Base64.getDecoder().decode(value));
-            return decoded;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "{}";
-        }
-    }
-
-    private static final Pattern BW_TEAM_LINE = Pattern.compile(
-            "\\b([RBGYAWPS])\\b\\s*[:]?\\s*(RED|BLUE|GREEN|YELLOW|AQUA|WHITE|PINK|GRAY)\\b");
-
-    private static String sbU(String s) {
-        if (s == null)
-            return "";
-        s = Strip.stripColor(s);
-        s = Normalizer.normalize(s, Normalizer.Form.NFKC);
-        s = s.replace('\u00A0', ' ').replace('\u2007', ' ').replace('\u202F', ' ');
-        s = s.replaceAll("[\\p{Cf}\\p{Mn}\\p{Me}]", "");
-        s = s.replaceAll("[^\\p{Alnum}:\\s]", "");
-        return s.toUpperCase();
     }
 
     private static String cleanName(String name) {

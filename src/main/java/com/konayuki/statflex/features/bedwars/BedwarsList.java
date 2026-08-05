@@ -1,14 +1,14 @@
 package com.konayuki.statflex.features.bedwars;
 
 import com.konayuki.statflex.utils.chat.Chat;
+import com.konayuki.statflex.utils.chat.Warn;
 import com.konayuki.statflex.utils.api.HypixelApi;
 import com.konayuki.statflex.utils.api.HypixelApiUtil;
+import com.konayuki.statflex.utils.hypixel.Ranks;
 import com.konayuki.statflex.utils.Debug;
 import com.konayuki.statflex.utils.Toggles;
 import com.konayuki.statflex.utils.Settings;
 import com.konayuki.statflex.utils.Messages;
-import com.konayuki.statflex.utils.chat.Warn;
-import com.konayuki.statflex.utils.Ranks;
 
 import com.google.gson.JsonObject;
 import net.minecraft.client.Minecraft;
@@ -121,10 +121,16 @@ public class BedwarsList {
         for (String name : playerNames) {
             new Thread(() -> {
                 try {
+                    if (name.toLowerCase().equals("online")) {
+                        return;
+                    }
+
                     HypixelApi.result result = HypixelApi.Fetch(name);
                     if (!result.success) {
                         Debug.log("Failed to fetch " + name + ": " + result.errorCode);
-                        failedNames.add(name);
+                        if (!HypixelApi.NAME_NOT_FOUND.equals(result.errorCode)) {
+                            failedNames.add(name);
+                        }
                         return;
                     }
 
@@ -133,7 +139,7 @@ public class BedwarsList {
 
                     if (!player.has("stats") || !player.get("stats").isJsonObject()
                             || !player.getAsJsonObject("stats").has("Bedwars")) {
-                        Debug.log("No Bedwars stats for " + name);
+                        Debug.log(Messages.NO_STATS + name);
                         failedNames.add(name);
                         return;
                     }
@@ -168,7 +174,7 @@ public class BedwarsList {
                 } finally {
                     latch.countDown();
                 }
-            }).start();
+            }, "BedwarsList").start();
         }
 
         new Thread(() -> {
@@ -191,7 +197,7 @@ public class BedwarsList {
 
             } catch (InterruptedException ignored) {
             }
-        }).start();
+        }, "BedwarsList").start();
     }
 
     public static void maybeWarnPlayers(List<PlayerData> playerDatas, boolean forceWarn) {

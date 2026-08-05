@@ -1,7 +1,7 @@
 package com.konayuki.statflex.features.namehistory;
 
 import com.konayuki.statflex.utils.chat.Chat;
-import com.konayuki.statflex.utils.Ranks;
+import com.konayuki.statflex.utils.hypixel.Ranks;
 import com.konayuki.statflex.utils.Connection;
 import com.konayuki.statflex.utils.Messages;
 
@@ -89,6 +89,6 @@ public class NameHistory {
                 Chat.send("§8[§cS§8]§7 Failed to fetch name history: " + e.getClass().getSimpleName());
                 e.printStackTrace();
             }
-        }).start();
+        }, "NameHistory").start();
     }
 }
