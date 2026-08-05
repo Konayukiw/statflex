@@ -104,28 +104,28 @@ Open the settings GUI with `/s`. The GUI provides tabbed configuration:
 
 ## Commands
 
-| Command | Description                       |
-|---------|-----------------------------------|
-| `/s` | Open the settings GUI             |
-| `/s api [Key]` | Set Hypixel API key               |
-| `/s bw [Player] -[Mode]` | Bedwars stats lookup              |
-| `/s sw [Player] -[Mode]` | Skywars stats lookup              |
-| `/s duels [Player] -[Mode]` | Duels stats lookup                |
-| `/s nh [Player]` | Name history lookup               |
-| `/s skin [Player] [-npcskin]` | Download player skin              |
-| `/s dir [Path]` | Set skin save directory           |
-| `/s autogg [Message]` | Manage AutoGG messages            |
-| `/s flag [Seconds]` | Set anticheat flag interval       |
-| `/s warn [Level] [FKDR]` | Set warn thresholds               |
-| `/s list` | Toggle Bedwars stats list         |
-| `/s auto` | Toggle Duels auto stats           |
-| `/s denick` | Toggle Denick                     |
-| `/s rpc` | Toggle Discord RPC                |
-| `/s keepwho` | Toggle original /who visibility   |
+| Command | Description                      |
+|---------|----------------------------------|
+| `/s` | Open the settings GUI            |
+| `/s api [Key]` | Set Hypixel API key              |
+| `/s bw [Player] -[Mode]` | Bedwars stats lookup             |
+| `/s sw [Player] -[Mode]` | Skywars stats lookup             |
+| `/s duels [Player] -[Mode]` | Duels stats lookup               |
+| `/s nh [Player]` | Name history lookup              |
+| `/s skin [Player] [-npcskin]` | Download player skin             |
+| `/s dir [Path]` | Set skin save directory          |
+| `/s autogg [Message]` | Manage AutoGG messages           |
+| `/s flag [Seconds]` | Set anticheat flag interval      |
+| `/s warn [Level] [FKDR]` | Set warn thresholds              |
+| `/s list` | Toggle Bedwars stats list        |
+| `/s auto` | Toggle Duels auto stats          |
+| `/s denick` | Toggle Denick                    |
+| `/s rpc` | Toggle Discord RPC               |
+| `/s keepwho` | Toggle original /who visibility  |
 | `/s secure` | Toggle SSL certificate validation |
-| `/s settings` | Show clickable settings in chat   |
-| `/s update` | Open Update tab in GUI            |
-| `/s help` | Show help in chat                 |
+| `/s setting` | Show clickable setting in chat   |
+| `/s update` | Open Update tab in GUI           |
+| `/s help` | Show help in chat                |
 
 ---
 
