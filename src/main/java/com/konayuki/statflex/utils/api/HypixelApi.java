@@ -11,6 +11,7 @@ import com.konayuki.statflex.utils.chat.Chat;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 public final class HypixelApi {
     public static final String INVALID_API = Messages.INVALID_API;
@@ -42,8 +43,8 @@ public final class HypixelApi {
 
             int status = conn.getResponseCode();
             InputStreamReader reader = status >= 200 && status < 300
-                    ? new InputStreamReader(conn.getInputStream())
-                    : new InputStreamReader(conn.getErrorStream());
+                    ? new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8)
+                    : new InputStreamReader(conn.getErrorStream(), StandardCharsets.UTF_8);
 
             JsonObject response = new JsonParser().parse(reader).getAsJsonObject();
             if (!response.has("success") || !response.get("success").getAsBoolean()) {
