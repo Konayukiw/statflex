@@ -6,6 +6,7 @@ import com.google.gson.JsonParser;
 import com.konayuki.statflex.utils.Color;
 import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.utils.api.Profile.PlayerInfo;
+import com.konayuki.statflex.utils.api.Keyless.ProviderUtil;
 import com.konayuki.statflex.utils.chat.Chat;
 
 import java.io.InputStreamReader;
@@ -26,14 +27,31 @@ public final class HypixelApi {
             return Result.failure(NAME_NOT_FOUND, null, inputName);
         }
 
-        String apiKey = HypixelApiUtil.get();
-        if (apiKey.equals("N/A")) {
-            return Result.failure(INVALID_API, null, null);
-        }
-
         PlayerInfo info = Profile.info(inputName.toLowerCase());
         if (info == null) {
             return Result.failure(NAME_NOT_FOUND, null, inputName);
+        }
+
+        if (HypixelApiUtil.isKeylessMode()) {
+            return fetchFromKeyless(info);
+        }
+
+        Result result = fetchFromHypixel(info);
+        if (result.success) {
+            return result;
+        }
+
+        if (INVALID_API.equals(result.errorCode)) {
+            HypixelApiUtil.markInvalid();
+            return fetchFromKeyless(info);
+        }
+        return result;
+    }
+
+    private static Result fetchFromHypixel(PlayerInfo info) {
+        String apiKey = HypixelApiUtil.get();
+        if (apiKey.equals("N/A")) {
+            return Result.failure(INVALID_API, null, info.name);
         }
 
         try {
@@ -64,6 +82,21 @@ public final class HypixelApi {
             }
 
             return Result.success(playerElement.getAsJsonObject(), info.name);
+        } catch (Exception e) {
+            return Result.failure(e.getClass().getSimpleName(), e, info.name);
+        }
+    }
+
+    private static Result fetchFromKeyless(PlayerInfo info) {
+        try {
+            ProviderUtil.Outcome outcome = ProviderUtil.fetch(info.uuid);
+            if (outcome.player != null) {
+                return Result.success(outcome.player, info.name);
+            }
+            if (outcome.error != null) {
+                return Result.failure(outcome.error.getMessage(), outcome.error, info.name);
+            }
+            return Result.failure(PLAYER_NOT_FOUND, null, info.name);
         } catch (Exception e) {
             return Result.failure(e.getClass().getSimpleName(), e, info.name);
         }

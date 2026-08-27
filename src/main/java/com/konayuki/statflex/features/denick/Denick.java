@@ -188,7 +188,7 @@ public class Denick {
         }
 
         Chat.send(Messages.PREFIX + "Found a nicked player: " + Color.RED + nick);
-        warn("Nicked player found: " + nick);
+        warn("Nicked a nicked player: " + nick);
     }
 
     private void warn(String report) {
