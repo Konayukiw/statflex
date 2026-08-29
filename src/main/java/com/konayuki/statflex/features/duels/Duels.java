@@ -7,6 +7,7 @@ import com.konayuki.statflex.utils.api.HypixelApi;
 import com.konayuki.statflex.utils.hypixel.Ranks;
 import com.konayuki.statflex.utils.Color;
 import com.konayuki.statflex.features.denick.Denick;
+import com.konayuki.statflex.features.tab.TabStatsCache;
 
 import com.google.gson.JsonObject;
 
@@ -137,9 +138,15 @@ public class Duels {
                         + (modeDisplay.isEmpty() ? "" : modeDisplay + " ") + title.label;
 
                 if (auto) {
-                    Chat.send(String.format(Color.DARK_GRAY + "[" + Color.RED + "S" + Color.DARK_GRAY
+                    String line = String.format(Color.DARK_GRAY + "[" + Color.RED + "S" + Color.DARK_GRAY
                                     + "] %s %s " + Color.GRAY + "| Wins: %s " + Color.GRAY + "| WLR: %s",
-                            modeAndTitle, coloredPlayerName, formattedWins, coloredWLR));
+                            modeAndTitle, coloredPlayerName, formattedWins, coloredWLR);
+                    if (TabStatsCache.isTabMode(TabStatsCache.Game.DUELS)) {
+                        TabStatsCache.append(TabStatsCache.Game.DUELS,
+                                TabStatsCache.header(TabStatsCache.Game.DUELS), line);
+                    } else {
+                        Chat.send(line);
+                    }
                 } else {
                     if (mode == null) {
                         Chat.send(Messages.DUELS_STATS);

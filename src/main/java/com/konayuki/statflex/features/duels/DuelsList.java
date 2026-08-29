@@ -3,6 +3,7 @@ package com.konayuki.statflex.features.duels;
 import com.konayuki.statflex.utils.Toggle;
 import com.konayuki.statflex.utils.chat.Locraw;
 import com.konayuki.statflex.utils.Text;
+import com.konayuki.statflex.features.tab.TabStatsCache;
 
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -57,6 +58,9 @@ public class DuelsList {
             public void onReceived(String gameType, String mode) {
                 if ("DUELS".equals(gameType)) {
                     String detectedMode = Duels.detect(mode);
+                    if (TabStatsCache.isTabMode(TabStatsCache.Game.DUELS)) {
+                        TabStatsCache.begin(TabStatsCache.Game.DUELS);
+                    }
                     for (String playerName : opponents) {
                         try {
                             Duels.stats(playerName, detectedMode, true);

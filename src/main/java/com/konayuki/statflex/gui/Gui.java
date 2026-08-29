@@ -26,6 +26,7 @@ import org.lwjgl.opengl.GL11;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -811,6 +812,12 @@ public class Gui extends GuiScreen {
             Setting.get().keepWhoEnabled = v;
             Setting.save();
         });
+        dropdown(tab, startX, actualComponentWidth, "Stats List Display", Arrays.asList("Chat", "Tab"),
+                "Tab".equalsIgnoreCase(setting.bedwarsListDisplay) ? 1 : 0,
+                (i, opt) -> {
+            Setting.get().bedwarsListDisplay = "Tab".equalsIgnoreCase(opt) ? "Tab" : "Chat";
+            Setting.save();
+        });
         Label note = new Label(
                 nextId(), startX, logicalCurrentY, actualComponentWidth,
                 "Manual lookup: /s bw [Player] -[Mode]"
@@ -860,6 +867,12 @@ public class Gui extends GuiScreen {
             Setting.get().keepWhoEnabled = v;
             Setting.save();
         });
+        dropdown(tab, startX, actualComponentWidth, "Stats List Display", Arrays.asList("Chat", "Tab"),
+                "Tab".equalsIgnoreCase(Setting.get().skywarsListDisplay) ? 1 : 0,
+                (i, opt) -> {
+            Setting.get().skywarsListDisplay = "Tab".equalsIgnoreCase(opt) ? "Tab" : "Chat";
+            Setting.save();
+        });
         Label note = new Label(
                 nextId(), startX, logicalCurrentY, actualComponentWidth,
                 "Manual lookup: /s sw [Player] -[Mode]"
@@ -881,6 +894,12 @@ public class Gui extends GuiScreen {
                 Toggle.duelsUpdated, v -> {
             Toggle.duelsUpdated = v;
             Setting.get().duelsUpdated = v;
+            Setting.save();
+        });
+        dropdown(tab, startX, actualComponentWidth, "Stats List Display", Arrays.asList("Chat", "Tab"),
+                "Tab".equalsIgnoreCase(Setting.get().duelsListDisplay) ? 1 : 0,
+                (i, opt) -> {
+            Setting.get().duelsListDisplay = "Tab".equalsIgnoreCase(opt) ? "Tab" : "Chat";
             Setting.save();
         });
         if (!tab.components.isEmpty()) {
@@ -1068,6 +1087,14 @@ public class Gui extends GuiScreen {
         Checkbox cb = new Checkbox(nextId(), startX, logicalCurrentY, label, description, initial, onChange);
         tab.components.add(cb);
         logicalCurrentY += cb.height + interComponentSpacing;
+    }
+
+    private void dropdown(Tab tab, int startX, int width, String label, List<String> options,
+                          int initialSelectedIndex, Dropdown.OnSelectionChanged onChange) {
+        Dropdown dd = new Dropdown(nextId(), startX, logicalCurrentY + labelHeightAboveComponent,
+                width, label, options, initialSelectedIndex, onChange);
+        tab.components.add(dd);
+        logicalCurrentY += labelHeightAboveComponent + dd.height + interComponentSpacing;
     }
 
     private List<String> readGg() {

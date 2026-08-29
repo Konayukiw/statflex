@@ -9,6 +9,7 @@ import com.konayuki.statflex.features.autogg.AutoGG;
 import com.konayuki.statflex.features.bedwars.BedwarsList;
 import com.konayuki.statflex.features.duels.DuelsList;
 import com.konayuki.statflex.features.skywars.SkywarsList;
+import com.konayuki.statflex.features.tab.TabStats;
 import com.konayuki.statflex.features.rpc.DiscordRPC;
 
 import com.konayuki.statflex.utils.api.HypixelApiUtil;
@@ -35,6 +36,7 @@ public final class Bootstrap {
     private static Denick denick;
     private static AutoGG autoGG;
     private static DuelsList duelsList;
+    private static TabStats tabStats;
     private static Locraw locraw;
     private static Party party;
     private static DiscordRPC discordRPC;
@@ -92,6 +94,7 @@ public final class Bootstrap {
             denick = new Denick();
             autoGG = new AutoGG();
             duelsList = new DuelsList();
+            tabStats = new TabStats();
             locraw = Locraw.get();
             party = Party.get();
             discordRPC = DiscordRPC.get();
@@ -104,6 +107,7 @@ public final class Bootstrap {
             MinecraftForge.EVENT_BUS.register(denick);
             MinecraftForge.EVENT_BUS.register(autoGG);
             MinecraftForge.EVENT_BUS.register(duelsList);
+            MinecraftForge.EVENT_BUS.register(tabStats);
             eventHandlersRegistered = true;
         }
     }

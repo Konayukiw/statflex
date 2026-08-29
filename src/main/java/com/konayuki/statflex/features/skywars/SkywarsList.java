@@ -8,6 +8,7 @@ import com.konayuki.statflex.utils.hypixel.Ranks;
 import com.konayuki.statflex.utils.Debug;
 import com.konayuki.statflex.utils.Color;
 import com.konayuki.statflex.features.denick.Denick;
+import com.konayuki.statflex.features.tab.TabStatsCache;
 
 import com.google.gson.JsonObject;
 import net.minecraft.util.EnumChatFormatting;
@@ -152,20 +153,30 @@ public class SkywarsList {
 
         playerDatas.sort(Comparator.comparingDouble(p -> -p.score));
 
-        Chat.send(Messages.SKYWARS_STATS);
+        List<String> lines = new ArrayList<>();
         for (PlayerData data : playerDatas) {
-            Chat.send(data.levelFormatted + " " + data.coloredPlayerName
+            lines.add(data.levelFormatted + " " + data.coloredPlayerName
                     + Color.GRAY + " | Wins: " + data.formattedWins + Color.GRAY + " | KDR: " + data.coloredKDR);
         }
+        int total;
+        synchronized (queue) {
+            total = queue.size();
+        }
+        String failedLine = failedNames.isEmpty() ? null : Messages.PREFIX + Color.RED + failedNames.size()
+                + Color.GRAY + "/" + Color.RED + total + Color.GRAY + " failed: " + Color.RED
+                + String.join(Color.GRAY + ", " + Color.RED, failedNames);
 
-        if (!failedNames.isEmpty()) {
-            int total;
-            synchronized (queue) {
-                total = queue.size();
+        if (TabStatsCache.isTabMode(TabStatsCache.Game.SKYWARS)) {
+            TabStatsCache.set(TabStatsCache.Game.SKYWARS,
+                    TabStatsCache.header(TabStatsCache.Game.SKYWARS), lines, failedLine);
+        } else {
+            Chat.send(Messages.SKYWARS_STATS);
+            for (String line : lines) {
+                Chat.send(line);
             }
-            Chat.send(Messages.PREFIX + Color.RED + failedNames.size() + Color.GRAY + "/" + Color.RED + total
-                    + Color.GRAY + " failed: " + Color.RED
-                    + String.join(Color.GRAY + ", " + Color.RED, failedNames));
+            if (failedLine != null) {
+                Chat.send(failedLine);
+            }
         }
     }
 

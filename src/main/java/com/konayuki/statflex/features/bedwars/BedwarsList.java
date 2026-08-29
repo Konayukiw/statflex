@@ -8,6 +8,7 @@ import com.konayuki.statflex.utils.api.HypixelApiUtil;
 import com.konayuki.statflex.utils.hypixel.Ranks;
 import com.konayuki.statflex.utils.Messages;
 import com.konayuki.statflex.features.denick.Denick;
+import com.konayuki.statflex.features.tab.TabStatsCache;
 
 import com.google.gson.JsonObject;
 import net.minecraft.client.Minecraft;
@@ -174,17 +175,26 @@ public class BedwarsList {
                 latch.await();
                 playerDatas.sort(Comparator.comparingDouble(p -> -p.score));
 
-                Chat.send(Messages.BEDWARS_STATS);
-
+                List<String> lines = new ArrayList<>();
                 for (PlayerData data : playerDatas) {
-                    Chat.send(data.coloredLevel + " " + data.coloredPlayerName + " " + Color.GRAY + "| Finals: "
+                    lines.add(data.coloredLevel + " " + data.coloredPlayerName + " " + Color.GRAY + "| Finals: "
                             + data.formattedFinals + " " + Color.GRAY + "| FKDR: " + data.coloredFKDR);
                 }
+                String failedLine = failedNames.isEmpty() ? null : Messages.PREFIX + Color.RED + failedNames.size()
+                        + Color.GRAY + "/" + Color.RED + playerNames.size() + Color.GRAY + " failed: " + Color.RED
+                        + String.join(Color.GRAY + ", " + Color.RED, failedNames);
 
-                if (!failedNames.isEmpty()) {
-                    Chat.send(Messages.PREFIX + Color.RED + failedNames.size() + Color.GRAY + "/" + Color.RED + playerNames.size()
-                            + Color.GRAY + " failed: " + Color.RED
-                            + String.join(Color.GRAY + ", " + Color.RED, failedNames));
+                if (TabStatsCache.isTabMode(TabStatsCache.Game.BEDWARS)) {
+                    TabStatsCache.set(TabStatsCache.Game.BEDWARS,
+                            TabStatsCache.header(TabStatsCache.Game.BEDWARS), lines, failedLine);
+                } else {
+                    Chat.send(Messages.BEDWARS_STATS);
+                    for (String line : lines) {
+                        Chat.send(line);
+                    }
+                    if (failedLine != null) {
+                        Chat.send(failedLine);
+                    }
                 }
 
                 warn(playerDatas, forceWarn);

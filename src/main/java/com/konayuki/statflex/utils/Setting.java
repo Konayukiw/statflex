@@ -15,8 +15,11 @@ public class Setting {
 
     public boolean denickEnabled = false;
     public boolean listStatsEnabled = true;
+    public String bedwarsListDisplay = "Chat";
     public boolean skywarsListStatsEnabled = true;
+    public String skywarsListDisplay = "Chat";
     public boolean autoStatsEnabled = true;
+    public String duelsListDisplay = "Chat";
     public boolean duelsUpdated = false;
     public boolean ignoreCertificates = false;
     public boolean keepWhoEnabled = false;
