@@ -135,18 +135,18 @@ Open the settings GUI with `/s`. The GUI provides tabbed configuration:
 - Java 8+ (To build by yourself)
 - A Hypixel API key (Generate at [Hypixel Developer Dashboard](https://developer.hypixel.net))
 
-## Running statflex (4 ways)
+## Usage
 
 The same jar supports every target. Pick whichever matches your setup:
 
-| Way | Target | How |
-|-----|--------|-----|
-| Forge Mod | Forge 1.8.9 | Drop the jar in `.minecraft/mods/` |
-| Forge Injectable | Forge 1.8.9 (running game) | `java -jar statflex-x.y-all.jar` (fat jar) from a JDK while the game runs |
-| Badlion Injectable | Badlion Client | Run the native loader exe from [statflex-injector releases](https://github.com/Konayukiw/statflex-injector/releases/latest) |
-| Lunar Injectable | Lunar Client (Zulu JDK 17) | Same native loader exe |
+| Client    | Target                           | How                                                                                                               |
+|-----------|----------------------------------|-------------------------------------------------------------------------------------------------------------------|
+| Forge Mod | Forge 1.8.9                      | Drop the jar in `.minecraft/mods/`                                                                                |
+| Forge     | Forge 1.8.9 (Already running)    | Run the native loader exe from [statflex-injector](https://github.com/Konayukiw/statflex-injector/releases/latest)                                         |
+| Badlion   | Badlion Client 1.8.9             | Run the native loader exe from [statflex-injector](https://github.com/Konayukiw/statflex-injector/releases/latest) |
+| Lunar     | Lunar Client 1.8.9 (Zulu JDK 17) | Run the native loader exe from [statflex-injector](https://github.com/Konayukiw/statflex-injector/releases/latest)                                                                                       |
 
-### Forge Mod (mods folder)
+### Forge Mod
 
 1. Install Minecraft Forge 1.8.9.
 2. Get the statflex jar from [Latest statflex release](https://github.com/Konayukiw/statflex/releases/latest).
