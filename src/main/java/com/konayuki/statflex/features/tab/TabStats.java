@@ -6,10 +6,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraftforge.client.event.MouseEvent;
-import net.minecraftforge.client.event.RenderGameOverlayEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
+import com.konayuki.statflex.events.MouseEvent;
+import com.konayuki.statflex.events.RenderTabEvent;
+import com.konayuki.statflex.events.Subscribe;
+import com.konayuki.statflex.events.TickEvent;
 
 public class TabStats {
     private static final int TOP_Y = 20;
@@ -28,33 +28,27 @@ public class TabStats {
     private final Minecraft mc = Minecraft.getMinecraft();
     private net.minecraft.world.World lastWorld;
 
-    @SubscribeEvent
-    public void onRenderGameOverlay(RenderGameOverlayEvent.Pre event) {
-        if (event.type != RenderGameOverlayEvent.ElementType.PLAYER_LIST) {
-            return;
-        }
+    @Subscribe
+    public void onRenderTab(RenderTabEvent event) {
         if (!isActive()) {
             return;
         }
-        event.setCanceled(true);
+        event.setCancelled(true);
         render();
     }
 
-    @SubscribeEvent
+    @Subscribe
     public void onMouse(MouseEvent event) {
-        if (event.dwheel == 0 || !isActive()) {
+        if (event.getDWheel() == 0 || !isActive()) {
             return;
         }
-        event.setCanceled(true);
-        int direction = event.dwheel > 0 ? -1 : 1;
+        event.setCancelled(true);
+        int direction = event.getDWheel() > 0 ? -1 : 1;
         TabStatsCache.setScrollIndex(TabStatsCache.scrollIndex() + direction);
     }
 
-    @SubscribeEvent
-    public void onTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
-            return;
-        }
+    @Subscribe
+    public void onTick(TickEvent event) {
         if (mc.theWorld != lastWorld) {
             lastWorld = mc.theWorld;
             TabStatsCache.clear();

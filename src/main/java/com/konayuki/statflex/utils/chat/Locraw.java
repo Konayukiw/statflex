@@ -5,9 +5,9 @@ import com.konayuki.statflex.utils.Debug;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.client.event.ClientChatReceivedEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
+import com.konayuki.statflex.events.ChatEvent;
+import com.konayuki.statflex.events.Subscribe;
+import com.konayuki.statflex.events.TickEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,16 +57,16 @@ public class Locraw {
         mc.thePlayer.sendChatMessage("/locraw");
     }
 
-    @SubscribeEvent
-    public void onChat(ClientChatReceivedEvent event) {
+    @Subscribe
+    public void onChat(ChatEvent event) {
         if (awaitingLocraw) {
-            String message = event.message.getUnformattedText();
+            String message = event.getMessage().getUnformattedText();
             if (message.startsWith("{") && message.endsWith("}")) {
                 try {
                     JsonObject json = new JsonParser().parse(message).getAsJsonObject();
                     gameType = json.has("gametype") ? json.get("gametype").getAsString() : null;
                     mode = json.has("mode") ? json.get("mode").getAsString() : null;
-                    event.setCanceled(true);
+                    event.setCancelled(true);
                     finish(true);
                 } catch (Exception e) {
                     finish(false);
@@ -75,8 +75,8 @@ public class Locraw {
         }
     }
 
-    @SubscribeEvent
-    public void onTick(TickEvent.ClientTickEvent event) {
+    @Subscribe
+    public void onTick(TickEvent event) {
         if (awaitingLocraw) {
             locrawTimeout++;
             if (locrawTimeout > 100) {

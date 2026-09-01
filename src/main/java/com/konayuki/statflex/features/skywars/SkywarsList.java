@@ -12,9 +12,9 @@ import com.konayuki.statflex.features.tab.TabStatsCache;
 
 import com.google.gson.JsonObject;
 import net.minecraft.util.EnumChatFormatting;
-import net.minecraftforge.client.event.ClientChatReceivedEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
+import com.konayuki.statflex.events.ChatEvent;
+import com.konayuki.statflex.events.Subscribe;
+import com.konayuki.statflex.events.TickEvent;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,13 +39,13 @@ public class SkywarsList {
     private volatile int lastTeamNumber = 0;
     private volatile int ticksSinceLastTeam = 0;
 
-    @SubscribeEvent
-    public void onChat(ClientChatReceivedEvent event) {
+    @Subscribe
+    public void onChat(ChatEvent event) {
         if (!Toggle.isSwList()) {
             return;
         }
 
-        String raw = event.message.getUnformattedText();
+        String raw = event.getMessage().getUnformattedText();
         String stripped = EnumChatFormatting.getTextWithoutFormattingCodes(raw);
         if (stripped == null) {
             return;
@@ -55,7 +55,7 @@ public class SkywarsList {
 
         if (lower.startsWith("online:")) {
             if (!Toggle.isKeepWho()) {
-                event.setCanceled(true);
+                event.setCancelled(true);
             }
             reset();
             List<String> names = new ArrayList<>();
@@ -71,7 +71,7 @@ public class SkywarsList {
 
         if (lower.startsWith("mode:")) {
             if (!Toggle.isKeepWho()) {
-                event.setCanceled(true);
+                event.setCancelled(true);
             }
             begin();
             return;
@@ -91,7 +91,7 @@ public class SkywarsList {
             }
 
             if (!Toggle.isKeepWho()) {
-                event.setCanceled(true);
+                event.setCancelled(true);
             }
 
             lastTeamNumber = Math.max(lastTeamNumber, teamNum);
@@ -106,11 +106,8 @@ public class SkywarsList {
         }
     }
 
-    @SubscribeEvent
-    public void onTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
-            return;
-        }
+    @Subscribe
+    public void onTick(com.konayuki.statflex.events.TickEvent event) {
         if (!Toggle.isSwList() || !collecting.get() || collectionDone.get()) {
             return;
         }

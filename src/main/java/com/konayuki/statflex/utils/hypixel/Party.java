@@ -4,9 +4,9 @@ import com.konayuki.statflex.utils.chat.Chat;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.EnumChatFormatting;
-import net.minecraftforge.client.event.ClientChatReceivedEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
+import com.konayuki.statflex.events.ChatEvent;
+import com.konayuki.statflex.events.Subscribe;
+import com.konayuki.statflex.events.TickEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,12 +58,12 @@ public final class Party {
         INSTANCE.updatedAt = 0;
     }
 
-    @SubscribeEvent
-    public void onChat(ClientChatReceivedEvent event) {
-        if (event.message == null) {
+    @Subscribe
+    public void onChat(ChatEvent event) {
+        if (event.getMessage() == null) {
             return;
         }
-        String line = EnumChatFormatting.getTextWithoutFormattingCodes(event.message.getUnformattedText());
+        String line = EnumChatFormatting.getTextWithoutFormattingCodes(event.getMessage().getUnformattedText());
         if (line == null) {
             return;
         }
@@ -73,9 +73,9 @@ public final class Party {
         }
     }
 
-    @SubscribeEvent
-    public void onTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !awaiting) {
+    @Subscribe
+    public void onTick(TickEvent event) {
+        if (!awaiting) {
             return;
         }
         if (++waitTicks >= REQUEST_TIMEOUT_TICKS) {
@@ -120,8 +120,7 @@ public final class Party {
                 || lower.startsWith("party leader:")
                 || lower.startsWith("party moderators:")
                 || lower.startsWith("party members:")
-                || lower.startsWith("you'll be partying with:")
-                || (lower.startsWith("you have joined") && lower.contains("party!"))
+                || (lower.startsWith("you have joined") && lower.contains("party!") && !lower.contains(":"))
                 || (lower.endsWith("joined the party.") && !isChat(lower))) {
             set(true);
             return;

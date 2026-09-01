@@ -3,16 +3,15 @@ package com.konayuki.statflex.features.anticheat;
 import com.konayuki.statflex.utils.*;
 import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.hypixel.Bot;
-import com.konayuki.statflex.utils.packet.ReceivedPacketDetector;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
 
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
-import net.minecraftforge.fml.common.network.FMLNetworkEvent;
-import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import com.konayuki.statflex.events.EventBus;
+import com.konayuki.statflex.events.PacketEvent;
+import com.konayuki.statflex.events.TickEvent;
+import com.konayuki.statflex.events.WorldEvent;
+import com.konayuki.statflex.events.Subscribe;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -38,14 +37,14 @@ public final class Anticheat {
 
     public static void register() {
         if (!registered) {
-            MinecraftForge.EVENT_BUS.register(INSTANCE);
+            EventBus.register(INSTANCE);
             registered = true;
         }
     }
 
-    @SubscribeEvent
-    public void onTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !AnticheatUtil.ready() || mc.isSingleplayer()) {
+    @Subscribe
+    public void onTick(TickEvent event) {
+        if (!AnticheatUtil.ready() || mc.isSingleplayer()) {
             return;
         }
 
@@ -63,19 +62,20 @@ public final class Anticheat {
         }
     }
 
-    @SubscribeEvent
-    public void onPacket(ReceivedPacketDetector event) {
-        lastClientBoundPacket = System.currentTimeMillis();
+    @Subscribe
+    public void onPacket(PacketEvent event) {
+        if (event.getDirection() == PacketEvent.Direction.RECEIVE) {
+            lastClientBoundPacket = System.currentTimeMillis();
+        }
     }
 
-    @SubscribeEvent
-    public void onJoin(EntityJoinWorldEvent event) {
-        if (event.entity == mc.thePlayer) reset();
-    }
-
-    @SubscribeEvent
-    public void onDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) {
-        reset();
+    @Subscribe
+    public void onJoin(WorldEvent event) {
+        if (event.isJoined() && event.isLocalPlayer()) {
+            reset();
+        } else if (!event.isJoined()) {
+            reset();
+        }
     }
 
     private void check(EntityPlayer player, AnticheatUtil data) {

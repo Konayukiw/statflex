@@ -614,7 +614,7 @@ public class Gui extends GuiScreen {
         allPossibleTabsMap.put("Bedwars", new Tab("Bedwars", "Bedwars"));
         allPossibleTabsMap.put("Skywars", new Tab("Skywars", "Skywars"));
         allPossibleTabsMap.put("Duels", new Tab("Duels", "Duels"));
-        allPossibleTabsMap.put("Server API", new Tab("Server API", "Server API"));
+        allPossibleTabsMap.put("Hypixel API", new Tab("Hypixel API", "Hypixel API"));
         allPossibleTabsMap.put("Skin", new Tab("Skin", "Skin"));
         allPossibleTabsMap.put("System", new Tab("System", "System"));
         allPossibleTabsMap.put("Update", new Tab("Update", "Update"));
@@ -674,7 +674,7 @@ public class Gui extends GuiScreen {
             skywars(tab, startX, actualComponentWidth);
         } else if ("Duels".equals(tab.id)) {
             duels(tab, startX, actualComponentWidth);
-        } else if ("Server API".equals(tab.id)) {
+        } else if ("Hypixel API".equals(tab.id)) {
             api(tab, startX, actualComponentWidth, setting);
         } else if ("Skin".equals(tab.id)) {
             skin(tab, startX, actualComponentWidth, setting);
@@ -911,7 +911,7 @@ public class Gui extends GuiScreen {
         String apiKey = setting.apiKey != null ? setting.apiKey : "";
         Text apiKeyField = new Text(
                 nextId(), startX, logicalCurrentY + labelHeightAboveComponent,
-                actualComponentWidth, "Server API Key", apiKey,
+                actualComponentWidth, "Hypixel API Key", apiKey,
                 t -> Setting.get().apiKey = t,
                 focused -> {
                     if (!focused) {

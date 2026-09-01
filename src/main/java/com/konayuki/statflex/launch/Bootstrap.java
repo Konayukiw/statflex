@@ -1,31 +1,31 @@
 package com.konayuki.statflex.launch;
 
 import com.konayuki.statflex.features.anticheat.Anticheat;
-import com.konayuki.statflex.update.Update;
-import com.konayuki.statflex.utils.*;
-import com.konayuki.statflex.utils.Commands;
-import com.konayuki.statflex.features.denick.Denick;
 import com.konayuki.statflex.features.autogg.AutoGG;
 import com.konayuki.statflex.features.bedwars.BedwarsList;
+import com.konayuki.statflex.features.denick.Denick;
 import com.konayuki.statflex.features.duels.DuelsList;
 import com.konayuki.statflex.features.skywars.SkywarsList;
 import com.konayuki.statflex.features.tab.TabStats;
 import com.konayuki.statflex.features.rpc.DiscordRPC;
-
+import com.konayuki.statflex.events.EventBus;
+import com.konayuki.statflex.events.Subscribe;
+import com.konayuki.statflex.events.TickEvent;
+import com.konayuki.statflex.forge.ForgeBridge;
+import com.konayuki.statflex.update.Update;
+import com.konayuki.statflex.utils.*;
+import com.konayuki.statflex.utils.Commands;
 import com.konayuki.statflex.utils.api.HypixelApiUtil;
 import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.chat.Locraw;
 import com.konayuki.statflex.utils.hypixel.Party;
 import com.konayuki.statflex.utils.packet.PacketUtil;
-import net.minecraft.client.Minecraft;
 
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
+import net.minecraft.client.Minecraft;
 
 public final class Bootstrap {
     private static final Object LOCK = new Object();
-    private static final LifecycleHandler LIFECYCLE_HANDLER = new LifecycleHandler();
+    private static final TickHandler TICK_HANDLER = new TickHandler();
     private static boolean initialized;
     private static boolean eventHandlersRegistered;
     private static boolean updateCheckStarted;
@@ -56,6 +56,8 @@ public final class Bootstrap {
             initializedBy = source;
         }
 
+        System.setProperty("statflex.initialized", "true");
+
         try {
             System.setProperty("https.protocols", "TLSv1.2");
 
@@ -65,7 +67,7 @@ public final class Bootstrap {
             PacketUtil.register();
             Commands.register();
             HypixelApiUtil.init();
-            registerEvents();
+            registerEvents(source);
             checkUpdate();
             greet();
             return true;
@@ -83,7 +85,7 @@ public final class Bootstrap {
         return start("injection");
     }
 
-    private static void registerEvents() {
+    private static void registerEvents(String source) {
         synchronized (LOCK) {
             if (eventHandlersRegistered) {
                 return;
@@ -99,15 +101,20 @@ public final class Bootstrap {
             party = Party.get();
             discordRPC = DiscordRPC.get();
 
-            MinecraftForge.EVENT_BUS.register(LIFECYCLE_HANDLER);
-            MinecraftForge.EVENT_BUS.register(locraw);
-            MinecraftForge.EVENT_BUS.register(party);
-            MinecraftForge.EVENT_BUS.register(bwList);
-            MinecraftForge.EVENT_BUS.register(swList);
-            MinecraftForge.EVENT_BUS.register(denick);
-            MinecraftForge.EVENT_BUS.register(autoGG);
-            MinecraftForge.EVENT_BUS.register(duelsList);
-            MinecraftForge.EVENT_BUS.register(tabStats);
+            EventBus.register(TICK_HANDLER);
+            EventBus.register(locraw);
+            EventBus.register(party);
+            EventBus.register(bwList);
+            EventBus.register(swList);
+            EventBus.register(denick);
+            EventBus.register(autoGG);
+            EventBus.register(duelsList);
+            EventBus.register(tabStats);
+
+            if ("forge".equals(source)) {
+                ForgeBridge.register();
+            }
+
             eventHandlersRegistered = true;
         }
     }
@@ -156,16 +163,12 @@ public final class Bootstrap {
         runnable.run();
     }
 
-    private static final class LifecycleHandler {
-        @SubscribeEvent
-        public void onTick(TickEvent.ClientTickEvent event) {
-            if (event.phase != TickEvent.Phase.END) {
-                return;
-            }
-
+    private static final class TickHandler {
+        @Subscribe
+        public void onTick(TickEvent event) {
             PacketUtil.ensure();
             flushGreet();
-            DiscordRPC.get().onTick();
+            discordRPC.onTick();
         }
     }
 }

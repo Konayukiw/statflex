@@ -1,13 +1,12 @@
 package com.konayuki.statflex.utils.mixin;
 
-import com.konayuki.statflex.utils.packet.ReceivedPacketDetector;
+import com.konayuki.statflex.events.EventBus;
+import com.konayuki.statflex.events.PacketEvent;
 
 import io.netty.channel.ChannelHandlerContext;
 
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.Packet;
-
-import net.minecraftforge.common.MinecraftForge;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -21,6 +20,6 @@ public class MixinNetworkManager {
             at = @At("HEAD")
     )
     private void statflex$receive(ChannelHandlerContext context, Packet<?> packet, CallbackInfo callbackInfo) {
-        MinecraftForge.EVENT_BUS.post(new ReceivedPacketDetector(packet));
+        EventBus.post(new PacketEvent(packet, PacketEvent.Direction.RECEIVE));
     }
 }

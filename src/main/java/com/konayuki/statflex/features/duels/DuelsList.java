@@ -5,8 +5,8 @@ import com.konayuki.statflex.utils.chat.Locraw;
 import com.konayuki.statflex.utils.Text;
 import com.konayuki.statflex.features.tab.TabStatsCache;
 
-import net.minecraftforge.client.event.ClientChatReceivedEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import com.konayuki.statflex.events.ChatEvent;
+import com.konayuki.statflex.events.Subscribe;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,14 +15,14 @@ public class DuelsList {
     private static int tickDelay = 0;
     private static String pendingChatLine = null;
 
-    @SubscribeEvent
-    public void onChat(ClientChatReceivedEvent event) {
+    @Subscribe
+    public void onChat(ChatEvent event) {
         if (!Toggle.isAuto()) {
             return;
         }
 
         try {
-            String chatLine = event.message.getUnformattedText();
+            String chatLine = event.getMessage().getUnformattedText();
             if (chatLine.contains("Opponent:") || chatLine.contains("Opponents:")) {
                 tickDelay = 6;
                 pendingChatLine = chatLine;
@@ -31,13 +31,9 @@ public class DuelsList {
         }
     }
 
-    @SubscribeEvent
-    public void onTick(net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent event) {
+    @Subscribe
+    public void onTick(com.konayuki.statflex.events.TickEvent event) {
         if (!Toggle.isAuto() || pendingChatLine == null) {
-            return;
-        }
-
-        if (event.phase != net.minecraftforge.fml.common.gameevent.TickEvent.Phase.END) {
             return;
         }
 

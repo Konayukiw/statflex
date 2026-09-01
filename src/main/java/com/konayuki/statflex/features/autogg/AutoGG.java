@@ -14,10 +14,11 @@ import net.minecraft.util.ChatStyle;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.event.HoverEvent;
 
-import net.minecraftforge.client.event.ClientChatReceivedEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.network.FMLNetworkEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
+import com.konayuki.statflex.events.ChatEvent;
+import com.konayuki.statflex.events.EventBus;
+import com.konayuki.statflex.events.Subscribe;
+import com.konayuki.statflex.events.TickEvent;
+import com.konayuki.statflex.events.WorldEvent;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -41,14 +42,14 @@ public class AutoGG {
         reload();
     }
 
-    @SubscribeEvent
-    public void onChat(ClientChatReceivedEvent event) {
-        if (event.type != 0)
+    @Subscribe
+    public void onChat(ChatEvent event) {
+        if (event.getType() != 0)
             return;
         if (sending)
             return;
 
-        String rawMessage = event.message.getUnformattedText();
+        String rawMessage = event.getMessage().getUnformattedText();
         String msg = Text.strip(rawMessage);
 
         synchronized (triggers) {
@@ -69,8 +70,8 @@ public class AutoGG {
         }
     }
 
-    @SubscribeEvent
-    public void onTick(TickEvent.ClientTickEvent event) {
+    @Subscribe
+    public void onTick(TickEvent event) {
         if (mc.thePlayer == null)
             return;
 
@@ -94,9 +95,11 @@ public class AutoGG {
         }
     }
 
-    @SubscribeEvent
-    public void onJoin(FMLNetworkEvent.ClientConnectedToServerEvent event) {
-        loadTriggers();
+    @Subscribe
+    public void onJoin(WorldEvent event) {
+        if (event.isJoined() && event.isLocalPlayer()) {
+            loadTriggers();
+        }
     }
 
     public void command(String[] args) {

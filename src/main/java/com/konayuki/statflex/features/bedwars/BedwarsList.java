@@ -13,8 +13,8 @@ import com.konayuki.statflex.features.tab.TabStatsCache;
 import com.google.gson.JsonObject;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.EnumChatFormatting;
-import net.minecraftforge.client.event.ClientChatReceivedEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import com.konayuki.statflex.events.ChatEvent;
+import com.konayuki.statflex.events.Subscribe;
 
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -28,19 +28,19 @@ public class BedwarsList {
     private static volatile boolean waitingParty = false;
     private static final Pattern namePattern = Pattern.compile("\\b[a-zA-Z0-9_]{3,16}\\b");
 
-    @SubscribeEvent
-    public void onChat(ClientChatReceivedEvent event) {
+    @Subscribe
+    public void onChat(ChatEvent event) {
         if (!Toggle.isBwList())
             return;
 
-        String raw = event.message.getUnformattedText();
+        String raw = event.getMessage().getUnformattedText();
         String stripped = EnumChatFormatting.getTextWithoutFormattingCodes(raw);
         String lower = stripped.toLowerCase();
         Minecraft mc = Minecraft.getMinecraft();
 
         if (lower.startsWith("online:")) {
             if (!Toggle.isKeepWho()) {
-                event.setCanceled(true);
+                event.setCancelled(true);
             }
 
             Queue.clear();

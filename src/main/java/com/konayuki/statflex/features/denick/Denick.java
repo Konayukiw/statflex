@@ -22,9 +22,9 @@ import com.mojang.authlib.properties.Property;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.util.IChatComponent;
-import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
+import com.konayuki.statflex.events.Subscribe;
+import com.konayuki.statflex.events.TickEvent;
+import com.konayuki.statflex.events.WorldEvent;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -54,11 +54,8 @@ public class Denick {
     private boolean locrawSent;
     private final List<String> awaitingGame = new ArrayList<>();
 
-    @SubscribeEvent
-    public void onTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
-            return;
-        }
+    @Subscribe
+    public void onTick(TickEvent event) {
         if (!Toggle.isDenick()) {
             return;
         }
@@ -84,9 +81,9 @@ public class Denick {
         }
     }
 
-    @SubscribeEvent
-    public void onJoin(EntityJoinWorldEvent event) {
-        if (event.entity != Minecraft.getMinecraft().thePlayer) {
+    @Subscribe
+    public void onJoin(WorldEvent event) {
+        if (!event.isJoined() || !event.isLocalPlayer()) {
             return;
         }
 
@@ -188,7 +185,7 @@ public class Denick {
         }
 
         Chat.send(Messages.PREFIX + "Found a nicked player: " + Color.RED + nick);
-        warn("Nicked a nicked player: " + nick);
+        warn("Found a nicked player: " + nick);
     }
 
     private void warn(String report) {

@@ -66,7 +66,7 @@ public final class ProviderUtil {
             try {
                 JsonObject player = request(provider, normalized);
                 if (player == null) {
-                    continue;   // reachable, but no data on this provider
+                    continue;
                 }
 
                 CACHE.put(cacheKey, new CachedPlayer(player, System.currentTimeMillis() + CACHE_TTL_MS));

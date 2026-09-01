@@ -41,18 +41,21 @@ repositories {
 }
 
 dependencies {
-    compile 'com.google.code.gson:gson:2.8.9'
+    compileOnly 'com.google.code.gson:gson:2.8.9'
     compile 'org.spongepowered:mixin:0.7.11-SNAPSHOT'
+    compile 'org.ow2.asm:asm-all:5.0.3'
 }
 
 jar {
     manifest.attributes(
             'MixinConfigs': 'mixins.json',
             'FMLCorePluginContainsFMLMod': 'true',
-            'Agent-Class': 'com.konayuki.statflex.launch.JavaAgent',
-            'Premain-Class': 'com.konayuki.statflex.launch.JavaAgent',
-            'Can-Redefine-Classes': 'false',
-            'Can-Retransform-Classes': 'false'
+            'ForceLoadAsMod': 'true',
+            'Premain-Class': 'com.konayuki.statflex.inject.Agent',
+            'Agent-Class': 'com.konayuki.statflex.inject.Agent',
+            'Can-Redefine-Classes': 'true',
+            'Can-Retransform-Classes': 'true',
+            'Main-Class': 'com.konayuki.statflex.inject.Injector'
     )
 }
 
@@ -62,10 +65,18 @@ task fatJar(type: Jar) {
     classifier = 'all'
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
+    dependsOn reobfJar
+
+    exclude 'META-INF/*.SF', 'META-INF/*.RSA', 'META-INF/*.DSA', 'META-INF/*.EC'
+    exclude 'com/google/gson/**'
+    exclude 'META-INF/maven/com.google.code.gson/**'
+
     from {
         configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) }
     }
-    with jar
+    from {
+        zipTree(jar.archivePath)
+    }
 }
 
 task copyDeps(type: Copy) {

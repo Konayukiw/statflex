@@ -1,16 +1,21 @@
 package com.konayuki.statflex.utils.packet;
 
+import com.konayuki.statflex.events.ChatEvent;
+import com.konayuki.statflex.events.EventBus;
+import com.konayuki.statflex.events.PacketEvent;
+import com.konayuki.statflex.events.WorldEvent;
+
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelPromise;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.Packet;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.network.FMLNetworkEvent;
+import net.minecraft.network.play.server.S01PacketJoinGame;
+import net.minecraft.network.play.server.S02PacketChat;
+import net.minecraft.network.play.server.S07PacketRespawn;
 
 import java.lang.reflect.Field;
 
@@ -28,12 +33,8 @@ public final class PacketUtil {
 
     public static void register() {
         synchronized (PacketUtil.class) {
-            if (!registered) {
-                MinecraftForge.EVENT_BUS.register(INSTANCE);
-                registered = true;
-            }
+            registered = true;
         }
-
         ensure();
     }
 
@@ -43,19 +44,6 @@ public final class PacketUtil {
         }
 
         INSTANCE.install();
-    }
-
-    @SubscribeEvent
-    public void onConnect(FMLNetworkEvent.ClientConnectedToServerEvent event) {
-        install();
-    }
-
-    @SubscribeEvent
-    public void onDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) {
-        synchronized (this) {
-            hookedManager = null;
-            hookedChannel = null;
-        }
     }
 
     private void install() {
@@ -96,10 +84,9 @@ public final class PacketUtil {
 
                     @Override
                     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-                        if (msg instanceof Packet) {
-                            MinecraftForge.EVENT_BUS.post(new ReceivedPacketDetector((Packet<?>) msg));
+                        if (onReceive(msg)) {
+                            super.channelRead(ctx, msg);
                         }
-                        super.channelRead(ctx, msg);
                     }
 
                     @Override
@@ -107,11 +94,16 @@ public final class PacketUtil {
                                       Object msg,
                                       ChannelPromise promise) throws Exception {
 
-                        if (msg instanceof Packet) {
-                            MinecraftForge.EVENT_BUS.post(new SentPacketDetector((Packet<?>) msg));
+                        if (onSend(msg, promise)) {
+                            super.write(ctx, msg, promise);
                         }
+                    }
 
-                        super.write(ctx, msg, promise);
+                    @Override
+                    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+                        PacketUtil.this.clearHooked();
+                        EventBus.post(new WorldEvent(false, true));
+                        super.channelInactive(ctx);
                     }
                 };
 
@@ -131,6 +123,56 @@ public final class PacketUtil {
 
         hookedManager = manager;
         hookedChannel = channel;
+    }
+
+    private boolean onReceive(Object msg) {
+        if (!(msg instanceof Packet)) {
+            return true;
+        }
+
+        PacketEvent packetEvent = new PacketEvent((Packet<?>) msg, PacketEvent.Direction.RECEIVE);
+        EventBus.post(packetEvent);
+        if (packetEvent.isCancelled()) {
+            return false;
+        }
+
+        if (msg instanceof S01PacketJoinGame || msg instanceof S07PacketRespawn) {
+            EventBus.post(new WorldEvent(true, true));
+        }
+
+        if (msg instanceof S02PacketChat) {
+            S02PacketChat chat = (S02PacketChat) msg;
+            ChatEvent chatEvent = new ChatEvent(chat.getChatComponent(), chat.getType());
+            EventBus.post(chatEvent);
+            if (chatEvent.isCancelled()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private boolean onSend(Object msg, ChannelPromise promise) {
+        if (!(msg instanceof Packet)) {
+            return true;
+        }
+
+        PacketEvent event = new PacketEvent((Packet<?>) msg, PacketEvent.Direction.SEND);
+        EventBus.post(event);
+        if (event.isCancelled()) {
+            try {
+                promise.setSuccess();
+            } catch (Throwable ignored) {
+            }
+            return false;
+        }
+
+        return true;
+    }
+
+    private synchronized void clearHooked() {
+        hookedManager = null;
+        hookedChannel = null;
     }
 
     private Channel channel(NetworkManager manager) {

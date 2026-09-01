@@ -132,35 +132,43 @@ Open the settings GUI with `/s`. The GUI provides tabbed configuration:
 ## Requirements
 
 - Minecraft **1.8.9**
-- Forge **11.15.1.2318**
 - Java 8+ (To build by yourself)
 - A Hypixel API key (Generate at [Hypixel Developer Dashboard](https://developer.hypixel.net))
----
 
-## Installation
+## Running statflex (4 ways)
 
-### Automatic installation
+The same jar supports every target. Pick whichever matches your setup:
 
-1. Launch Minecraft 1.8.9 (Badlion Client is not supported).
-2. Get statflex injector at [Latest statflex release](https://github.com/Konayukiw/statflex-injector/releases/latest).
-3. Just run injector.
+| Way | Target | How |
+|-----|--------|-----|
+| Forge Mod | Forge 1.8.9 | Drop the jar in `.minecraft/mods/` |
+| Forge Injectable | Forge 1.8.9 (running game) | `java -jar statflex-x.y-all.jar` (fat jar) from a JDK while the game runs |
+| Badlion Injectable | Badlion Client | Run the native loader exe from [statflex-injector releases](https://github.com/Konayukiw/statflex-injector/releases/latest) |
+| Lunar Injectable | Lunar Client (Zulu JDK 17) | Same native loader exe |
 
-### Manual installation
+### Forge Mod (mods folder)
 
 1. Install Minecraft Forge 1.8.9.
-2. Get statflex jar at [Latest statflex release](https://github.com/Konayukiw/statflex/releases/latest).
+2. Get the statflex jar from [Latest statflex release](https://github.com/Konayukiw/statflex/releases/latest).
 3. Place the jar in your `.minecraft/mods/` folder.
-4. Launch Minecraft and register API key via `/s api [Key]` to enable stats viewer.
+4. Launch Minecraft and register an API key via `/s api [Key]` to enable the stats viewer.
+
+### Badlion / Lunar Injectable
+
+1. Launch the client first, then run the loader exe. It finds the game process automatically (Badlion and Lunar disable the JVM attach mechanism with `-XX:+DisableAttachMechanism`, so the loader uses DLL injection instead).
+2. Details land in `%TEMP%\statflex-native.log` if anything goes wrong.
 
 ---
 
 ## Building from Source
 
+### Mod jar
+
 ```bash
 gradlew build
 ```
 
-The output Jar will be in `build/libs/`.
+The output jar (`build/libs/statflex-x.y.jar`) is reobfuscated to SRG names and works both as a Forge mod and as the injection payload -- the same jar is the agent (`Premain-Class`/`Agent-Class`), the attach injector (`Main-Class`) and the jar the native loader embeds.
 
 To produce a fatJar with all dependencies bundled:
 
@@ -168,13 +176,20 @@ To produce a fatJar with all dependencies bundled:
 gradlew fatJar
 ```
 
+### Injector (Badlion / Lunar)
+
+See [statflex-injector](https://github.com/Konayukiw/statflex-injector). Requires CMake and MSVC; the build embeds `../statflex/build/libs/statflex-*.jar` automatically.
+
 ---
 
 ## Tech Stack
 
 - Java 8
 - MinecraftForge 1.8.9 (ForgeGradle 2.1)
-- SpongePowered Mixin 0.7.11
+- Internal event bus + netty pipeline hooks (works on any 1.8.9 client)
+- ASM hook transformer for injection (SRG / MCP / notch auto-mapping at runtime)
+- JVMTI native loader for Badlion / Lunar (C++, see statflex-injector)
+- SpongePowered Mixin 0.7.11 (infrastructure, kept from the Forge setup)
 - Gson 2.8.9
 - Hypixel API v2
 - Crafty API

@@ -12,19 +12,16 @@ import com.konayuki.statflex.gui.Gui;
 import com.konayuki.statflex.utils.api.HypixelApiUtil;
 import com.konayuki.statflex.utils.chat.Chat;
 import com.konayuki.statflex.utils.chat.ChatUtil;
+import com.konayuki.statflex.events.EventBus;
+import com.konayuki.statflex.events.SendChatEvent;
+import com.konayuki.statflex.events.Subscribe;
+import com.konayuki.statflex.events.TickEvent;
+
 import net.minecraft.client.Minecraft;
-import net.minecraft.command.ICommand;
-import net.minecraft.command.ICommandSender;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.event.HoverEvent;
-import net.minecraft.util.BlockPos;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.IChatComponent;
-
-import net.minecraftforge.client.ClientCommandHandler;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,7 +29,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class Commands implements ICommand {
+public class Commands {
     private static final String BULLET = Color.RED + " || " + Color.GRAY;
     private final List<String> aliases = Arrays.asList("s");
     private static final AutoGG AUTO_GG_HANDLER = new AutoGG();
@@ -47,14 +44,11 @@ public class Commands implements ICommand {
             return;
         }
 
-        Commands instance = new Commands();
-        ClientCommandHandler.instance.registerCommand(instance);
-        MinecraftForge.EVENT_BUS.register(instance);
+        EventBus.register(new Commands());
         registered = true;
     }
 
-    @Override
-    public void processCommand(ICommandSender sender, String[] args) {
+    public void execute(String[] args) {
         if (args.length < 1) {
             open(null);
             return;
@@ -76,7 +70,7 @@ public class Commands implements ICommand {
 
             case "flag":
             case "interval":
-                flag(sender, args);
+                flag(args);
                 break;
 
             case "bw":
@@ -335,7 +329,7 @@ public class Commands implements ICommand {
         }
     }
 
-    private void flag(ICommandSender sender, String[] args) {
+    private void flag(String[] args) {
         if (args.length < 2) {
             Chat.send(Messages.USAGE);
             Chat.send(BULLET + "Current value: " + Color.YELLOW + Color.BOLD
@@ -410,11 +404,8 @@ public class Commands implements ICommand {
         openGuiTicks = 1;
     }
 
-    @SubscribeEvent
-    public void onTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
-            return;
-        }
+    @Subscribe
+    public void onTick(TickEvent event) {
         if (openGuiTicks < 0) {
             return;
         }
@@ -431,38 +422,46 @@ public class Commands implements ICommand {
         Toggle.sync(setting);
     }
 
-    @Override
-    public String getCommandName() {
+    public static String commandName() {
         return "s";
     }
 
-    @Override
-    public String getCommandUsage(ICommandSender sender) {
-        return Messages.USAGE;
-    }
-
-    @Override
-    public List<String> getCommandAliases() {
+    public List<String> aliases() {
         return aliases;
     }
 
-    @Override
-    public boolean canCommandSenderUseCommand(ICommandSender sender) {
-        return true;
+    @Subscribe
+    public void onSendChat(SendChatEvent event) {
+        String message = event.getMessage();
+        if (message == null) {
+            return;
+        }
+
+        String[] args = parseCommand(message);
+        if (args == null) {
+            return;
+        }
+
+        event.setCancelled(true);
+        execute(args);
     }
 
-    @Override
-    public boolean isUsernameIndex(String[] args, int index) {
-        return index == 1;
-    }
+    private static String[] parseCommand(String message) {
+        String lower = message.toLowerCase();
+        String prefix = null;
+        if (lower.equals("/s") || lower.startsWith("/s ")) {
+            prefix = "/s";
+        } else if (lower.equals("/statflex") || lower.startsWith("/statflex ")) {
+            prefix = "/statflex";
+        }
+        if (prefix == null) {
+            return null;
+        }
 
-    @Override
-    public List<String> addTabCompletionOptions(ICommandSender sender, String[] args, BlockPos pos) {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public int compareTo(ICommand o) {
-        return this.getCommandName().compareTo(o.getCommandName());
+        String rest = message.substring(prefix.length()).trim();
+        if (rest.isEmpty()) {
+            return new String[0];
+        }
+        return rest.split(" ");
     }
 }
