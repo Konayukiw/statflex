@@ -25,3 +25,4 @@ dummy.pid
 .workbuddy-ai
 .claude
 scripts
+.gitignore
